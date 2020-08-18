@@ -5,7 +5,7 @@
 Table Users as U {
   id int [pk, increment]
   name varchar
-  born date
+  birthday date
   email email
   passwd varchar
   phone int
@@ -32,8 +32,7 @@ Table Meal {
 Ref: Meal.rest > R.id 
 
 Table FoodType {
-  id int [pk]
-  name varchar
+  name varchar [pk]
 }
 
 Ref: FoodType.id < Meal.type
