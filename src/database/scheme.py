@@ -29,6 +29,9 @@ class User(Base, Serializable):
 	passwd = Column(String(255))
 	phone = Column(Integer, unique=True)
 
+	def __repr__(self):
+		return f"User: {self.name}"
+
 class Restaurant(Base, Serializable):
 	__tablename__ = 'Restaurants'
 
@@ -39,10 +42,17 @@ class Restaurant(Base, Serializable):
 	login = Column(String(255), unique=True, nullable=False)
 	passwd = Column(String(255), nullable=False)
 
+	def __repr__(self):
+		return f"Restaurant: {self.name}"
+
 class FoodType(Base, Serializable):
 	__tablename__ = 'FoodTypes'
 
 	name = Column(String(255), primary_key=True)
+
+	def __repr__(self):
+		return f"FoodType: {self.name}"
+
 
 class Meal(Base, Serializable):
 	__tablename__ = 'Meals'
