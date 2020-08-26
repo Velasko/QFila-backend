@@ -3,19 +3,20 @@ import sys
 import argparse
 
 from sqlalchemy import create_engine
+from flask import Flask
 
 from .scheme import Base
-from .app import app
 
+from .app import api
 
 DATABASE_ENGINE = os.getenv('DATABASE_ENGINE')
 
-class myfile(list):
-	def write(self, data):
-		self.append(data)
+app = Flask("Qfila database")
+api.init_app(app)
+
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Declaration of the database scheme of the application')
+	parser = argparse.ArgumentParser(description='Database section of the application')
 	parser.add_argument('--database', default=DATABASE_ENGINE,
 						type=str, help="Which database the script should run on.")
 	
@@ -28,11 +29,11 @@ if __name__ == '__main__':
 	parser.add_argument('-d', '--debug', action='store_true', help="Runs with debug")
 	parser.add_argument('-p', '--port', default=5000, help="Which port to run the application on")
 
+#	parser.add_argument('-o', '--output', default=None, help="Recieves the name of the file on which the output will be written to.")
+
 	tester = parser.add_subparsers().add_parser("test", help="REST mode arguments")
 
 	args = parser.parse_args()
-
-#	print(args)
 
 	if args.create_scheme:
 		engine = create_engine(args.database)
@@ -52,7 +53,6 @@ if __name__ == '__main__':
 		flask.start()
 
 		sys.argv.remove('-t')
-		# unittest.main(module='database.test')
 
 		_output = sys.stdout
 
@@ -63,7 +63,6 @@ if __name__ == '__main__':
 			execute_tests(verbosity=2, exit=False)
 
 		flask.kill()
-		flask.join()
 
 		sys.stderr = _output
 		sys.stdout = _output

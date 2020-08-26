@@ -3,7 +3,7 @@
 
 from datetime import date, datetime
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Float, String
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Float, String, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -27,7 +27,7 @@ class User(Base, Serializable):
 	birthday = Column(Date)
 	email = Column(String(255), unique=True)
 	passwd = Column(String(255))
-	phone = Column(Integer, unique=True)
+	phone = Column(BigInteger, unique=True)
 
 	def __repr__(self):
 		return f"User: {self.name}"

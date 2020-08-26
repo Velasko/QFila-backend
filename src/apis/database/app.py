@@ -9,12 +9,11 @@ from flask_restx import Api, Resource, fields
 
 from sqlalchemy import create_engine, update
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import exc
 
 from .scheme import Base, User, Restaurant, Meal, FoodType, Cart, Item
 
-app = Flask('Qfila-Database')
-api = Api(app, version='0.1', title='Qfila-Database',
+api = Api(version='0.1', title='Qfila-Database',
 	description='A database REST interface for the Qfila application',
 )
 
@@ -26,6 +25,19 @@ Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+user = api.model('User', {
+	'name' : fields.String(description='User name'),
+    'email' : fields.String(description='User email'),
+    'passwd' : fields.String(description='User password'),
+    'birthday' : fields.DateTime(description='User birthday', dt_format="iso8601"),
+    'phone' : fields.Integer(default=None, description='User phone number')
+})
+
+id = api.model('Identifyiers', {
+    'email' : fields.String(description='User email'),
+    'phone' : fields.Integer(description='User phone number')
+})
 
 @ns.route('/user')
 class UserHandler(Resource):
@@ -55,9 +67,24 @@ class UserHandler(Resource):
 
 		return d <= twelve_years_ago
 
-
+	@ns.doc("Create user")
+	@ns.expect(user)
 	def post(self):
-		data = dict(request.form)
+		"""Method to create the user.
+
+		Expected a json with the folowing items:
+
+		Obligatory:
+			- name
+			- email
+			- password (already hashed)
+			- birthday (YYYY-MM-DD)
+
+		Optional:
+			- phone
+		"""
+		data = api.payload
+		print(data)
 
 		try:
 			#checking obligatory fields and modifying as required.
@@ -67,6 +94,7 @@ class UserHandler(Resource):
 
 			data['name'] = data['name'].lower()
 			data['email'] = data['email'].lower()
+
 			match = re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", data['email'])
 			if match is None:
 				api.abort(400, "Invalid email.")
@@ -77,7 +105,8 @@ class UserHandler(Resource):
 			session.add(user)
 
 			session.commit()
-		except IntegrityError as e:
+		except (exc.InvalidRequestError, exc.IntegrityError) as e:
+			#I don't get why they seem to change between the two.
 			api.abort(409, e._message().split(".")[-1] + " already in use.")
 		except KeyError as e:
 			"Required value is missing"
@@ -85,19 +114,36 @@ class UserHandler(Resource):
 
 		return {}, 201
 
+	@ns.doc("Find user")
+	@ns.expect(id)
 	def get(self):
-		data = dict(request.form)
-		
+		"""Method to get user information based on e-mail or phone.
+		A single user shall be returned from this query."""
+		data = api.payload
+
 		try:
 			query = self.query(data)
-			return query.first().serialize()
+			user = query.first().serialize()
+
+			#hiding user id
+			del user['id']
+
+			return user
 		except AttributeError:
 			api.abort(404)
 		except KeyError as e:
 			api.abort(415, e.args[0])
 
-
+	@ns.doc("Modify user")
 	def put(self):
+		"""Method to modify an user.
+
+		A json with two sections must be parsed. 
+
+		The first one must be named 'id' and must have unique identifyiers (email or phone).
+
+		The second must be named update and have the fields to be updated.
+		"""
 		data = json.loads(dict(request.form)['data'])
 
 		if 'birthday' in data['update']:
@@ -115,8 +161,14 @@ class UserHandler(Resource):
 		except KeyError as e:
 			api.abort(415, e.args[0])
 
+	@ns.doc("Delete user")
+	@ns.expect(id)
 	def delete(self):
-		data = dict(request.form)
+		"""Method called to delete the user.
+
+		In this scenario, it was prefered to clear out the fields and turn it into
+		a ghost user instead."""
+		data = api.payload
 
 		try:
 			query = self.query(data)
@@ -130,4 +182,6 @@ class UserHandler(Resource):
 
 
 if __name__ == '__main__':
+	app = Flask("Qfila database")
+	api.init_app(app)
 	app.run(debug=True)

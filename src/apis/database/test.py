@@ -5,25 +5,42 @@ import unittest
 from datetime import date
 from requests import put, get, post, delete
 
-hostname = f"{os.getenv('APPLICATION_HOSTNAME')}/database/user"
-default_data = {"name" : "test user", "birthday" : "1977-01-01", "email" : "test@database.qfila", "passwd":3, 'phone':85900000000}
+from .scheme import Base, User, Restaurant, Meal, FoodType, Cart, Item
 
+hostname = f"{os.getenv('APPLICATION_HOSTNAME')}/database/user"
+default_data = {"name" : "test user", "birthday" : "1977-01-01", "email" : "test@database.qfila", "passwd":3, 'phone':200000000}
+
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+DATABASE_ENGINE = os.getenv('DATABASE_ENGINE')
+engine = create_engine(DATABASE_ENGINE)
+Base.metadata.bind = engine
+DBSession = sessionmaker(bind=engine)
+database = DBSession()
 
 class DatabaseUserTest(unittest.TestCase):
 
-	def test_post_user_obligatory_keys(self):
+	def clean_delete_user(self, email):
+		"""Method to clean the done test"""
+		query = database.query(User).filter(User.email==email)
+
+		query.delete()
+		database.commit()
+
+	def d_test_post_user_obligatory_keys(self):
 		"""Tests if the fields name, birthday, email and password are required for the user creation."""
 
 		data = default_data.copy()
 
 		#testing if the those keys are obligatory when creating an user
 		for obligatory in ('name', 'birthday', 'email', 'passwd'):
-			resp = post(hostname, data={ key : value for key, value in data.items() if key != obligatory})
-			self.assertEqual(resp.status_code, 400)
-			self.assertEqual(resp.json()['message'], obligatory)
-			print('')
+			with self.subTest(obligatory=obligatory):
+				resp = post(hostname, data={ key : value for key, value in data.items() if key != obligatory})
+				self.assertEqual(resp.status_code, 400)
+				self.assertEqual(resp.json()['message'], obligatory)
 
-	def test_post_user_field_validation(self):
+	def d_test_post_user_field_validation(self):
 		'''Test to check if the values for each field is valid.'''
 
 	#tests for the name field
@@ -45,23 +62,41 @@ class DatabaseUserTest(unittest.TestCase):
 
 	#tests for the phone field
 
-	def test_post_user_creation_unicity(self):
-		data = default_data.copy()
-		resp = post(hostname, data=data)
-		print(resp)
+	def test_post_user_creation(self):
+		"""Testing insert of user and it's unicity"""
 
+		import time
+		data = default_data.copy()
+		# data['email'] = 'potato@gmail.com'
+		# data['phone'] = 23
+		resp = post(hostname, data=data).status_code
+
+		time.sleep(3)
+		self.assertEqual(resp, 201)
+
+		data['phone'] = data['phone']*2
 		resp = post(hostname, data=data)
 		self.assertEqual(resp.status_code, 409)
 
+		data['phone'] = default_data['phone']
+		data['email'] = data['email'] + '2'
+		resp = post(hostname, data=data)
+		self.assertEqual(resp.status_code, 409)
 
-	def test_get_user(self):
+		self.clean_delete_user(data['email'][:-1])
+
+
+	def u_test_get_user(self):
+		"""Testing to retrieve user"""
 		pass
 #		resp = get(hostname, )
 
-	def test_put_user(self):
+	def u_test_put_user(self):
+		"""Testing to modify user"""
 		pass
 
-	def test_delete_user(self):
+	def u_test_delete_user(self):
+		"""Testing to delete user"""
 		pass
 
 def execute_tests(*args, **kwargs):
