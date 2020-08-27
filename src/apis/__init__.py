@@ -1,11 +1,13 @@
 from flask_restx import Api
 
-from .database.app import ns as ns1
-from .user.app import ns as ns2
+from .database import app as app1
+from .user import app as app2
 
 api = Api(
 	title='Qfila'
 )
 
-api.add_namespace(ns1)
-api.add_namespace(ns2)
+api.add_namespace(app1.ns)
+api.add_namespace(app2.ns)
+
+app = None

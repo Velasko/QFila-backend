@@ -11,8 +11,13 @@ from flask import Flask, request
 from flask_restx import Api, Resource, fields, reqparse
 
 #password
-
 from werkzeug.security import check_password_hash, generate_password_hash
+
+#getting the main app module
+import importlib
+appmodule = importlib.import_module(__package__.split('.')[0])
+
+from ..utilities import authentication
 
 headers = {
 	"accept": "application/json",
@@ -31,39 +36,6 @@ user = api.model('User', {
 })
 
 
-def token_required(f):
-	@wraps(f)
-	def decorator(*args, **kwargs):
-
-		token = None
-
-		if 'Token' in request.headers:
-			token = request.headers['Token']
-
-		if not token:
-			return {'message': 'a valid token is missing'}
-
-		try:
-			data = jwt.decode(token, ns.app.config['SECRET_KEY'])
-			resp = get(
-				'{}/database/user'.format(ns.app.config['APPLICATION_HOSTNAME']),
-				data=json.dumps({'email': data['email']}), headers=headers
-			)
-			current_user = resp.json()
-
-			print(data)
-
-		except jwt.ExpiredSignatureError as e:
-			return {'message' : 'token expired'}
-		except:
-			return {'message': 'token is invalid'}
-
-		#The self obj is actually the first item in args.
-		#parsing "f(current_user, *args, **kwargs)" leads to a headache in the function 
-		return f(args[0], current_user, *args[1:], **kwargs)
-	return decorator
-
-
 @ns.route("/login")
 class Auth(Resource):
 
@@ -75,20 +47,12 @@ class Auth(Resource):
 
 		auth = api.payload
 
-		resp = get(
-			'{}/database/user'.format(ns.app.config['APPLICATION_HOSTNAME']),
+		user = get(
+			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
 			data=json.dumps({'email': auth['email']}), headers=headers
-		)
+		).json()
 
-		user = resp.json()
-
-		if check_password_hash(user['passwd'], auth['passwd']):
-			token = jwt.encode({
-				'email' : user['email'],
-				'exp' : datetime.datetime.utcnow() + datetime.timedelta(ns.app.config['session_ttl'])},
-				ns.app.config['SECRET_KEY']
-			)
-
+		if ( token := authentication.passwd_check(user, auth)):
 			return {'token' : token.decode('UTF-8')}, 200
 		else:
 			return {}, 401
@@ -105,12 +69,16 @@ class Auth(Resource):
 
 		for key, value in data.items():
 			if key == 'passwd':
-				data['passwd'] = generate_password_hash(data['passwd'], 'sha256')
+				data['passwd'] = authentication.hash_password(data['passwd'])
+			elif 'birthday' == value:
+				date = date.fromisoformat(value)
+				if not self.age_check(date):
+					api.abort(403, "User below 12 years old")
 			elif isinstance(value, str):
 				data[key] = value.lower()
 
 		resp = post(
-			'{}/database/user'.format(ns.app.config['APPLICATION_HOSTNAME']),
+			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
 			data=json.dumps(data), headers=headers
 		)
 
@@ -122,7 +90,7 @@ class Auth(Resource):
 @ns.route("/test")
 class User(Resource):
 
-	@token_required
+	@authentication.token_required
 	def get(self, user):
 		return user, 200
 

@@ -19,8 +19,7 @@ api = Api(version='0.1', title='Qfila-Database',
 
 ns = api.namespace('database')
 
-DATABASE_ENGINE = os.getenv('DATABASE_ENGINE')
-engine = create_engine(DATABASE_ENGINE)
+engine = create_engine(os.getenv('DATABASE_URI'))
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
@@ -116,6 +115,7 @@ class UserHandler(Resource):
 
 	@ns.doc("Find user")
 	@ns.expect(id)
+	@ns.marshal_with(user)
 	def get(self):
 		"""Method to get user information based on e-mail or phone.
 		A single user shall be returned from this query."""
