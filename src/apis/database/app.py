@@ -13,6 +13,8 @@ from sqlalchemy import exc
 
 from .scheme import Base, User, Restaurant, Meal, FoodType, Cart, Item
 
+from ..utilities import checkers
+
 api = Api(version='0.1', title='Qfila-Database',
 	description='A database REST interface for the Qfila application',
 )
@@ -25,17 +27,17 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-user = api.model('User', {
-	'name' : fields.String(description='User name'),
-    'email' : fields.String(description='User email'),
-    'passwd' : fields.String(description='User password'),
-    'birthday' : fields.DateTime(description='User birthday', dt_format="iso8601"),
-    'phone' : fields.Integer(default=None, description='User phone number')
+id = api.model('Identifyiers', {
+    'email' : fields.String(required=True, description='User email'),
+    'phone' : fields.Integer(description='User phone number')
 })
 
-id = api.model('Identifyiers', {
-    'email' : fields.String(description='User email'),
-    'phone' : fields.Integer(description='User phone number')
+user = api.inherit('User', id, {
+	'name' : fields.String(required=True,description='User name'),
+    'email' : fields.String(required=True, description='User email'),
+    'passwd' : fields.String(required=True, description='User password'),
+    'birthday' : fields.DateTime(required=True, description='User birthday', dt_format="iso8601"),
+    'phone' : fields.Integer(default=None, description='User phone number')
 })
 
 @ns.route('/user')
@@ -48,23 +50,6 @@ class UserHandler(Resource):
 			return session.query(User).filter(User.__getattribute__(User, id_name) == data[id_name].lower())
 		else:
 			raise KeyError(f"{id_name} not email or phone")
-
-	def age_check(self, d):
-		"""Checks the age based on the (d)ate
-			
-			If it's below 12 years old:
-				return False
-			Else:
-				return True
-		"""
-
-		if isinstance(d, str):
-			d = date.fromisoformat(d)
-
-		tdy = date.today()
-		twelve_years_ago = date(tdy.year-12, tdy.month, tdy.day)
-
-		return d <= twelve_years_ago
 
 	@ns.doc("Create user")
 	@ns.expect(user)
@@ -83,19 +68,17 @@ class UserHandler(Resource):
 			- phone
 		"""
 		data = api.payload
-		print(data)
 
 		try:
 			#checking obligatory fields and modifying as required.
 			data['birthday'] = date.fromisoformat(data['birthday'])
-			if not self.age_check(data['birthday']):
+			if not checkers.age_check(data['birthday']):
 				api.abort(403, "User below 12 years old")
 
 			data['name'] = data['name'].lower()
 			data['email'] = data['email'].lower()
 
-			match = re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", data['email'])
-			if match is None:
+			if not checkers.valid_email(data['email']):
 				api.abort(400, "Invalid email.")
 
 			data['passwd']
@@ -106,9 +89,11 @@ class UserHandler(Resource):
 			session.commit()
 		except (exc.InvalidRequestError, exc.IntegrityError) as e:
 			#I don't get why they seem to change between the two.
-			api.abort(409, e._message().split(".")[-1] + " already in use.")
+			session.rollback()
+			api.abort(409, e._message().split(".")[-1][:-3] + " already in use.")
 		except KeyError as e:
 			"Required value is missing"
+			session.rollback()
 			api.abort(400, e.args[0])
 
 		return {}, 201
@@ -148,7 +133,7 @@ class UserHandler(Resource):
 
 		if 'birthday' in data['update']:
 			data['update']['birthday'] = date.fromisoformat(data['update']['birthday'])
-			if not self.age_check(data['birthday']):
+			if not checkers.age_check(data['birthday']):
 				api.abort(403, "User below 12 years old")
 
 		try:
@@ -157,8 +142,10 @@ class UserHandler(Resource):
 			session.commit()
 			return {}, 200
 		except AttributeError:
+			session.rollback()
 			api.abort(404)
 		except KeyError as e:
+			session.rollback()
 			api.abort(415, e.args[0])
 
 	@ns.doc("Delete user")
@@ -176,8 +163,10 @@ class UserHandler(Resource):
 			session.commit()
 			return {}, 200
 		except AttributeError:
+			session.rollback()
 			api.abort(404)
 		except KeyError as e:
+			session.rollback()
 			api.abort(415, e.args[0])
 
 

@@ -25,7 +25,6 @@ def token_required(f):
 	@wraps(f)
 	def decorator(*args, **kwargs):
 		token = None
-		print("KEK IN token_required")
 
 		if 'Token' in request.headers:
 			token = request.headers['Token']
@@ -58,12 +57,12 @@ def passwd_check(user, auth):
 	if check_password_hash(user['passwd'], auth['passwd']):
 		token = jwt.encode({
 			'email' : user['email'],
-			'exp' : datetime.datetime.utcnow() + datetime.timedelta(appmodule.app.config['session_ttl'])},
+			'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=appmodule.app.config['session_ttl'])},
 			appmodule.app.config['SECRET_KEY']
 		)
 
 		return token
-	return False
+	raise KeyError('invalid password')
 
 def hash_password(passwd, hash=HASH_METHOD):
-	generate_password_hash(data['passwd'], hash)
+	return generate_password_hash(passwd, hash)

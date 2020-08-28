@@ -17,7 +17,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import importlib
 appmodule = importlib.import_module(__package__.split('.')[0])
 
-from ..utilities import authentication
+from ..utilities import authentication, checkers
 
 headers = {
 	"accept": "application/json",
@@ -31,8 +31,14 @@ api = Api(version='0.1', title='Client',
 ns = api.namespace('user', description='client operations')
 
 user = api.model('User', {
-	'email': fields.String(required=True, description='User email'),
-	'passwd': fields.String(required=True, description='User password'),
+	'email' : fields.String(required=True, description='User email'),
+	'passwd' : fields.String(required=True, description='User password'),
+})
+
+new_user = api.inherit('New User', user, {
+	'name' : fields.String(required=True, description='User name'),
+    'birthday' : fields.DateTime(required=True, description='User birthday', dt_format="iso8601"),
+    'phone' : fields.Integer(default=None, description='User phone number')
 })
 
 
@@ -52,16 +58,18 @@ class Auth(Resource):
 			data=json.dumps({'email': auth['email']}), headers=headers
 		).json()
 
-		if ( token := authentication.passwd_check(user, auth)):
-			return {'token' : token.decode('UTF-8')}, 200
-		else:
-			return {}, 401
+		try:
+			if ( token := authentication.passwd_check(user, auth)):
+				return {'token' : token.decode('UTF-8')}, 200
+		except:
+			api.abort(401, "Not authorized")
 
 	# should this even be here?
 	def update(self):
 		"""Method to modify password?"""
 		pass
 
+	@ns.expect(new_user)
 	def post(self):
 		"""method to create the login"""
 		# curl -X POST "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"name\": \"vel\",  \"email\": \"vel3@app.com\",  \"passwd\": \"string\",  \"birthday\": \"1980-08-25\",  \"phone\": 2}"
@@ -72,15 +80,19 @@ class Auth(Resource):
 				data['passwd'] = authentication.hash_password(data['passwd'])
 			elif 'birthday' == value:
 				date = date.fromisoformat(value)
-				if not self.age_check(date):
+				if not checkers.age_check(date):
 					api.abort(403, "User below 12 years old")
 			elif isinstance(value, str):
 				data[key] = value.lower()
+				if key == 'email' and not checkers.valid_email(value):
+					api.abort(400, "Invalid email.")
 
 		resp = post(
 			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
 			data=json.dumps(data), headers=headers
 		)
+
+		return resp.json(), resp.status_code
 
 	def delete(self):
 		"""method to logout"""
@@ -92,6 +104,7 @@ class User(Resource):
 
 	@authentication.token_required
 	def get(self, user):
+		#curl -X GET "http://localhost:5000/user/test" -H "accept: application/json" -H  "Content-Type: application/json" -H "token: "
 		return user, 200
 
 
