@@ -17,7 +17,11 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import importlib
 appmodule = importlib.import_module(__package__.split('.')[0])
 
-from ..utilities import authentication, checkers
+try:
+	from ..utilities import authentication, checkers
+except ValueError:
+	#If running from inside apis folder
+	from utilities import authentication, checkers
 
 headers = {
 	"accept": "application/json",
@@ -59,7 +63,7 @@ class Auth(Resource):
 		).json()
 
 		try:
-			if ( token := authentication.passwd_check(user, auth)):
+			if ( token := authentication.passwd_check(user, auth, appmodule.app.config)):
 				return {'token' : token.decode('UTF-8')}, 200
 		except:
 			api.abort(401, "Not authorized")
@@ -102,7 +106,7 @@ class Auth(Resource):
 @ns.route("/test")
 class User(Resource):
 
-	@authentication.token_required
+	@authentication.token_required(appmodule)
 	def get(self, user):
 		#curl -X GET "http://localhost:5000/user/test" -H "accept: application/json" -H  "Content-Type: application/json" -H "token: "
 		return user, 200

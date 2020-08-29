@@ -13,7 +13,11 @@ from sqlalchemy import exc
 
 from .scheme import Base, User, Restaurant, Meal, FoodType, Cart, Item
 
-from ..utilities import checkers
+try:
+	from ..utilities import checkers
+except ValueError:
+	#If running from inside apis folder
+	from utilities import checkers
 
 api = Api(version='0.1', title='Qfila-Database',
 	description='A database REST interface for the Qfila application',
