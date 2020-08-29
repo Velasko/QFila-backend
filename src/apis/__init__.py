@@ -6,7 +6,7 @@ api = Api(
 
 app = None
 
-#create function here for the imports
+#function created for the imports and adding the services to be runned here.
 #it's easier to not add the namespace than to delete
 #intention of this 'not adding' is for the capability
 #of selecting which services to run.
