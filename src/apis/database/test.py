@@ -7,17 +7,25 @@ from requests import put, get, post, delete
 
 from .scheme import Base, User, Restaurant, Meal, FoodType, Cart, Item
 
-hostname = f"{os.getenv('APPLICATION_HOSTNAME')}/database/user"
+hostname = "http://localhost:5000/database/user"
 default_data = {"name" : "test user", "birthday" : "1977-01-01", "email" : "test@database.qfila", "passwd":3, 'phone':200000000}
 
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-DATABASE_ENGINE = os.getenv('DATABASE_ENGINE')
-engine = create_engine(DATABASE_ENGINE)
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-database = DBSession()
+
+# DATABASE_ENGINE = os.getenv('DATABASE_ENGINE')
+# engine = create_engine(DATABASE_ENGINE)
+# Base.metadata.bind = engine
+# DBSession = sessionmaker(bind=engine)
+# database = DBSession()
+from .app import session as database
+
+
+headers = {
+	"accept": "application/json",
+	"Content-Type": "application/json"
+}
 
 class DatabaseUserTest(unittest.TestCase):
 
@@ -65,22 +73,20 @@ class DatabaseUserTest(unittest.TestCase):
 	def test_post_user_creation(self):
 		"""Testing insert of user and it's unicity"""
 
-		import time
 		data = default_data.copy()
 		# data['email'] = 'potato@gmail.com'
 		# data['phone'] = 23
-		resp = post(hostname, data=data).status_code
+		resp = post(hostname, data=data, headers=headers).status_code
 
-		time.sleep(3)
 		self.assertEqual(resp, 201)
 
 		data['phone'] = data['phone']*2
-		resp = post(hostname, data=data)
+		resp = post(hostname, data=data, headers=headers)
 		self.assertEqual(resp.status_code, 409)
 
 		data['phone'] = default_data['phone']
 		data['email'] = data['email'] + '2'
-		resp = post(hostname, data=data)
+		resp = post(hostname, data=data, headers=headers)
 		self.assertEqual(resp.status_code, 409)
 
 		self.clean_delete_user(data['email'][:-1])

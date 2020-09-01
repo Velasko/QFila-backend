@@ -119,7 +119,7 @@ class UserHandler(Resource):
 
 			return user
 		except AttributeError:
-			api.abort(404)
+			api.abort(404, 'User not found')
 		except KeyError as e:
 			api.abort(415, e.args[0])
 

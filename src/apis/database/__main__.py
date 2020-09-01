@@ -48,32 +48,32 @@ if __name__ == '__main__':
 		import multiprocessing
 		from .test import *
 
-		flask = multiprocessing.Process(target=app.run, kwargs={'debug':True})
-		flask.daemon = True
-		flask.start()
+		try:
+			flask = multiprocessing.Process(target=app.run, kwargs={'debug':True})
+			flask.start()
 
-		sys.argv.remove('-t')
+			sys.argv.remove('-t')
 
-		_output = sys.stdout
+			_output = sys.stdout
 
-		filename = '/tmp/unittest_output.log'
-		with open(filename, 'w') as file:
-			sys.stdout = file
-			sys.stderr = file
-			execute_tests(verbosity=2, exit=False)
+			filename = '/tmp/unittest_output.log'
+			with open(filename, 'w') as file:
+				sys.stdout = file
+				sys.stderr = file
+				execute_tests(verbosity=2, exit=False)
 
-		flask.kill()
+			sys.stderr = _output
+			sys.stdout = _output
 
-		sys.stderr = _output
-		sys.stdout = _output
+			print("\nUnittest output:")
 
-		print("\nUnittest output:")
-
-		with open(filename, 'r') as file:
-			for line in file.readlines():
-				print(line, end='')
-
-		print("Tests finished.")
+			with open(filename, 'r') as file:
+				for line in file.readlines():
+					print(line, end='')
+		
+		finally:
+			flask.kill()
+			print("Tests finished.")
 
 	else:
 		parser.print_help()
