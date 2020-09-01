@@ -29,9 +29,10 @@ if __name__ == '__main__':
 			#database is parsed
 			app.config['DATABASE_URL'] = args.database
 		else:
-			print("case 3")
 			print("The database must be one of the services or it's url must be parsed via --database.")
 			sys.exit()
+	else:
+		app.config['DATABASE_URL'] = f'http://localhost:{args.port}'
 
 	config_api(args.services)
 
