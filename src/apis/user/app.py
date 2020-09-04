@@ -10,9 +10,6 @@ from requests import post, get, put, delete
 from flask import Flask, request
 from flask_restx import Api, Resource, fields, reqparse
 
-#password
-from werkzeug.security import check_password_hash, generate_password_hash
-
 #getting the main app module
 import importlib
 appmodule = importlib.import_module(__package__.split('.')[0])
