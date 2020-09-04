@@ -1,5 +1,4 @@
 import os
-import re
 import json
 
 from datetime import date, datetime
@@ -32,16 +31,16 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 id = api.model('Identifyiers', {
-    'email' : fields.String(required=True, description='User email'),
-    'phone' : fields.Integer(description='User phone number')
+	'email' : fields.String(required=True, description='User email'),
+	'phone' : fields.Integer(description='User phone number')
 })
 
 user = api.inherit('User', id, {
 	'name' : fields.String(required=True,description='User name'),
-    'email' : fields.String(required=True, description='User email'),
-    'passwd' : fields.String(required=True, description='User password'),
-    'birthday' : fields.DateTime(required=True, description='User birthday', dt_format="iso8601"),
-    'phone' : fields.Integer(default=None, description='User phone number')
+	'email' : fields.String(required=True, description='User email'),
+	'passwd' : fields.String(required=True, description='User password'),
+	'birthday' : fields.DateTime(required=True, description='User birthday', dt_format="iso8601"),
+	'phone' : fields.Integer(default=None, description='User phone number')
 })
 
 @ns.route('/user')
@@ -172,6 +171,71 @@ class UserHandler(Resource):
 		except KeyError as e:
 			session.rollback()
 			api.abort(415, e.args[0])
+
+
+@ns.route('/catalog')
+class CatalogHandlar(Resource):
+
+	def get_table(self, qtype):
+		if 	qtype == 'meal':
+			return Meal
+		elif qtype == 'restaurant':
+			return Restaurant
+		elif qtype == 'location':
+			raise NotImplemented()
+		else:
+			api.abort(404)
+
+	def id_query(self, db_class, keyword):
+		raise NotImplemented
+		#Meals have 2 ids: rest id + meal id
+		#Restaurant has 1 id
+		return session.query(db_class).filter(db_class.id == keyword)
+
+	def name_query(self, db_class, keyword):
+		return session.query(db_class).filter(db_class.name.like(keyword))
+
+	def type_query(self, db_class, keyword):
+		types = session.query(FoodType.name).filter(FoodType.name.like(keyword)).all()
+
+		if db_class == Meal:
+			query = session.query(db_class).filter(
+				Meal.foodtype.in_([row[0] for row in types])
+			)
+
+		elif db_class == Restaurant:
+			m_query = session.query(Meal.rest).filter(
+				Meal.foodtype.in_([row[0] for row in types])
+			)
+
+			query = session.query(db_class).filter(
+				db_class.id.in_([row[0] for row in m_query])
+			)
+
+		return query
+
+
+	# @ns.expect(catalog_query)
+	def get(self):
+		query_params = api.payload
+
+		keyword = "%{}%".format(query_params['keyword'])
+		
+		try:
+			db_class = self.get_table(query_params['type'])
+			query = self.__getattribute__("{}_query".format(query_params["category"]))(db_class, keyword)
+		except KeyError as e:
+			raise e
+
+		response = {
+			'meal' : [],
+			'restaurant' : [],
+			'location' : []
+		}
+
+		response[query_params['type']] = [ item.safe_serialize() for item in query.all() ]
+
+		return json.dumps(response), 200
 
 
 if __name__ == '__main__':
