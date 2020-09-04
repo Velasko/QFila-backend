@@ -19,6 +19,15 @@ class Serializable():
 
 		return data
 
+	def safe_serialize(self):
+		data = self.serialize()
+
+		for key in ('login', 'passwd'):
+			if key in data:
+				del data[key]
+
+		return data
+
 class User(Base, Serializable):
 	__tablename__ = 'Users'
 
@@ -59,23 +68,24 @@ class Meal(Base, Serializable):
 
 	id = Column(Integer	, primary_key=True)
 	rest = Column(Integer, ForeignKey('Restaurants.id'), primary_key=True)
+	name = Column(String(255), nullable=False)
 	foodtype = Column(String(255), ForeignKey('FoodTypes.name', ondelete='RESTRICT'))
 	price = Column(Float, nullable=False)
 	description = Column(String(511))
 
 class Cart(Base, Serializable):
-	__tablename__ = 'Cart'
+	__tablename__ = 'Carts'
 
-	user = Column(Integer, ForeignKey('Users.id', ondelete='RESTRICT'), primary_key=True)
 	time = Column(DateTime, primary_key=True)
+	user = Column(Integer, ForeignKey('Users.id', ondelete='RESTRICT'), primary_key=True)
 	total_price = Column(Float, nullable=False)
 	#trigger total_price = sum(item.price)
 
 class Item(Base, Serializable):
 	__tablename__ = 'Items'
 
-	user = Column(Integer, ForeignKey('Cart.user', ondelete='RESTRICT'), primary_key=True)
-	time = Column(DateTime, ForeignKey('Cart.time', ondelete='RESTRICT'), primary_key=True)
+	user = Column(Integer, ForeignKey('Carts.user', ondelete='RESTRICT'), primary_key=True)
+	time = Column(DateTime, ForeignKey('Carts.time', ondelete='RESTRICT'), primary_key=True)
 	rest = Column(Integer, ForeignKey('Meals.rest', ondelete='RESTRICT'), primary_key=True)
 	meal = Column(Integer, ForeignKey('Meals.id', ondelete='RESTRICT'), primary_key=True)
 	total_price = Column(Float, nullable=False)

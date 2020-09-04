@@ -35,12 +35,46 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 
+
+	database_url = args.database
+	if database_url is None:
+		try:
+			database_url = os.getenv('DATABASE_URI')
+		except:
+			print("__main__.py: error: the following arguments are required: --database")
+			sys.exit()
+
 	if args.create_scheme:
-		engine = create_engine(args.database)
+		engine = create_engine(database_url)
 		Base.metadata.create_all(engine)
 		print("scheme created")
+
 	elif args.delete_scheme:
-		raise NotImplemented("Deletion of scheme not implemented.")
+		import random, string
+		key = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(5))
+		print('\033[91m' + "WARNING:", '\033[93m', 'You are about to drop ALL TABLES from the database')
+
+		try:
+			confirmation = input(f"If you wish to proceed, type: {key}'\033[0m'\n>>> ")
+
+			if key != confirmation:
+				print("Key incorrect, operation cancelled!")
+			else:
+				from .scheme import Item, Cart, Meal, FoodType, Restaurant, User
+
+				for table in (Item, Cart, Meal, FoodType, Restaurant, User):
+					try:
+						table.__table__.drop()
+					except Exception:
+						print("An exception has occured with", table.__tablename__)
+					else:
+						print(table.__tablename__, "dropped")
+
+				print('Scheme has been deleted')
+		except KeyboardInterrupt:
+			print("Keyboard Interruption! Operation Cancelled.")
+
+
 	elif args.run:
 		app.run(debug=args.debug, port=args.port)
 	elif args.test:

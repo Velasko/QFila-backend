@@ -15,18 +15,22 @@ Table Restaurants as R {
   id int [pk, increment]
   name varchar
   address varchar
-  open boolean
   bank_info bank
-  login varchar //email?
+  email varchar
   passwd varchar
+  //CNPj???
+  //Any information so it's open?
 }
 
 Table Meal {
-  rest int [pk]
   id int [pk, increment]
-  type int
+  rest int [pk]
+  name varchar
+  foodtype int
   price float
   description varchar
+  //Add complements?
+  //Sortings?
 }
 
 Ref: Meal.rest > R.id 
@@ -35,17 +39,16 @@ Table FoodType {
   name varchar [pk]
 }
 
-Ref: FoodType.id < Meal.type
+Ref: FoodType.name < Meal.foodtype
 
 Table Cart as C {
   //fazer uma tabela com cada item uma compra?
   //fazer uma tabela para a compra e outra para os itens da compra?
-  user int [pk]
   time datetime [pk]
+  user int [pk]
   total_price float
 
   //Total prices modifyers?
-  //promo of 10%?
 }
 
 Ref: C.user > U.id
@@ -55,10 +58,12 @@ Table Item as I {
   time datetime [pk]
   rest int [pk]
   meal int [pk]
-  price float
+  total_price float
 }
 
 Ref: I.user > C.user
 Ref: I.time > C.time
 Ref: I.rest > Meal.rest
 Ref: I.meal > Meal.id
+
+//Review table?
