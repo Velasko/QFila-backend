@@ -59,6 +59,9 @@ class FoodCourt(Base, Serializable):
 	latitude = Column(Float, nullable=False)
 	longitude = Column(Float, nullable=False)
 
+	def __repr__(self):
+		return f"Restaurant: {self.name}"
+
 class Restaurant(Base, Serializable):
 	__tablename__ = 'Restaurants'
 
