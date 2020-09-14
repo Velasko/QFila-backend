@@ -10,23 +10,30 @@ from sqlalchemy import create_engine
 
 Base = declarative_base()
 
+def safe_serialize(data):
+	data = serialize(data)
+
+	for key in ('login', 'passwd'):
+		if key in data:
+			del data[key]
+
+	return data
+
+def serialize(data):
+	data = {key : value for key, value in data.__dict__.items() if not key.startswith("_")}
+	for key, value in data.items():
+		if isinstance(value, date): 
+			data[key] = value.isoformat()
+
+	return data
+
 class Serializable():
 	def serialize(self):
-		data = {key : value for key, value in self.__dict__.items() if not key.startswith("_")}
-		for key, value in data.items():
-			if isinstance(value, date): 
-				data[key] = value.isoformat()
-
-		return data
+		return serialize(self)
 
 	def safe_serialize(self):
-		data = self.serialize()
+		return safe_serialize(self)
 
-		for key in ('login', 'passwd'):
-			if key in data:
-				del data[key]
-
-		return data
 
 class User(Base, Serializable):
 	__tablename__ = 'Users'
@@ -46,7 +53,11 @@ class FoodCourt(Base, Serializable):
 
 	id = Column(Integer	, primary_key=True)
 	name = Column(String(255), nullable=False)
+	state = Column(String(255), nullable=False) 
+	city = Column(String(255), nullable=False)
 	address = Column(String(255), nullable=False)
+	latitude = Column(Float, nullable=False)
+	longitude = Column(Float, nullable=False)
 
 class Restaurant(Base, Serializable):
 	__tablename__ = 'Restaurants'
