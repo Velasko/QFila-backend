@@ -20,7 +20,7 @@ class CatalogHandler(Resource):
 			order = self.get_restaurant_order(**location)
 		return order
 
-	def get_location_order(self, city, state, longitude, latitude):
+	def get_foodcourt_order(self, city, state, longitude, latitude):
 		query = session.query(
 			FoodCourt.id.label('id'),
 			((FoodCourt.longitude - longitude)*(FoodCourt.longitude - longitude) + \
@@ -114,9 +114,18 @@ class CatalogHandler(Resource):
 		return self.base_name_query(db_class=Restaurant, rest_id=Restaurant.id, keyword=keyword, order=order)
 
 	def location_name_query(self, keyword, order):
-		#nome das praças na cidade? sim
-		#nome de outras regioes?
-		query = session.query(FoodCourt).filter(FoodCourt.name == keyword)
+		query = session.query(
+			FoodCourt
+		).filter(
+			FoodCourt.name.like(keyword)
+		).join(
+			order,
+			FoodCourt.id == order.c.id
+		).order_by(
+			order.c.sort
+		)
+
+		return query
 
 #----------- Type Queries -----------#
 	def get_types(self, keyword):
