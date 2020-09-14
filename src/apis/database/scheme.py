@@ -41,15 +41,22 @@ class User(Base, Serializable):
 	def __repr__(self):
 		return f"User: {self.name}"
 
+class FoodCourt(Base, Serializable):
+	__tablename__ = 'FoodCourts'
+
+	id = Column(Integer	, primary_key=True)
+	name = Column(String(255), nullable=False)
+	address = Column(String(255), nullable=False)
+
 class Restaurant(Base, Serializable):
 	__tablename__ = 'Restaurants'
 
 	id = Column(Integer	, primary_key=True)
 	name = Column(String(255), nullable=False)
-	address = Column(String(255), nullable=False)
 	bank_info = Column(String(255), nullable=False)
 	login = Column(String(255), unique=True, nullable=False)
 	passwd = Column(String(255), nullable=False)
+	location = Column(Integer, ForeignKey('FoodCourts.id', ondelete='RESTRICT'), nullable=False)
 
 	def __repr__(self):
 		return f"Restaurant: {self.name}"
@@ -67,7 +74,7 @@ class Meal(Base, Serializable):
 	__tablename__ = 'Meals'
 
 	id = Column(Integer	, primary_key=True)
-	rest = Column(Integer, ForeignKey('Restaurants.id'), primary_key=True)
+	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='RESTRICT'), primary_key=True)
 	name = Column(String(255), nullable=False)
 	foodtype = Column(String(255), ForeignKey('FoodTypes.name', ondelete='RESTRICT'))
 	price = Column(Float, nullable=False)

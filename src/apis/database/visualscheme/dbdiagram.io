@@ -11,16 +11,24 @@ Table Users as U {
   phone int
 }
 
+Table FoodCourt {
+  id int [pk, increment]
+  name string
+  address string
+}
+
 Table Restaurants as R {
   id int [pk, increment]
   name varchar
-  address varchar
   bank_info bank
   email varchar
   passwd varchar
+  location int
   //CNPj???
   //Any information so it's open?
 }
+
+Ref: FoodCourt.id < Restaurants.location
 
 Table Meal {
   id int [pk, increment]
@@ -54,10 +62,10 @@ Table Cart as C {
 Ref: C.user > U.id
 
 Table Item as I {
-  user int [pk]
   time datetime [pk]
-  rest int [pk]
+  user int [pk]
   meal int [pk]
+  rest int [pk]
   total_price float
 }
 
