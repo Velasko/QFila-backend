@@ -198,7 +198,6 @@ class CatalogHandler(Resource):
 			raise e
 
 		except AttributeError as e:
-			raise e
 			api.abort(404)
 
 		response = {

@@ -74,14 +74,13 @@ class Catalog(Resource):
 			'offset' : 0,
 			'limit' : appmodule.app.config['DATABASE_PAGE_SIZE_DEFAULT']
 		}
-		if 'pagesize' in args:
-			pagination['limit'] = int(raw_args['pagesize'])
-		if 'page' in args:
-			pagination['offset'] = (
-				max(
-					int(raw_args['page']),
-					appmodule.app.config['DATABASE_PAGE_SIZE_LIMIT']
-				) - 1) * pagination['limit']
+		if 'pagesize' in raw_args:
+			pagination['limit'] = min(
+				int(raw_args['pagesize']),
+				appmodule.app.config['DATABASE_PAGE_SIZE_LIMIT']
+			)
+		if 'page' in raw_args:
+			pagination['offset'] = (int(raw_args['page']) - 1) * pagination['limit']
 		args['pagination'] = pagination
 
 		#ids/keyword
@@ -117,7 +116,7 @@ class Catalog(Resource):
 			args['category'] = category
 			args['type'] = qtype
 		except KeyError as e:
-			return {'message' : str(e)}
+			api.abort(417, "missing argument: " + str(e.args[0]))
 
 		if qtype == 'all':
 			raise NotImplemented("Yet to assemble the junction of queries")
