@@ -43,24 +43,28 @@ class Catalog(Resource):
 			- longitude : float
 
 		Optional arguments:
+			- keyword : str - default="".
+				Used to filter by name or type. If not parsed, will match every possibility.
+
 			- page : int - default=1.
 			- pagesize : int - default=5; max=10.
 
 			- city : str - default=fortaleza.
 			- state : str - default=ceara.
 
+			- courts : int - default=inf
+				Defines the ammount of food courts which should be fetched.
+
 		Situational arguments:
 			if they category is id:
 				meal/restaurant/foodcourt is required, depending on desired result;
 				expected for it to be integers.
-			else:
-				keyword is expected.
 
 		The url should be something of the sort:
 		http://qfila.com/catalog/{category}/{type}?argument=value
 		"""
 
-		catalog_re = "(id|name|type)/(meal|restaurant|location|all)"#(/\w+)?(/page:[0-9]+:[0-9]+)?"
+		catalog_re = "(id|name|type)/(meal|restaurant|location|all)"
 		compiled_re = re.compile(catalog_re, re.IGNORECASE)
 		self.match = lambda string: compiled_re.fullmatch(string).groups()
 
@@ -92,7 +96,10 @@ class Catalog(Resource):
 				else:
 					args['id'][mrf] = None
 		else:
-			args['keyword'] = raw_args['keyword']
+			if 'keyword' in raw_args:
+				args['keyword'] = raw_args['keyword']
+			else:
+				args['keyword'] = ''
 
 		#location
 		default = {'city' : 'fortaleza', 'state' : 'ceara'}
@@ -105,16 +112,24 @@ class Catalog(Resource):
 		for loc in ('latitude', 'longitude'):
 			args['location'][loc] = float(raw_args[loc])
 
+		#food court distance
+		args['courts'] = None
+		if 'courts' in raw_args:
+			args['courts'] = int(raw_args['courts'])
+
 		return args
 
 	def get(self, path):
 		"""Method to query meals, restaurants and locations"""
-		category, qtype = self.match(path.lower())
-
 		try:
+			category, qtype = self.match(path.lower())
+
 			args = self.argument_parser(category, **dict(request.args))
 			args['category'] = category
 			args['type'] = qtype
+		except AttributeError:
+			#re.match returned none -> invalid url
+			api.abort(404)
 		except KeyError as e:
 			api.abort(417, "missing argument: " + str(e.args[0]))
 

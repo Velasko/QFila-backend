@@ -12,15 +12,15 @@ appmodule = importlib.import_module(__package__.split('.')[0])
 @ns.route('/catalog')
 class CatalogHandler(Resource):
 
-	def get_order(self, qtype, location):
+	def get_order(self, qtype, location, limit=None):
 		#Uses the user's location to calculate the food court's distances
 		if qtype == 'location':
-			order = self.get_foodcourt_order(**location)
+			order = self.get_foodcourt_order(**location, limit=limit)
 		else:
-			order = self.get_restaurant_order(**location)
+			order = self.get_restaurant_order(**location, limit=limit)
 		return order
 
-	def get_foodcourt_order(self, city, state, longitude, latitude):
+	def get_foodcourt_order(self, city, state, longitude, latitude, limit=None):
 		query = session.query(
 			FoodCourt.id.label('id'),
 			((FoodCourt.longitude - longitude)*(FoodCourt.longitude - longitude) + \
@@ -32,9 +32,12 @@ class CatalogHandler(Resource):
 			FoodCourt.state == state
 		)
 
+		if not limit is None:
+			query = query.limit(limit)
+
 		return query.subquery()
 
-	def get_restaurant_order(self, city, state, longitude, latitude):
+	def get_restaurant_order(self, city, state, longitude, latitude, limit=None):
 		"""Returns a list of tuples of the type (Restaurant.id as id, distance), based on
 		the distance of longitude and latitude.
 
@@ -53,6 +56,9 @@ class CatalogHandler(Resource):
 			FoodCourt.city == city,
 			FoodCourt.state == state
 		)
+
+		if not limit is None:
+			query = query.limit(limit)
 
 		return query.subquery()
 
@@ -176,6 +182,7 @@ class CatalogHandler(Resource):
 
 		location = query_params['location']
 		qtype = query_params['type']
+		foodcourt_ammout = query_params['courts']
 
 
 		if query_params['category'] == 'id':
@@ -183,7 +190,7 @@ class CatalogHandler(Resource):
 		else:
 			kwargs = {
 				'keyword': "%{}%".format(query_params['keyword']),
-				'order' : self.get_order(qtype, location)
+				'order' : self.get_order(qtype, location, limit=foodcourt_ammout)
 			}
 		
 		try:
