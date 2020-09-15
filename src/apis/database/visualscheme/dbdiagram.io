@@ -15,6 +15,8 @@ Table FoodCourt {
   id int [pk, increment]
   name string
   address string
+  latitude Float
+  longitude Float
 }
 
 Table Restaurants as R {
