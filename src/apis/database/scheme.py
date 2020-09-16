@@ -1,9 +1,15 @@
 #Study based on:
 #https://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/
 
-from datetime import date, datetime
+import enum
+from datetime import date
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, Float, String, BigInteger
+from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Float, BigInteger, Integer, SmallInteger 
+from sqlalchemy import String
+from sqlalchemy import Date, DateTime
+from sqlalchemy import Enum
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -102,6 +108,12 @@ class Cart(Base, Serializable):
 	total_price = Column(Float, nullable=False)
 	#trigger total_price = sum(item.price)
 
+class ItemState(enum.Enum):
+	cancelled = -1
+	served = 0
+	preparing = 1
+	awaiting_payment = 2
+
 class Item(Base, Serializable):
 	__tablename__ = 'Items'
 
@@ -109,4 +121,8 @@ class Item(Base, Serializable):
 	time = Column(DateTime, ForeignKey('Carts.time', ondelete='RESTRICT'), primary_key=True)
 	rest = Column(Integer, ForeignKey('Meals.rest', ondelete='RESTRICT'), primary_key=True)
 	meal = Column(Integer, ForeignKey('Meals.id', ondelete='RESTRICT'), primary_key=True)
+
+	ammount = Column(SmallInteger, nullable=False, default=1)
+	state = Column(Enum(ItemState), nullable=False)
+
 	total_price = Column(Float, nullable=False)

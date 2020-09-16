@@ -8,8 +8,6 @@ from sqlalchemy import create_engine
 from .scheme import Base
 
 
-
-
 api = Api(version='0.1', title='Qfila-Database',
 	description='A database REST interface for the Qfila application',
 )
@@ -21,8 +19,6 @@ Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
-
-
 
 
 from . import user

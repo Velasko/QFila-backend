@@ -108,19 +108,7 @@ class User(Resource):
 		#curl -X GET "http://localhost:5000/user/test" -H "accept: application/json" -H  "Content-Type: application/json" -H "token: "
 		return user, 200
 
-
-
-
-class Hist():
-	# raise NotImplementedError("User purchase history not implemented")
-
-	def post():
-		"""A purchase has been made"""
-		pass
-
-	def get():
-		"""Get purchase history"""
-		pass
+from . import history
 
 if __name__ == '__main__':
 	app = Flask("Qfila user")

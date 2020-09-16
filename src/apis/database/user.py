@@ -158,3 +158,41 @@ class UserHandler(Resource):
 		except KeyError as e:
 			session.rollback()
 			api.abort(415, e.args[0])
+
+@ns.route('/user/history/<string:mode>')
+class UserHistoryHandler(Resource):
+
+	def get(self, mode):
+		data = api.payload
+
+		if mode == 'meals':
+			initial_query = session.query(
+					Meal
+				).join(
+					Item,
+					Item.rest == Meal.rest and \
+					Item.meal == Meal.id
+				)
+		elif mode == 'restaurants':
+			initial_query = session.query(
+					Restaurant
+				).join(
+					Item,
+					Item.rest == Restaurant.id
+				)
+		else:
+			api.abort(404)
+
+		query = initial_query.join(
+			User,
+			User.id == Item.user
+		).filter(
+			User.name == data['user']
+		).order_by(
+			Item.time
+		# ).distinct(
+		# 	# Restaurant
+		).limit(3)
+
+		return [safe_serialize(rest) for rest in query.all()]
+
