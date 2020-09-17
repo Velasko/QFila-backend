@@ -64,8 +64,24 @@ def passwd_check(user, auth, config):
 			config['SECRET_KEY']
 		)
 
-		return token
+		return token.decode('UTF-8')
 	raise KeyError('invalid password')
+
+def generate_token(data, config, duration=None):
+	"""This function generates a token with an expiration time.
+
+	Arguments:
+	 - data : dict. Data to be stored in token
+	 - config. Must be the app's configuration dictionary
+	 - duration : int (minutes) = App's default length. Can be parsed for a different value.
+	"""
+
+	if duration is None:
+		duration = config['session_ttl']
+
+	data['exp']  = datetime.datetime.utcnow() + datetime.timedelta(minutes=duration)
+	token = jwt.encode(data, config['SECRET_KEY']).decode('UTF-8')
+	return token
 
 def hash_password(passwd, hash=HASH_METHOD):
 	return generate_password_hash(passwd, hash)
