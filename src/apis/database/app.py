@@ -133,7 +133,7 @@ class UserHandler(Resource):
 
 		The second must be named update and have the fields to be updated.
 		"""
-		data = json.loads(dict(request.form)['data'])
+		data = api.payload
 
 		if 'birthday' in data['update']:
 			data['update']['birthday'] = date.fromisoformat(data['update']['birthday'])
