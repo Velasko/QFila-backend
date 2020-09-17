@@ -53,7 +53,7 @@ class Auth(Resource):
 	@ns.expect(user)
 	def get(self):
 		"""Method to be authenticated"""
-		# curl -X GET "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{ \"email\": \"vel3@app.com\", \"passwd\": \"string\" }"
+		# curl -X GET "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{ \"email\": \"f.l.velasko@gmail.com\", \"passwd\": \"string\" }"
 
 		auth = api.payload
 
@@ -64,7 +64,7 @@ class Auth(Resource):
 
 		try:
 			if ( token := authentication.passwd_check(user, auth, appmodule.app.config)):
-				return {'token' : token.decode('UTF-8')}, 200
+				return {'token' : token}, 200
 		except:
 			api.abort(401, "Not authorized")
 
@@ -124,6 +124,8 @@ class Hist():
 	def get():
 		"""Get purchase history"""
 		pass
+
+from . import password_recovery
 
 if __name__ == '__main__':
 	app = Flask("Qfila user")

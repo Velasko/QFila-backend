@@ -14,7 +14,7 @@ def config_api(libs):
 	import importlib
 
 	if libs is None:
-		libs = ('database', 'user')
+		libs = ('database', 'user', 'mail')
 	try:
 		for service_name in libs:
 			service = importlib.import_module('.app', f"{__package__}.{service_name}")

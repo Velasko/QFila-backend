@@ -11,5 +11,8 @@ config(app)
 
 api.init_app(app)
 
+from .apis.mail import mail
+mail.init_app(app)
+
 if __name__ == '__main__':
 	app.run(debug=True)
