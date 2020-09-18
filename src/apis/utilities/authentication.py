@@ -31,7 +31,7 @@ class token_required():
 				token = request.headers['Token']
 
 			if not token:
-				return {'message': 'a valid token is missing'}
+				return {'message': 'Authentication required'}
 
 			try:
 				data = jwt.decode(token, self.appmodule.app.config['SECRET_KEY'])
@@ -40,6 +40,8 @@ class token_required():
 					data=json.dumps({'email': data['email']}), headers=headers
 				)
 				current_user = resp.json()
+
+				del current_user['passwd']
 
 			except jwt.ExpiredSignatureError as e:
 				return {'message' : 'token expired'}
