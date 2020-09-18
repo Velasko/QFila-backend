@@ -1,4 +1,5 @@
 import json
+import jwt
 
 from markupsafe import escape
 from requests import get, post, put
@@ -18,10 +19,10 @@ import importlib
 appmodule = importlib.import_module(__package__.split('.')[0])
 
 try:
-	from ..utilities import authentication, checkers
+	from ..utilities import authentication, checkers, headers
 except ValueError:
 	#If running from inside apis folder
-	from utilities import authentication, checkers
+	from utilities import authentication, checkers, headers
 
 @ns.route('/passwordrecovery')
 class PasswordRecovery(Resource):
@@ -32,14 +33,14 @@ class PasswordRecovery(Resource):
 
 		user = get(
 			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps({'email': email}), headers=headers
+			data=json.dumps({'email': email}), headers=headers.json
 		)
 
 		if user.status_code == 404:
 			api.abort(404, "Could not find user.")
 
 		token = authentication.generate_token(
-			{'email' : email},
+			{'email' : email, 'passwd' : user.json()['passwd']},
 			appmodule.app.config,
 			duration=15
 		)
@@ -48,7 +49,7 @@ class PasswordRecovery(Resource):
 
 		email = post(
 			'{}/mail/passwordrecovery'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps({'link' : link, 'email' : email}), headers=headers
+			data=json.dumps({'link' : link, 'email' : email}), headers=headers.json
 		)
 
 		return email.json(), email.status_code, email.headers.items()
@@ -67,7 +68,7 @@ class PasswordRecovery(Resource):
 		}
 
 		resp = put('{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps(data), headers=headers
+			data=json.dumps(data), headers=headers.json
 		)
 
 		print(resp.status_code)
@@ -83,6 +84,19 @@ class NewPasswordForm(FlaskForm):
 @ns.route("/passwordrecovery/<string:token>")
 class ForgottenPassword(Resource):
 	def get(self, token, head=""):
+		data = jwt.decode(token, appmodule.app.config['SECRET_KEY'])
+
+		user = get(
+			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
+			data=json.dumps({'email': data['email']}), headers=headers.json
+		).json()
+
+		try:
+			if data['passwd'] != user['passwd']:
+				api.abort(404)
+		except:
+			api.abort(404)
+
 		template = head + """
 {% block content %}
     <h1>Sign In</h1>
@@ -100,8 +114,8 @@ class ForgottenPassword(Resource):
     </form>
 {% endblock %}
 """
-		headers = {'Content-Type': 'text/html'}
-		return make_response(render_template_string(template, form=NewPasswordForm()), 200, headers)
+		header = {'Content-Type': 'text/html'}
+		return make_response(render_template_string(template, form=NewPasswordForm()), 200, header)
 
 	def post(self, token):
 		"""Verifier of the password.
@@ -114,10 +128,9 @@ class ForgottenPassword(Resource):
 		elif not checkers.valid_password(passwd):
 			return self.get(token, head="Senha invalida")
 
-		passwd = str(authentication.hash_password(passwd))
-		print(passwd)
+		passwd = authentication.hash_password(passwd)
 
-		header = headers.copy()
+		header = headers.json.copy()
 		header['token'] = token
 		resp = put(
 			'{}/user/passwordrecovery'.format(appmodule.app.config['DATABASE_URL']),

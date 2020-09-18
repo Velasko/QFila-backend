@@ -18,15 +18,10 @@ import importlib
 appmodule = importlib.import_module(__package__.split('.')[0])
 
 try:
-	from ..utilities import authentication, checkers
+	from ..utilities import authentication, checkers, headers
 except ValueError:
 	#If running from inside apis folder
-	from utilities import authentication, checkers
-
-headers = {
-	"accept": "application/json",
-	"Content-Type": "application/json"
-}
+	from utilities import authentication, checkers, headers
 
 api = Api(version='0.1', title='Client',
 	description='Client side interface',
@@ -59,7 +54,7 @@ class Auth(Resource):
 
 		user = get(
 			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps({'email': auth['email']}), headers=headers
+			data=json.dumps({'email': auth['email']}), headers=headers.json
 		).json()
 
 		try:
@@ -93,7 +88,7 @@ class Auth(Resource):
 
 		resp = post(
 			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps(data), headers=headers
+			data=json.dumps(data), headers=headers.json
 		)
 
 		return resp.json(), resp.status_code

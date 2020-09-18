@@ -41,12 +41,15 @@ class token_required():
 				)
 				current_user = resp.json()
 
+				if current_user['passwd'] != data['passwd']:
+					raise Exception()
+
 			except jwt.ExpiredSignatureError as e:
 				return {'message' : 'token expired'}
 			except TypeError:
 				return {'message' : 'could not connect to database'}
 			except:
-				return {'message': 'token is invalid'}
+				return {'message': 'Authentication required'}
 
 			#The self obj is actually the first item in args.
 			#parsing "f(current_user, *args, **kwargs)" leads to a headache in the function 
@@ -54,12 +57,21 @@ class token_required():
 		return decorator
 
 
-def passwd_check(user, auth, config):
+def passwd_check(user, auth_attempt, config):
+	"""Function to check if the user authentication is correct and returns a token
+	if it is.
+
+	Parameters:
+	 - user : dict. Must contain 'email' and 'passwd' fields
+	 - auth_attempt: dict. Must contain 'passwd' field.
+	 - config: dict. Application's dictionary with it's secret key and session time to live.
+	"""
 
 	#config expected to be app.config
-	if check_password_hash(user['passwd'], auth['passwd']):
+	if check_password_hash(user['passwd'], auth_attempt['passwd']):
 		token = jwt.encode({
 			'email' : user['email'],
+			'passwd' : user['passwd'],
 			'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=config['session_ttl'])},
 			config['SECRET_KEY']
 		)
