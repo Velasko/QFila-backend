@@ -10,10 +10,7 @@ from flask import request
 #password hash
 from werkzeug.security import generate_password_hash, check_password_hash
 
-headers = {
-	"accept": "application/json",
-	"Content-Type": "application/json"
-}
+from . import headers
 
 HASH_METHOD = 'sha256'
 
@@ -37,7 +34,7 @@ class token_required():
 				data = jwt.decode(token, self.appmodule.app.config['SECRET_KEY'])
 				resp = get(
 					'{}/database/user'.format(self.appmodule.app.config['DATABASE_URL']),
-					data=json.dumps({'email': data['email']}), headers=headers
+					data=json.dumps({'email': data['email']}), headers=headers.json
 				)
 				current_user = resp.json()
 
