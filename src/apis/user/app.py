@@ -10,9 +10,6 @@ from requests import post, get, put, delete
 from flask import Flask, request
 from flask_restx import Api, Resource, fields, reqparse
 
-#password
-from werkzeug.security import check_password_hash, generate_password_hash
-
 #getting the main app module
 import importlib
 appmodule = importlib.import_module(__package__.split('.')[0])
@@ -106,19 +103,7 @@ class User(Resource):
 		#curl -X GET "http://localhost:5000/user/test" -H "accept: application/json" -H  "Content-Type: application/json" -H "token: "
 		return user, 200
 
-
-
-
-class Hist():
-	# raise NotImplementedError("User purchase history not implemented")
-
-	def post():
-		"""A purchase has been made"""
-		pass
-
-	def get():
-		"""Get purchase history"""
-		pass
+from . import history
 
 from . import password_recovery
 
