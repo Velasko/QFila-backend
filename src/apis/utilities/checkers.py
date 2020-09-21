@@ -33,3 +33,6 @@ def valid_email(email):
 
 	match = re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", email)
 	return match is not None
+
+def valid_password(password):
+	return True

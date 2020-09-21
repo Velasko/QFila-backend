@@ -15,15 +15,10 @@ import importlib
 appmodule = importlib.import_module(__package__.split('.')[0])
 
 try:
-	from ..utilities import authentication, checkers
+	from ..utilities import authentication, checkers, headers
 except ValueError:
 	#If running from inside apis folder
-	from utilities import authentication, checkers
-
-headers = {
-	"accept": "application/json",
-	"Content-Type": "application/json"
-}
+	from utilities import authentication, checkers, headers
 
 api = Api(version='0.1', title='Client',
 	description='Client side interface',
@@ -50,18 +45,18 @@ class Auth(Resource):
 	@ns.expect(user)
 	def get(self):
 		"""Method to be authenticated"""
-		# curl -X GET "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{ \"email\": \"vel3@app.com\", \"passwd\": \"string\" }"
+		# curl -X GET "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{ \"email\": \"f.l.velasko@gmail.com\", \"passwd\": \"string\" }"
 
 		auth = api.payload
 
 		user = get(
 			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps({'email': auth['email']}), headers=headers
+			data=json.dumps({'email': auth['email']}), headers=headers.json
 		).json()
 
 		try:
 			if ( token := authentication.passwd_check(user, auth, appmodule.app.config)):
-				return {'token' : token.decode('UTF-8')}, 200
+				return {'token' : token}, 200
 		except:
 			api.abort(401, "Not authorized")
 
@@ -90,7 +85,7 @@ class Auth(Resource):
 
 		resp = post(
 			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps(data), headers=headers
+			data=json.dumps(data), headers=headers.json
 		)
 
 		return resp.json(), resp.status_code
@@ -109,6 +104,8 @@ class User(Resource):
 		return user, 200
 
 from . import history
+
+from . import password_recovery
 
 if __name__ == '__main__':
 	app = Flask("Qfila user")
