@@ -77,7 +77,7 @@ class Restaurant(Base, Serializable):
 	login = Column(String(255), unique=True, nullable=False)
 	passwd = Column(String(255), nullable=False)
 	location = Column(Integer, ForeignKey('FoodCourts.id', ondelete='RESTRICT'), nullable=False)
-	image = Colimn(String(200))
+	image = Column(String(200))
 
 	def __repr__(self):
 		return f"Restaurant: {self.name}"
@@ -100,7 +100,7 @@ class Meal(Base, Serializable):
 	foodtype = Column(String(255), ForeignKey('FoodTypes.name', ondelete='RESTRICT'))
 	price = Column(Float, nullable=False)
 	description = Column(String(511))
-	image = Colimn(String(200))
+	image = Column(String(200))
 
 class Cart(Base, Serializable):
 	__tablename__ = 'Carts'
