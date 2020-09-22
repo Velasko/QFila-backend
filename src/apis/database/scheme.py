@@ -100,13 +100,14 @@ class Meal(Base, Serializable):
 	__table_args__ = (
 		ForeignKeyConstraint(
 			['rest', 'section'],
-			['MenuSections.rest', 'MenuSections.name']
+			['MenuSections.rest', 'MenuSections.name'],
+			ondelete='RESTRICT'
 		),
 	)
 
 	id = Column(Integer	, primary_key=True)
-	rest = Column(Integer, ForeignKey('MenuSections.rest', ondelete='RESTRICT'), primary_key=True)
-	section = Column(String(50), ForeignKey('MenuSections.name', ondelete='RESTRICT'))
+	rest = Column(Integer, primary_key=True)
+	section = Column(String(50))
 	name = Column(String(255), nullable=False)
 	foodtype = Column(String(255), ForeignKey('FoodTypes.name', ondelete='RESTRICT'))
 	price = Column(Float, nullable=False)
@@ -128,11 +129,23 @@ class ItemState(enum.Enum):
 
 class Item(Base, Serializable):
 	__tablename__ = 'Items'
+	__table_args__ = (
+		ForeignKeyConstraint(
+			['user', 'time'],
+			['Carts.user', 'Carts.time'],
+			ondelete='RESTRICT'
+		),
+		ForeignKeyConstraint(
+			['meal', 'rest'],
+			['Meals.id', 'Meals.rest'],
+			ondelete='RESTRICT'
+		),
+	)
 
-	user = Column(Integer, ForeignKey('Carts.user', ondelete='RESTRICT'), primary_key=True)
-	time = Column(DateTime, ForeignKey('Carts.time', ondelete='RESTRICT'), primary_key=True)
-	rest = Column(Integer, ForeignKey('Meals.rest', ondelete='RESTRICT'), primary_key=True)
-	meal = Column(Integer, ForeignKey('Meals.id', ondelete='RESTRICT'), primary_key=True)
+	user = Column(Integer, primary_key=True)
+	time = Column(DateTime, primary_key=True)
+	meal = Column(Integer, primary_key=True)
+	rest = Column(Integer, primary_key=True)
 
 	ammount = Column(SmallInteger, nullable=False, default=1)
 	state = Column(Enum(ItemState), nullable=False)
