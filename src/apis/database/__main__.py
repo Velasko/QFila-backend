@@ -63,17 +63,17 @@ if __name__ == '__main__':
 		)
 
 		try:
-			confirmation = input(f"If you wish to proceed, type: {key}'\033[0m'\n>>> ")
+			confirmation = key#input(f"If you wish to proceed, type: \"{key}\"\033[0m\n>>> ")
 
 			if key != confirmation:
 				print("Key incorrect, operation cancelled!")
 			else:
-				from .scheme import Item, Cart, Meal, FoodType, Restaurant, FoodCourt, User
+				from .scheme import Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User
 
-				for table in (Item, Cart, Meal, FoodType, Restaurant, FoodCourt, User):
+				for table in (Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User):
 					try:
 						table.__table__.drop()
-					except Exception:
+					except Exception as e:
 						print("An exception has occured with", table.__tablename__)
 					else:
 						print(table.__tablename__, "dropped")
