@@ -63,7 +63,7 @@ if __name__ == '__main__':
 		)
 
 		try:
-			confirmation = key#input(f"If you wish to proceed, type: \"{key}\"\033[0m\n>>> ")
+			confirmation = input(f"If you wish to proceed, type: \"{key}\"\033[0m\n>>> ")
 
 			if key != confirmation:
 				print("Key incorrect, operation cancelled!")
