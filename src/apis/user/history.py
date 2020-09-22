@@ -11,15 +11,10 @@ import importlib
 appmodule = importlib.import_module(__package__.split('.')[0])
 
 try:
-	from ..utilities import authentication
+	from ..utilities import authentication, headers
 except ValueError:
 	#If running from inside apis folder
-	from utilities import authentication
-
-headers = {
-	"accept": "application/json",
-	"Content-Type": "application/json"
-}
+	from utilities import authentication, headers
 
 @ns.route("/recent/<string:mode>")
 class Recent(Resource):
@@ -35,7 +30,7 @@ class Recent(Resource):
 
 		resp = get('{}/database/user/history/{}'.format(appmodule.app.config['DATABASE_URL'], mode),
 			data=json.dumps(data),
-			headers=headers
+			headers=headers.json
 		)
 
 		print(resp.status_code)
