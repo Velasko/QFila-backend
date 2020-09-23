@@ -7,8 +7,8 @@ api = Api(version='0.1', title='Client',
 
 ns = api.namespace('user', description='client operations')
 
-
 from . import login
+from . import order
 from . import history
 from . import password_recovery
 

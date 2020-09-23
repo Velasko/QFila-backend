@@ -78,7 +78,7 @@ class Auth(Resource):
 			data=json.dumps(data), headers=headers.json
 		)
 
-		return resp.json(), resp.status_code
+		return {}, resp.status_code
 
 	def delete(self):
 		"""method to logout"""
