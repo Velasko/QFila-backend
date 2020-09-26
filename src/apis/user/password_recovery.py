@@ -45,15 +45,16 @@ class PasswordRecovery(Resource):
 
 		link = current_app.config['APPLICATION_HOSTNAME'] + "/user/passwordrecovery/" + escape(token)
 
-		try:
-			email = post(
-				'{}/mail/passwordrecovery'.format(current_app.config['DATABASE_URL']),
-				data=json.dumps({'link' : link, 'email' : email, 'name': user['name']}), headers=headers.json
-			)
-			
-			return email.json(), email.status_code, email.headers.items()
-		except:
-			api.abort(503)
+		email = post(
+			'{}/mail/passwordrecovery'.format(current_app.config['APPLICATION_HOSTNAME']),
+			data=json.dumps({'link' : link, 'email' : email, 'name': user['name']}), headers=headers.json
+		)
+
+		if email.status_code == 404:
+			return {'message' : "email service unavailable"}, 503
+
+		return email.json(), email.status_code, email.headers.items()
+		# except:
 
 	@authentication.token_required()
 	def put(self, user):

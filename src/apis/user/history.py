@@ -30,6 +30,5 @@ class Recent(Resource):
 			headers=headers.json
 		)
 
-		print(resp.status_code)
 		return resp.json()
 				
