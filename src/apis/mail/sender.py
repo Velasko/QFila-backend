@@ -12,6 +12,7 @@ class MailScheduler(Thread):
 
 		super().__init__(*args, **kwargs)
 		self.daemon = True
+		self.name = "Mail sender daemon"
 
 	def init_app(self, app):
 		self.app = app
@@ -36,8 +37,8 @@ class MailScheduler(Thread):
 	def run(self):
 		try:
 			while True:
+				time.sleep(60)
 				if len(self.mails) > 0:
 					self.send_mails()
-			time.sleep(10)
 		finally:
 			self.send_mails()
