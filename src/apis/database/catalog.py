@@ -1,13 +1,10 @@
 import json
 
+from flask import current_app
 from flask_restx import Resource
 
 from .app import ns, session, api
 from .scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize
-
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
 
 @ns.route('/catalog')
 class CatalogHandler(Resource):
@@ -214,7 +211,7 @@ class CatalogHandler(Resource):
 		}
 
 		offset = query_params['pagination']['offset']
-		limit = min(appmodule.app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
+		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
 		query = query.offset(offset).limit(limit)
 
 		response[query_params['type']] = [ safe_serialize(item) for item in query.all() ]

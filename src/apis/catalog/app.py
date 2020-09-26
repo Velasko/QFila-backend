@@ -1,19 +1,16 @@
 import json
 import re
 
-from flask import Flask, request
+from flask import Flask, request, current_app
 from flask_restx import Api, Resource, fields, reqparse
 
 from requests import post, get, put, delete
 
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
-
-headers = {
-	"accept": "application/json",
-	"Content-Type": "application/json"
-}
+try:
+	from ..utilities import headers
+except ValueError:
+	#If running from inside apis folder
+	from utilities import headers
 
 api = Api(version='0.1', title='Catalog',
 	description='Client side interface for the catalog',
@@ -76,12 +73,12 @@ class Catalog(Resource):
 		#pagination
 		pagination = {
 			'offset' : 0,
-			'limit' : appmodule.app.config['DATABASE_PAGE_SIZE_DEFAULT']
+			'limit' : current_app.config['DATABASE_PAGE_SIZE_DEFAULT']
 		}
 		if 'pagesize' in raw_args:
 			pagination['limit'] = min(
 				int(raw_args['pagesize']),
-				appmodule.app.config['DATABASE_PAGE_SIZE_LIMIT']
+				current_app.config['DATABASE_PAGE_SIZE_LIMIT']
 			)
 		if 'page' in raw_args:
 			pagination['offset'] = (int(raw_args['page']) - 1) * pagination['limit']
@@ -137,9 +134,9 @@ class Catalog(Resource):
 			raise NotImplemented("Yet to assemble the junction of queries")
 
 		resp = get(
-			'{}/database/catalog'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/database/catalog'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps(args),
-			headers=headers
+			headers=headers.json
 		)
 
 		if resp.status_code != 200:

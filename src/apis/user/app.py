@@ -7,12 +7,8 @@ from functools import wraps
 
 from requests import post, get, put, delete
 
-from flask import Flask, request
+from flask import Flask, request, current_app
 from flask_restx import Api, Resource, fields, reqparse
-
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
 
 try:
 	from ..utilities import authentication, checkers, headers
@@ -50,14 +46,15 @@ class Auth(Resource):
 		auth = api.payload
 
 		user = get(
-			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/database/user'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps({'email': auth['email']}), headers=headers.json
 		).json()
 
 		try:
-			if ( token := authentication.passwd_check(user, auth, appmodule.app.config)):
+			if ( token := authentication.passwd_check(user, auth, current_app.config)):
 				return {'token' : token}, 200
-		except:
+		except Exception as e:
+			print(e)
 			api.abort(401, "Not authorized")
 
 	# should this even be here?
@@ -84,7 +81,7 @@ class Auth(Resource):
 					api.abort(400, "Invalid email.")
 
 		resp = post(
-			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/database/user'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps(data), headers=headers.json
 		)
 
@@ -98,13 +95,12 @@ class Auth(Resource):
 @ns.route("/test")
 class User(Resource):
 
-	@authentication.token_required(appmodule)
+	@authentication.token_required()
 	def get(self, user):
 		#curl -X GET "http://localhost:5000/user/test" -H "accept: application/json" -H  "Content-Type: application/json" -H "token: "
 		return user, 200
 
 from . import history
-
 from . import password_recovery
 
 if __name__ == '__main__':

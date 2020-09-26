@@ -7,10 +7,7 @@ from .app import api
 
 if __name__ == '__main__':
 	import argparse
-	import importlib
 
-	#package configuration when this is the mainfile execution
-	appmodule = importlib.import_module(__package__.split('.')[0])
 	app = Flask("Qfila user")
 
 	#adding the configurations from app
@@ -18,7 +15,6 @@ if __name__ == '__main__':
 	config(app)
 
 	api.init_app(app)
-	appmodule.app = app
 
 	parser = argparse.ArgumentParser(description='User interface section of the back-end')
 
