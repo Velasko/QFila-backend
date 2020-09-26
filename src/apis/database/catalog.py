@@ -82,7 +82,7 @@ class CatalogHandler(Resource):
 
 		if ids['restaurant'] is None:
 			return session.query(Restaurant).filter(Restaurant.location == ids['foodcourt'])
-		return session.query(Restaurant).filter(Restaurant.id == ids['restaurant'])
+		return session.query(Restaurant).filter(Restaurant.id.in_(ids['restaurant']))
 
 	def location_id_query(self, **ids):
 		"""A function to return food courts based on it's ids.
