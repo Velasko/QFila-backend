@@ -10,10 +10,7 @@ from .app import api
 
 if __name__ == '__main__':
 	import argparse
-	import importlib
 
-	#package configuration when this is the mainfile execution
-	appmodule = importlib.import_module(__package__.split('.')[0])
 	app = Flask("Qfila database")
 
 	#adding the configurations from app
@@ -21,8 +18,6 @@ if __name__ == '__main__':
 	config(app)
 
 	api.init_app(app)
-	appmodule.app = app
-
 
 	parser = argparse.ArgumentParser(description='Database section of the application')
 	parser.add_argument('--database', type=str, help="Which database the script should run on.")
@@ -63,17 +58,17 @@ if __name__ == '__main__':
 		)
 
 		try:
-			confirmation = input(f"If you wish to proceed, type: {key}'\033[0m'\n>>> ")
+			confirmation = input(f"If you wish to proceed, type: \"{key}\"\033[0m\n>>> ")
 
 			if key != confirmation:
 				print("Key incorrect, operation cancelled!")
 			else:
-				from .scheme import Item, Cart, Meal, FoodType, Restaurant, FoodCourt, User
+				from .scheme import Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User
 
-				for table in (Item, Cart, Meal, FoodType, Restaurant, FoodCourt, User):
+				for table in (Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User):
 					try:
 						table.__table__.drop()
-					except Exception:
+					except Exception as e:
 						print("An exception has occured with", table.__tablename__)
 					else:
 						print(table.__tablename__, "dropped")

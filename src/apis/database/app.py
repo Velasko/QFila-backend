@@ -23,6 +23,7 @@ session = DBSession()
 
 from . import user
 from . import catalog
+from . import order
 
 if __name__ == '__main__':
 	from flask import Flask

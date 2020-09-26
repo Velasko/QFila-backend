@@ -5,7 +5,7 @@ import jwt
 from functools import wraps
 from requests import get
 
-from flask import request
+from flask import request, current_app
 
 #password hash
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15,9 +15,8 @@ from . import headers
 HASH_METHOD = 'sha256'
 
 class token_required():
-	def __init__(self, appmodule):
-		#tried to use app directly, but a circular import error would pop up
-		self.appmodule = appmodule
+	def __init__(self, *args):
+		pass
 
 	def __call__(self, f):
 		@wraps(f)
@@ -31,9 +30,9 @@ class token_required():
 				return {'message': 'Authentication required'}
 
 			try:
-				data = jwt.decode(token, self.appmodule.app.config['SECRET_KEY'])
+				data = jwt.decode(token, current_app.config['SECRET_KEY'])
 				resp = get(
-					'{}/database/user'.format(self.appmodule.app.config['DATABASE_URL']),
+					'{}/database/user'.format(current_app.config['DATABASE_URL']),
 					data=json.dumps({'email': data['email']}), headers=headers.json
 				)
 				current_user = resp.json()
@@ -42,7 +41,8 @@ class token_required():
 					raise Exception()
 
 			except jwt.ExpiredSignatureError as e:
-				return {'message' : 'token expired'}
+				#token expired
+				api.abort(498)
 			except TypeError:
 				return {'message' : 'could not connect to database'}
 			except:
@@ -54,7 +54,7 @@ class token_required():
 		return decorator
 
 
-def passwd_check(user, auth_attempt, config):
+def passwd_check(user, auth_attempt, config=None):
 	"""Function to check if the user authentication is correct and returns a token
 	if it is.
 
@@ -64,7 +64,9 @@ def passwd_check(user, auth_attempt, config):
 	 - config: dict. Application's dictionary with it's secret key and session time to live.
 	"""
 
-	#config expected to be app.config
+	if config is None:
+		config = current_app.config
+
 	if check_password_hash(user['passwd'], auth_attempt['passwd']):
 		token = jwt.encode({
 			'email' : user['email'],
