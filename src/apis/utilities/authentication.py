@@ -42,7 +42,7 @@ class token_required():
 
 			except jwt.ExpiredSignatureError as e:
 				#token expired
-				api.abort(498)
+				return {'message' : 'Token expired'}, 498
 			except TypeError:
 				return {'message' : 'could not connect to database'}
 			except:
