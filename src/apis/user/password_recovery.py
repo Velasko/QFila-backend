@@ -12,7 +12,7 @@ from flask_wtf import FlaskForm
 from wtforms import PasswordField, SubmitField
 from wtforms.validators import DataRequired, EqualTo
 
-from .app import ns, api, headers
+from .app import ns, api
 
 try:
 	from ..utilities import authentication, checkers, headers
