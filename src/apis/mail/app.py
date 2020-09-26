@@ -22,5 +22,5 @@ from . import order_confirmation
 if __name__ == '__main__':
 	app = Flask("Qfila user")
 	api.init_app(app)
-	mail.init_app(app)
+	mail_scheduler.init_app(app)
 	app.run(debug=True)

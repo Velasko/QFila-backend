@@ -39,8 +39,10 @@ class PasswordRecovery(Resource):
 		if user.status_code == 404:
 			api.abort(404, "Could not find user.")
 
+		user = user.json()
+
 		token = authentication.generate_token(
-			{'email' : email, 'passwd' : user.json()['passwd']},
+			{'email' : email, 'passwd' : user['passwd']},
 			appmodule.app.config,
 			duration=15
 		)
@@ -48,8 +50,8 @@ class PasswordRecovery(Resource):
 		link = appmodule.app.config['APPLICATION_HOSTNAME'] + "/user/passwordrecovery/" + escape(token)
 
 		email = post(
-			'{}/mail/passwordrecovery'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps({'link' : link, 'email' : email}), headers=headers.json
+			'{}/mail/passwordrecovery'.format(appmodule.app.config['APPLICATION_HOSTNAME']),
+			data=json.dumps({'link' : link, 'email' : email, 'name' : user['name']}), headers=headers.json
 		)
 
 		return email.json(), email.status_code, email.headers.items()

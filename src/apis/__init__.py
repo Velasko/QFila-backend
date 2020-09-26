@@ -10,7 +10,7 @@ app = None
 #it's easier to not add the namespace than to delete
 #intention of this 'not adding' is for the capability
 #of selecting which services to run.
-def config_api(libs):
+def config_api(app, libs):
 	import importlib
 
 	if libs is None:
@@ -22,6 +22,10 @@ def config_api(libs):
 
 			api.add_namespace(service.ns)
 			service.ns._path = service_name
+
+			if service_name == 'mail':
+				service.mail_scheduler.init_app(app)
+
 	except ModuleNotFoundError as e:
 		import sys
 

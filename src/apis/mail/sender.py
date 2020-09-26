@@ -8,10 +8,15 @@ class MailScheduler(Thread):
 		self.lock = Lock()
 		self.mails = []
 		self.server = mail
-		super().__init__(*args, **kwargs)
-		self.setDaemon(True)
-		self.start()
+		self.app = None
 
+		super().__init__(*args, **kwargs)
+		self.daemon = True
+
+	def init_app(self, app):
+		self.app = app
+		self.server.init_app(app)
+		self.start()
 
 	def append(self, mail):
 		with self.lock:
@@ -19,23 +24,20 @@ class MailScheduler(Thread):
 
 	def send_mails(self):
 		with self.lock:
-			with self.server.connect() as conn:
-				for mail in self.mails:
-					msg = Message(**mail)
-					print('sent:', msg)
-					# conn.send(msg)
+			with self.app.app_context():
+				with self.server.connect() as conn:
+					for mail in self.mails:
+						msg = Message(**mail)
+						# print("email sent to:", mail['email'])
+						print('sent:', msg)
+						# conn.send(msg)
 			self.mails = []
 
 	def run(self):
-		# self.mails.append({})
 		try:
 			while True:
 				if len(self.mails) > 0:
 					self.send_mails()
-				time.sleep(10)
+			time.sleep(10)
 		finally:
 			self.send_mails()
-
-if __name__ == '__main__':
-	x = MailScheduler(None)
-	print(dir(x))
