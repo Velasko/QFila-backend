@@ -38,6 +38,7 @@ class CartHandler(Resource):
 
 			cart = Cart(time=time, user=user.id, total_price=total_price)
 			session.add(cart)
+			session.flush()
 
 			for item in items:
 				session.add(item)
