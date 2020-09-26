@@ -35,10 +35,6 @@ class Catalog(Resource):
 			- restaurant;
 			- location.
 
-		Obligatory arguments:
-			- latitude : float
-			- longitude : float
-
 		Optional arguments:
 			- keyword : str - default="".
 				Used to filter by name or type. If not parsed, will match every possibility.
@@ -56,6 +52,10 @@ class Catalog(Resource):
 			if they category is id:
 				meal/restaurant/foodcourt is required, depending on desired result;
 				expected for it to be integers.
+
+			if the query is not id based, the following argument are required:
+				- latitude : float
+				- longitude : float
 
 		The url should be something of the sort:
 		http://qfila.com/catalog/{category}/{type}?argument=value
@@ -89,7 +89,8 @@ class Catalog(Resource):
 			args['id'] = {}
 			for mrf in ('meal', 'restaurant', 'foodcourt'):
 				if mrf in raw_args:
-					args['id'][mrf] = int(raw_args[mrf])
+					print('id', mrf, raw_args[mrf])
+					args['id'][mrf] = raw_args[mrf]
 				else:
 					args['id'][mrf] = None
 		else:
@@ -98,16 +99,16 @@ class Catalog(Resource):
 			else:
 				args['keyword'] = ''
 
-		#location
-		default = {'city' : 'fortaleza', 'state' : 'ceara'}
-		args['location'] = {}
-		for loc in ('city', 'state'):
-			try:
-				args['location'][loc] = raw_args[loc]
-			except KeyError:
-				args['location'][loc] = default[loc]
-		for loc in ('latitude', 'longitude'):
-			args['location'][loc] = float(raw_args[loc])
+			#location
+			default = {'city' : 'fortaleza', 'state' : 'ceara'}
+			args['location'] = {}
+			for loc in ('city', 'state'):
+				try:
+					args['location'][loc] = raw_args[loc]
+				except KeyError:
+					args['location'][loc] = default[loc]
+			for loc in ('latitude', 'longitude'):
+				args['location'][loc] = float(raw_args[loc])
 
 		#food court distance
 		args['courts'] = None

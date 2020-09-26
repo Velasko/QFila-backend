@@ -177,7 +177,6 @@ class CatalogHandler(Resource):
 	def get(self):
 		query_params = api.payload
 
-		location = query_params['location']
 		qtype = query_params['type']
 		foodcourt_ammout = query_params['courts']
 
@@ -185,6 +184,7 @@ class CatalogHandler(Resource):
 		if query_params['category'] == 'id':
 			kwargs = query_params['id']
 		else:
+			location = query_params['location']
 			kwargs = {
 				'keyword': "%{}%".format(query_params['keyword']),
 				'order' : self.get_order(qtype, location, limit=foodcourt_ammout)
