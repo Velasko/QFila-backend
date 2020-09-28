@@ -89,7 +89,6 @@ class Catalog(Resource):
 			args['id'] = {}
 			for mrf in ('meal', 'restaurant', 'foodcourt'):
 				if mrf in raw_args:
-					print('id', mrf, raw_args[mrf])
 					args['id'][mrf] = raw_args[mrf]
 				else:
 					args['id'][mrf] = None
