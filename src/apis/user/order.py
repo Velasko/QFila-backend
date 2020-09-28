@@ -30,20 +30,11 @@ class PlaceOrder(Resource):
 		The meals data required are: meal and restaurant's id and the ammount.
 		"""
 		data = api.payload
+		order = data['order']
 
 		resp = post('{}/database/user/order/'.format(appmodule.app.config['DATABASE_URL']),
 			json={
 				'user': user['email'],
-				'order' : data['order']
-			},
-			headers=headers.json
-		)
-
-		order = {'mcdonalds' : ['big mac', 'mc chicken']}
-
-		resp = post('{}/mail/orderreview'.format(appmodule.app.config['APPLICATION_HOSTNAME']),
-			json={
-				'recipients' : [(user['name'], user['email'])],
 				'order' : order
 			},
 			headers=headers.json
@@ -51,5 +42,13 @@ class PlaceOrder(Resource):
 
 		if resp.status_code == 201:
 			payment.execute(data['payment'])
+
+		resp = post('{}/mail/orderreview'.format(appmodule.app.config['APPLICATION_HOSTNAME']),
+			json={
+				'recipients' : (user['name'], user['email']),
+				'order' : order
+			},
+			headers=headers.json
+		)
 
 		return {}, resp.status_code
