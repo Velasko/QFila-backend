@@ -2,14 +2,11 @@ import json
 
 from requests import post, get
 
+from flask import current_app
 from flask_restx import Resource
 from flask_restx import Resource, fields
 
 from .app import ns, api
-
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
 
 try:
 	from ..utilities import authentication, checkers, headers
@@ -28,6 +25,7 @@ new_user = api.inherit('New User', user, {
     'phone' : fields.Integer(default=None, description='User phone number')
 })
 
+
 @ns.route("/login")
 class Auth(Resource):
 
@@ -40,25 +38,21 @@ class Auth(Resource):
 		auth = api.payload
 
 		user = get(
-			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/database/user'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps({'email': auth['email']}), headers=headers.json
 		).json()
 
 		try:
-			if ( token := authentication.passwd_check(user, auth, appmodule.app.config)):
+			if ( token := authentication.passwd_check(user, auth, current_app.config)):
 				return {'token' : token}, 200
-		except:
+		except Exception as e:
+			print(e)
 			api.abort(401, "Not authorized")
-
-	# should this even be here?
-	def update(self):
-		"""Method to modify password?"""
-		pass
 
 	@ns.expect(new_user)
 	def post(self):
 		"""method to create the login"""
-		# curl -X POST "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"name\": \"vel\",  \"email\": \"vel3@app.com\",  \"passwd\": \"string\",  \"birthday\": \"1980-08-25\",  \"phone\": 2}"
+		# curl -X POST "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"name\": \"Velasco\",  \"email\": \"f.l.velasko@gmail.com\",  \"passwd\": \"string\",  \"birthday\": \"1997-04-30\",  \"phone\": +55 (85) 98838-1204}"
 		data = api.payload
 
 		for key, value in data.items():
@@ -74,12 +68,17 @@ class Auth(Resource):
 					api.abort(400, "Invalid email.")
 
 		resp = post(
-			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/database/user'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps(data), headers=headers.json
 		)
 
-		return {}, resp.status_code
+		return resp.json(), resp.status_code
 
-	def delete(self):
-		"""method to logout"""
-		pass
+#a test method for the required authentication
+@ns.route("/test")
+class User(Resource):
+
+	@authentication.token_required()
+	def get(self, user):
+		#curl -X GET "http://localhost:5000/user/test" -H "accept: application/json" -H  "Content-Type: application/json" -H "token: "
+		return user, 200

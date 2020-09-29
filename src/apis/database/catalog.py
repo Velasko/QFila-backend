@@ -1,13 +1,10 @@
 import json
 
+from flask import current_app
 from flask_restx import Resource
 
 from .app import ns, session, api
 from .scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize
-
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
 
 @ns.route('/catalog')
 class CatalogHandler(Resource):
@@ -85,7 +82,7 @@ class CatalogHandler(Resource):
 
 		if ids['restaurant'] is None:
 			return session.query(Restaurant).filter(Restaurant.location == ids['foodcourt'])
-		return session.query(Restaurant).filter(Restaurant.id == ids['restaurant'])
+		return session.query(Restaurant).filter(Restaurant.id.in_(ids['restaurant']))
 
 	def location_id_query(self, **ids):
 		"""A function to return food courts based on it's ids.
@@ -180,7 +177,6 @@ class CatalogHandler(Resource):
 	def get(self):
 		query_params = api.payload
 
-		location = query_params['location']
 		qtype = query_params['type']
 		foodcourt_ammout = query_params['courts']
 
@@ -188,6 +184,7 @@ class CatalogHandler(Resource):
 		if query_params['category'] == 'id':
 			kwargs = query_params['id']
 		else:
+			location = query_params['location']
 			kwargs = {
 				'keyword': "%{}%".format(query_params['keyword']),
 				'order' : self.get_order(qtype, location, limit=foodcourt_ammout)
@@ -214,7 +211,7 @@ class CatalogHandler(Resource):
 		}
 
 		offset = query_params['pagination']['offset']
-		limit = min(appmodule.app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
+		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
 		query = query.offset(offset).limit(limit)
 
 		response[query_params['type']] = [ safe_serialize(item) for item in query.all() ]

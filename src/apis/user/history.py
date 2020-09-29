@@ -2,13 +2,10 @@ import json
 
 from requests import get
 
+from flask import current_app
 from flask_restx import Resource
 
 from .app import ns
-
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
 
 try:
 	from ..utilities import authentication, headers
@@ -19,7 +16,7 @@ except ValueError:
 @ns.route("/recent/<string:mode>")
 class Recent(Resource):
 
-	@authentication.token_required(appmodule)
+	@authentication.token_required()
 	def get(self, user, mode=None):
 		"""Get recent restaurants"""
 
@@ -28,11 +25,10 @@ class Recent(Resource):
 		if not mode in ('restaurants', 'meals'):
 			api.abort(404)
 
-		resp = get('{}/database/user/history/{}'.format(appmodule.app.config['DATABASE_URL'], mode),
+		resp = get('{}/database/user/history/{}'.format(current_app.config['DATABASE_URL'], mode),
 			data=json.dumps(data),
 			headers=headers.json
 		)
 
-		print(resp.status_code)
 		return resp.json()
 				

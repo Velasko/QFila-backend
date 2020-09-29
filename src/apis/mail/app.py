@@ -4,9 +4,7 @@ from flask_restx import Api, Resource
 
 from flask_mail import Mail, Message
 
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
+from .sender import MailScheduler
 
 api = Api(version='0.1', title='Qfila-Mail',
 	description='A Mail REST interface for the Qfila application',
@@ -14,13 +12,15 @@ api = Api(version='0.1', title='Qfila-Mail',
 
 ns = api.namespace('mail')
 mail = Mail()
+mail_scheduler = MailScheduler(mail)
 
 from . import password_recovery
+from . import order_confirmation
 
 
 
 if __name__ == '__main__':
 	app = Flask("Qfila user")
 	api.init_app(app)
-	mail.init_app(app)
+	mail_scheduler.init_app(app)
 	app.run(debug=True)

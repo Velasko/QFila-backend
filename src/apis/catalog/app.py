@@ -1,19 +1,16 @@
 import json
 import re
 
-from flask import Flask, request
+from flask import Flask, request, current_app
 from flask_restx import Api, Resource, fields, reqparse
 
 from requests import post, get, put, delete
 
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
-
-headers = {
-	"accept": "application/json",
-	"Content-Type": "application/json"
-}
+try:
+	from ..utilities import headers
+except ValueError:
+	#If running from inside apis folder
+	from utilities import headers
 
 api = Api(version='0.1', title='Catalog',
 	description='Client side interface for the catalog',
@@ -38,10 +35,6 @@ class Catalog(Resource):
 			- restaurant;
 			- location.
 
-		Obligatory arguments:
-			- latitude : float
-			- longitude : float
-
 		Optional arguments:
 			- keyword : str - default="".
 				Used to filter by name or type. If not parsed, will match every possibility.
@@ -60,6 +53,10 @@ class Catalog(Resource):
 				meal/restaurant/foodcourt is required, depending on desired result;
 				expected for it to be integers.
 
+			if the query is not id based, the following argument are required:
+				- latitude : float
+				- longitude : float
+
 		The url should be something of the sort:
 		http://qfila.com/catalog/{category}/{type}?argument=value
 		"""
@@ -76,12 +73,12 @@ class Catalog(Resource):
 		#pagination
 		pagination = {
 			'offset' : 0,
-			'limit' : appmodule.app.config['DATABASE_PAGE_SIZE_DEFAULT']
+			'limit' : current_app.config['DATABASE_PAGE_SIZE_DEFAULT']
 		}
 		if 'pagesize' in raw_args:
 			pagination['limit'] = min(
 				int(raw_args['pagesize']),
-				appmodule.app.config['DATABASE_PAGE_SIZE_LIMIT']
+				current_app.config['DATABASE_PAGE_SIZE_LIMIT']
 			)
 		if 'page' in raw_args:
 			pagination['offset'] = (int(raw_args['page']) - 1) * pagination['limit']
@@ -92,7 +89,7 @@ class Catalog(Resource):
 			args['id'] = {}
 			for mrf in ('meal', 'restaurant', 'foodcourt'):
 				if mrf in raw_args:
-					args['id'][mrf] = int(raw_args[mrf])
+					args['id'][mrf] = raw_args[mrf]
 				else:
 					args['id'][mrf] = None
 		else:
@@ -101,16 +98,16 @@ class Catalog(Resource):
 			else:
 				args['keyword'] = ''
 
-		#location
-		default = {'city' : 'fortaleza', 'state' : 'ceara'}
-		args['location'] = {}
-		for loc in ('city', 'state'):
-			try:
-				args['location'][loc] = raw_args[loc]
-			except KeyError:
-				args['location'][loc] = default[loc]
-		for loc in ('latitude', 'longitude'):
-			args['location'][loc] = float(raw_args[loc])
+			#location
+			default = {'city' : 'fortaleza', 'state' : 'ceara'}
+			args['location'] = {}
+			for loc in ('city', 'state'):
+				try:
+					args['location'][loc] = raw_args[loc]
+				except KeyError:
+					args['location'][loc] = default[loc]
+			for loc in ('latitude', 'longitude'):
+				args['location'][loc] = float(raw_args[loc])
 
 		#food court distance
 		args['courts'] = None
@@ -137,9 +134,9 @@ class Catalog(Resource):
 			raise NotImplemented("Yet to assemble the junction of queries")
 
 		resp = get(
-			'{}/database/catalog'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/database/catalog'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps(args),
-			headers=headers
+			headers=headers.json
 		)
 
 		if resp.status_code != 200:

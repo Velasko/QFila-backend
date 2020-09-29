@@ -10,10 +10,7 @@ from .app import api
 
 if __name__ == '__main__':
 	import argparse
-	import importlib
 
-	#package configuration when this is the mainfile execution
-	appmodule = importlib.import_module(__package__.split('.')[0])
 	app = Flask("Qfila database")
 
 	#adding the configurations from app
@@ -21,8 +18,6 @@ if __name__ == '__main__':
 	config(app)
 
 	api.init_app(app)
-	appmodule.app = app
-
 
 	parser = argparse.ArgumentParser(description='Database section of the application')
 	parser.add_argument('--database', type=str, help="Which database the script should run on.")

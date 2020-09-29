@@ -9,17 +9,27 @@ from .scheme import *
 class CartHandler(Resource):
 
 	def post(self):
-		order = api.payload['order']
+		# order = api.payload['order']
+		#separating each meal
+		order = []
+		for restaurant, meals in api.payload['order'].items():
+			for meal, ammount in meals.items():
+				order.append({
+					'rest' : restaurant,
+					'meal' : meal,
+					'ammount' : ammount
+				})
 
 		try:
 			user = session.query(User).filter(User.email == api.payload['user']).first()
 			time = datetime.datetime.utcnow()
 
-			items =[]
+			items = []
 			total_price = 0
-			for item_data in order.values():
-				price = session.query(Meal).filter(Meal.id == item_data['meal'], Meal.rest==item_data['rest']).first().price
-				item_price = price * item_data['ammount']
+			for item_data in order:
+				meal = session.query(Meal).filter(Meal.id == item_data['meal'], Meal.rest==item_data['rest']).first()
+				price = meal.price
+				item_price = price * int(item_data['ammount'])
 
 				total_price += item_price
 
@@ -28,6 +38,7 @@ class CartHandler(Resource):
 
 			cart = Cart(time=time, user=user.id, total_price=total_price)
 			session.add(cart)
+			session.flush()
 
 			for item in items:
 				session.add(item)

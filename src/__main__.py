@@ -34,7 +34,7 @@ if __name__ == '__main__':
 	else:
 		app.config['DATABASE_URL'] = f'http://localhost:{args.port}'
 
-	config_api(args.services)
+	config_api(app, args.services)
 
 	if args.run:
 		app.run(debug=args.debug, port=args.port)

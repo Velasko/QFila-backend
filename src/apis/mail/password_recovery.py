@@ -1,19 +1,20 @@
 from flask_restx import Resource
 from flask_mail import Message
 
-from .app import ns, api, mail
+from .app import ns, api, mail_scheduler
 
 @ns.route('/passwordrecovery')
 class PasswordRecovery(Resource):
 	def post(self):
 		link = api.payload['link']
 		email = api.payload['email']
+		name = api.payload['name']
 
-		msg = Message("Qfila esqueci minha senha", recipients=[email])
-		msg.html = f'Você requisitou uma mudança de senha. <a href="{link}">Clique aqui</a>'
+		msg = {
+			'subject' : "Requisição de mudança de senha do Qfila",
+			'recipients' : [(name, email)],
+			'html' : f'Você requisitou uma mudança de senha. <a href="{link}">Clique aqui</a>'
+		}
 
-		print("E-mail wasn't sent for considering this a mockup for test and development.\n" + \
-			"However, this is the message:\n" + msg.html)
-		# mail.send(msg)
-
-		return {'message' : 'email sent'}
+		mail_scheduler.append(msg)
+		return {'message' : 'email added to queue'}, 201

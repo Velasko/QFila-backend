@@ -4,7 +4,7 @@ import jwt
 from markupsafe import escape
 from requests import get, post, put
 
-from flask import request, render_template_string, make_response
+from flask import request, render_template_string, make_response, current_app
 
 from flask_restx import Resource
 
@@ -13,10 +13,6 @@ from wtforms import PasswordField, SubmitField
 from wtforms.validators import DataRequired, EqualTo
 
 from .app import ns, api
-
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
 
 try:
 	from ..utilities import authentication, checkers, headers
@@ -32,29 +28,35 @@ class PasswordRecovery(Resource):
 		email = api.payload['email']
 
 		user = get(
-			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/database/user'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps({'email': email}), headers=headers.json
 		)
 
 		if user.status_code == 404:
 			api.abort(404, "Could not find user.")
 
+		user = user.json()
+
 		token = authentication.generate_token(
-			{'email' : email, 'passwd' : user.json()['passwd']},
-			appmodule.app.config,
+			{'email' : email, 'passwd' : user['passwd']},
+			current_app.config,
 			duration=15
 		)
 
-		link = appmodule.app.config['APPLICATION_HOSTNAME'] + "/user/passwordrecovery/" + escape(token)
+		link = current_app.config['APPLICATION_HOSTNAME'] + "/user/passwordrecovery/" + escape(token)
 
 		email = post(
-			'{}/mail/passwordrecovery'.format(appmodule.app.config['DATABASE_URL']),
-			data=json.dumps({'link' : link, 'email' : email}), headers=headers.json
+			'{}/mail/passwordrecovery'.format(current_app.config['APPLICATION_HOSTNAME']),
+			data=json.dumps({'link' : link, 'email' : email, 'name': user['name']}), headers=headers.json
 		)
 
-		return email.json(), email.status_code, email.headers.items()
+		if email.status_code == 404:
+			return {'message' : "email service unavailable"}, 503
 
-	@authentication.token_required(appmodule)
+		return email.json(), email.status_code, email.headers.items()
+		# except:
+
+	@authentication.token_required()
 	def put(self, user):
 		passwd = api.payload['passwd']
 
@@ -67,7 +69,7 @@ class PasswordRecovery(Resource):
 			}
 		}
 
-		resp = put('{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
+		resp = put('{}/database/user'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps(data), headers=headers.json
 		)
 
@@ -84,10 +86,10 @@ class NewPasswordForm(FlaskForm):
 @ns.route("/passwordrecovery/<string:token>")
 class ForgottenPassword(Resource):
 	def get(self, token, head=""):
-		data = jwt.decode(token, appmodule.app.config['SECRET_KEY'])
+		data = jwt.decode(token, current_app.config['SECRET_KEY'])
 
 		user = get(
-			'{}/database/user'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/database/user'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps({'email': data['email']}), headers=headers.json
 		).json()
 
@@ -133,7 +135,7 @@ class ForgottenPassword(Resource):
 		header = headers.json.copy()
 		header['token'] = token
 		resp = put(
-			'{}/user/passwordrecovery'.format(appmodule.app.config['DATABASE_URL']),
+			'{}/user/passwordrecovery'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps({'passwd': passwd}), headers=header
 		)
 

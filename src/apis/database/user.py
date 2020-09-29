@@ -7,10 +7,6 @@ from sqlalchemy import exc
 from .app import ns, session, api
 from .scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize
 
-#getting the main app module
-import importlib
-appmodule = importlib.import_module(__package__.split('.')[0])
-
 try:
 	from ..utilities import checkers
 except ValueError:
@@ -195,4 +191,3 @@ class UserHistoryHandler(Resource):
 		).limit(3)
 
 		return [safe_serialize(rest) for rest in query.all()]
-
