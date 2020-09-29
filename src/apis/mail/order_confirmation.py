@@ -67,9 +67,6 @@ class OrderReview(Resource):
 		taxa = payment.service_fee(total_value)
 		msg += template.total(total_value, taxa)
 
-		with open("teste.html", "w") as file:
-			file.write(msg)
-
 		mail = {
 			'subject' : 'Confirmação de pedido',
 			'recipients' : recipients,
