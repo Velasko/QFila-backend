@@ -18,7 +18,7 @@ id = api.model('Identifyiers', {
 	'phone' : fields.Integer(description='User phone number')
 })
 
-user = api.inherit('User', id, {
+user = api.inherit('Database User', id, {
 	'name' : fields.String(required=True,description='User name'),
 	'email' : fields.String(required=True, description='User email'),
 	'passwd' : fields.String(required=True, description='User password'),
