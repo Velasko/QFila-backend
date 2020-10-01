@@ -51,7 +51,8 @@ class OrderReview(Resource):
 			rest_price = 0
 
 			msg += template.restaurant_body(rest[rest_id]['image'], rest[rest_id]['name'])
-			for meal_id, ammount in meals.items():
+			for meal_id, mealinfo in meals.items():
+				ammount = mealinfo['ammount']
 				ammt = int(ammount)
 				name = meal[meal_id]['name']
 				price = float(meal[meal_id]['price'])

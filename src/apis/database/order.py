@@ -15,15 +15,15 @@ except ValueError:
 class CartHandler(Resource):
 
 	def post(self):
-		# order = api.payload['order']
 		#separating each meal
 		order = []
 		for restaurant, meals in api.payload['order'].items():
-			for meal, ammount in meals.items():
+			for meal, mealinfo in meals.items():
 				order.append({
 					'rest' : restaurant,
 					'meal' : meal,
-					'ammount' : ammount
+					'ammount' : mealinfo["ammount"],
+					'comments' : mealinfo["comments"],
 				})
 
 		try:
