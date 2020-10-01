@@ -29,8 +29,7 @@ class MailScheduler(Thread):
 				with self.server.connect() as conn:
 					for mail in self.mails:
 						msg = Message(**mail)
-						# print("email sent to:", mail['email'])
-						print('sent:', msg)
+						print("email sent to:", mail['recipients'])
 						# conn.send(msg)
 			self.mails = []
 

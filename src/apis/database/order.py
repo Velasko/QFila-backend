@@ -5,24 +5,32 @@ from flask_restx import Resource
 from .app import ns, api, session
 from .scheme import *
 
+try:
+	from ..utilities import payment
+except ValueError:
+	#If running from inside apis folder
+	from utilities import payment
+
 @ns.route('/user/order')
 class CartHandler(Resource):
 
 	def post(self):
-		# order = api.payload['order']
 		#separating each meal
 		order = []
 		for restaurant, meals in api.payload['order'].items():
-			for meal, ammount in meals.items():
+			for meal, mealinfo in meals.items():
 				order.append({
 					'rest' : restaurant,
 					'meal' : meal,
-					'ammount' : ammount
+					'ammount' : mealinfo["ammount"],
+					'comments' : mealinfo["comments"],
 				})
 
 		try:
 			user = session.query(User).filter(User.email == api.payload['user']).first()
 			time = datetime.datetime.utcnow()
+			payment_method = api.payload['payment_method']
+			fee = api.payload['fee']
 
 			items = []
 			total_price = 0
@@ -36,7 +44,12 @@ class CartHandler(Resource):
 				item = Item(user=user.id, time=time, state='awaiting_payment', total_price=item_price, **item_data)
 				items.append(item)
 
-			cart = Cart(time=time, user=user.id, total_price=total_price)
+			if fee is None:
+				fee = payment.service_fee(total_price)
+
+			cart = Cart(time=time, user=user.id, order_total=total_price,
+				payment_method=payment_method, qfila_fee=fee
+			)
 			session.add(cart)
 			session.flush()
 
