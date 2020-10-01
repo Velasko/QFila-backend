@@ -45,7 +45,6 @@ if __name__ == '__main__':
 
 	config = config_api(app, args.services)
 	config.configure()
-	config.verify()
 
 	if args.run:
 		app.run(host=args.host, debug=args.debug, port=args.port)

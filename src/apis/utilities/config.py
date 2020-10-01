@@ -12,7 +12,7 @@ class BaseConfig():
 		#url.com/test/ and url.com/test will be the same with this argument:
 		self.app.url_map.strict_slashes = False
 
-	def configure(self, auto_verify=False):
+	def configure(self, auto_verify=True):
 		"""Makes any execution required to configure the app"""
 		for method in self.__dir__():
 			if method.startswith("config_"):
