@@ -5,19 +5,14 @@ from sqlalchemy import create_engine
 from flask import Flask
 
 from .scheme import Base
-
-from .app import api
+from .app import blueprint
+from .config import Config
 
 if __name__ == '__main__':
 	import argparse
 
 	app = Flask("Qfila database")
-
-	#adding the configurations from app
-	exec(''.join(open("{}/back-end/src/app_config.py".format(os.getenv('VIRTUAL_ENV')), 'r').readlines()))
-	config(app)
-
-	api.init_app(app)
+	config = Config(app)
 
 	parser = argparse.ArgumentParser(description='Database section of the application')
 	parser.add_argument('--database', type=str, help="Which database the script should run on.")
@@ -29,6 +24,7 @@ if __name__ == '__main__':
 	group.add_argument('-t', '--test', action='store_true', help='Runs the unittest')
 
 	parser.add_argument('-d', '--debug', action='store_true', help="Runs with debug")
+	parser.add_argument('--host', default='127.0.0.1', help="defines the host")
 	parser.add_argument('-p', '--port', default=5000, help="Which port to run the application on")
 
 #	parser.add_argument('-o', '--output', default=None, help="Recieves the name of the file on which the output will be written to.")
@@ -79,7 +75,9 @@ if __name__ == '__main__':
 
 
 	elif args.run:
-		app.run(debug=args.debug, port=args.port)
+		app.register_blueprint(blueprint, url_prefix="/")
+		config.configure()
+		app.run(host=args.host, debug=args.debug, port=args.port)
 	elif args.test:
 
 		import multiprocessing
