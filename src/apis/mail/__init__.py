@@ -1,1 +1,1 @@
-from .app import api, mail_scheduler
+from .app import mail_scheduler
