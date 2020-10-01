@@ -6,7 +6,7 @@ from .apis import api, config_api
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Execution of full application')
-	required_parse = ("database", "catalog", "mail")
+	services_list = ("database", "catalog", "mail")
 
 	group = parser.add_mutually_exclusive_group()
 	group.add_argument('-r', '--run', action='store_true', help="runs the full REST application")
@@ -17,34 +17,38 @@ if __name__ == '__main__':
 	parser.add_argument('-p', '--port', default=5000, help="which port to run the application on")
 	parser.add_argument('-s', '--services', nargs='+', help='specifies the REST services to be runned. It is case sensitive!')
 
-	for service in required_parse:
+	for service in services_list:
 		parser.add_argument(f'--{service}', default=None, type=str, help=f"{service} url for connection.")
 
 	args = parser.parse_args()
 
-	#If some services are selected, some depend on secondary services,
-	#which must be known where to access.
-	#Therefore, either the service is executed here or it's parsed
-	for service in required_parse:
-		config_name = service.upper() + "_URL"
-		if not args.services is None:
-			if service in args.services and getattr(args, service) is None:
-				#This service is one of the executed ones
-				app.config[config_name] = f'http://{args.host}:{args.port}'
-
-			elif not (service in args.services or getattr(args, service) is None):
-				#service is parsed
-				app.config[config_name] = getattr(args, service)
-
-			else:
-				print(f"The {service} must be one of the services or it's url must be parsed via --{service}.")
-				sys.exit()
-		else:
-			#every service is executed
-			app.config[config_name] = f'http://{args.host}:{args.port}'
-
 	config = config_api(app, args.services)
-	config.configure()
+	config.configure(auto_verify=False)
+
+	#If some services were selected, there is default url only to those selected.
+	#The others will recieve None, which is considered a failure in config.verify.
+	url = f'http://{args.host}:{args.port}'
+	if args.services is None:
+		args.services = services_list
+
+	for service in services_list: 
+		config_name = service.upper() + "_URL"
+		if service in args.services:
+			app.config[config_name] = url
+		else:
+			app.config[config_name] = getattr(args, service)
+
+	try:
+		config.verify()
+	except KeyError as e:
+		#if service url was not parsed:
+		service = e.key.lower().split("_")[0]
+		if service in services_list:
+			print(f"The {service} must be one of the services or it's url must be parsed via --{service}.")
+			sys.exit()
+
+		raise e
+
 
 	if args.run:
 		app.run(host=args.host, debug=args.debug, port=args.port)
