@@ -52,7 +52,7 @@ class Auth(Resource):
 	@ns.expect(new_user)
 	def post(self):
 		"""method to create the login"""
-		# curl -X POST "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"name\": \"Velasco\",  \"email\": \"f.l.velasko@gmail.com\",  \"passwd\": \"string\",  \"birthday\": \"1997-04-30\",  \"phone\": +55 (85) 98838-1204}"
+		# curl -X POST "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"name\": \"Velasco\", \"email\": \"f.l.velasko@gmail.com\", \"passwd\": \"string\", \"birthday\": \"1997-04-30\", \"phone\": 0}"
 		data = api.payload
 
 		for key, value in data.items():
