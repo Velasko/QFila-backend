@@ -115,13 +115,23 @@ class Meal(Base, Serializable):
 	description = Column(String(511))
 	image = Column(String(200))
 
+class PaymentMethods(enum.Enum):
+	credit = 0
+	debit = 1
+	google_pay = 2
+	apple_pay = 3
+	samsung_pay = 4
+	pix = 5
+
+
 class Cart(Base, Serializable):
 	__tablename__ = 'Carts'
 
 	time = Column(DateTime, primary_key=True)
 	user = Column(Integer, ForeignKey('Users.id', ondelete='RESTRICT'), primary_key=True)
-	total_price = Column(Float, nullable=False)
-	#trigger total_price = sum(item.price)
+	order_total = Column(Float, nullable=False)
+	qfila_fee = Column(Float, nullable=False)
+	payment_method = Column(Enum(PaymentMethods), nullable=False)
 
 class ItemState(enum.Enum):
 	cancelled = -1
@@ -153,3 +163,4 @@ class Item(Base, Serializable):
 	state = Column(Enum(ItemState), nullable=False)
 
 	total_price = Column(Float, nullable=False)
+	comments = Column(String(255))
