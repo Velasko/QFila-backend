@@ -6,7 +6,8 @@ except ValueError:
 
 class Config(BaseConfig):
 	def config_catalog(self):
-		pass
+		self.app.config['CATALOG_PAGE_SIZE_DEFAULT'] = 5
+		self.app.config['CATALOG_PAGE_SIZE_LIMIT'] = 10
 
 	def verify_user(self):
 		required_config = ['DATABASE_URL']

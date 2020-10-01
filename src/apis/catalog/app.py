@@ -76,12 +76,12 @@ class Catalog(Resource):
 		#pagination
 		pagination = {
 			'offset' : 0,
-			'limit' : current_app.config['DATABASE_PAGE_SIZE_DEFAULT']
+			'limit' : current_app.config['CATALOG_PAGE_SIZE_DEFAULT']
 		}
 		if 'pagesize' in raw_args:
 			pagination['limit'] = min(
 				int(raw_args['pagesize']),
-				current_app.config['DATABASE_PAGE_SIZE_LIMIT']
+				current_app.config['CATALOG_PAGE_SIZE_LIMIT']
 			)
 		if 'page' in raw_args:
 			pagination['offset'] = (int(raw_args['page']) - 1) * pagination['limit']
