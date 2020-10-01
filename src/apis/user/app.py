@@ -1,20 +1,15 @@
-from flask_restx import Api, Resource, fields
+from flask import Blueprint
+from flask_restx import Api, Namespace, Resource, fields
 
-api = Api(version='0.1', title='Client',
+blueprint = Blueprint("Qfila user api", __name__)
+api = Api(blueprint, version='0.1', title='Qfila user api', default='user',
 	description='Client side interface',
 )
 
-ns = api.namespace('user', description='client operations')
-
+ns = Namespace('user', description='client operations')
+api.add_namespace(ns)
 
 from . import login
 from . import order
 from . import history
 from . import password_recovery
-
-
-if __name__ == '__main__':
-	from flask import Flask
-	app = Flask("Qfila user")
-	api.init_app(app)
-	app.run()

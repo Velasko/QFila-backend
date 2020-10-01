@@ -15,11 +15,17 @@ def config_api(app, libs):
 		libs = ('database', 'user', 'catalog', 'mail')
 
 	try:
+		models = api.models
 		for service_name in libs:
 			service = importlib.import_module('.app', f"{__package__}.{service_name}")
 
+			for name, model in service.api.models.items():
+				if name in models:
+					raise NameError("Two models with the same name")
+				models[name] = model
+
+			app.register_blueprint(service.blueprint, url_prefix=f"/{service_name}")
 			api.add_namespace(service.ns)
-			service.ns._path = service_name
 
 			if service_name == 'mail':
 				service.mail_scheduler.init_app(app)

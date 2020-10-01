@@ -1,8 +1,8 @@
 import json
 import re
 
-from flask import Flask, request, current_app
-from flask_restx import Api, Resource, fields, reqparse
+from flask import Blueprint, request, current_app
+from flask_restx import Api, Resource, Namespace, fields, reqparse
 
 from requests import post, get, put, delete
 
@@ -12,11 +12,14 @@ except ValueError:
 	#If running from inside apis folder
 	from utilities import headers
 
-api = Api(version='0.1', title='Catalog',
-	description='Client side interface for the catalog',
+
+blueprint = Blueprint("Qfila catalog api", __name__)
+api = Api(blueprint, default="catalog", title="Qfila catalog API",
+	version="0.1", description="Catalog REST service",
 )
 
-ns = api.namespace('catalog', description='Catalog queries')
+ns = Namespace('catalog', description='Catalog queries')
+api.add_namespace(ns)
 
 # @ns.route('/<string:qtype>')
 # @ns.route('/<string:qtype>/<string:keyword>')
@@ -143,10 +146,3 @@ class Catalog(Resource):
 			return { 'message' : 'Error in query'}, resp.status_code
 
 		return resp.json()
-
-
-
-if __name__ == '__main__':
-	app = Flask("Qfila catalog")
-	api.init_app(app)
-	app.run(debug=True)
