@@ -12,6 +12,9 @@ class BaseConfig():
 		#url.com/test/ and url.com/test will be the same with this argument:
 		self.app.url_map.strict_slashes = False
 
+		self.app.config['TESTING'] = True
+		self.app.config['ENV'] = 'development'
+
 	def configure(self, auto_verify=True):
 		"""Makes any execution required to configure the app"""
 		for method in self.__dir__():
@@ -34,7 +37,7 @@ class BaseConfig():
 	def _verify(self, required_config):
 		"""Base verification method."""
 		for config in required_config:
-			if not config in self.app.config:
+			if not config in self.app.config or self.app.config[config] is None:
 				error = KeyError(f"No {config} in app.config")
 				error.key = config
 				raise error
