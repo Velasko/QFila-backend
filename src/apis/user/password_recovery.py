@@ -43,11 +43,12 @@ class PasswordRecovery(Resource):
 			duration=15
 		)
 
-		link = current_app.config['APPLICATION_HOSTNAME'] + "/user/passwordrecovery/" + escape(token)
+		link = current_app.config['APPLICATION_HOSTNAME'] + "/mail/passwordrecovery" + escape(token)
 
 		email = post(
-			'{}/mail/passwordrecovery'.format(current_app.config['APPLICATION_HOSTNAME']),
-			data=json.dumps({'link' : link, 'email' : email, 'name': user['name']}), headers=headers.json
+			'{}/mail/passwordrecovery'.format(current_app.config['MAIL_URL']),
+			data=json.dumps({'link' : link, 'email' : email, 'name': user['name']}),
+			headers=headers.json
 		)
 
 		if email.status_code == 404:
