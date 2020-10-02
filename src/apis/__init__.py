@@ -28,9 +28,6 @@ def config_api(app, libs):
 			app.register_blueprint(service.blueprint, url_prefix=f"/{service_name}")
 			api.add_namespace(service.ns)
 
-			if service_name == 'mail':
-				service.mail_scheduler.init_app(app)
-
 			config = importlib.import_module('.config', f"{__package__}.{service_name}")
 			configs.append(config.Config)
 

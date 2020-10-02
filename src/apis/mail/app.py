@@ -5,7 +5,7 @@ from flask_mail import Mail, Message
 from .sender import MailScheduler
 
 blueprint = Blueprint("Qfila mail api", __name__)
-api = Api(blueprint, version='0.1', title='Qfila-Mail', default='mail',
+api = Api(blueprint, version='0.1', title='Qfila-Mail',
 	description='A Mail REST interface for the Qfila application',
 )
 

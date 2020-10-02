@@ -26,7 +26,7 @@ if __name__ == '__main__':
 	config.configure(auto_verify=False)
 
 	#If some services were selected, there is default url only to those selected.
-	#The others will recieve None, which is considered a failure in config.verify.
+	#The others will recieve None, which is considered a failure in config.verify() .
 	url = f'http://{args.host}:{args.port}'
 	if args.services is None:
 		args.services = services_list
