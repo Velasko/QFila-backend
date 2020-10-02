@@ -29,7 +29,7 @@ class OrderReview(Resource):
 
 		rest_ids = ",".join(order.keys())
 		resp = get("{}/catalog/id/restaurant?restaurant=({})".format(
-						current_app.config["APPLICATION_HOSTNAME"],
+						current_app.config["CATALOG_URL"],
 						rest_ids
 						)
 					)
@@ -41,7 +41,7 @@ class OrderReview(Resource):
 		for rest_id, meals in order.items():
 			meal_keys = ",".join(meals.keys())
 			resp = get("{}/catalog/id/meal?restaurant={}?meal=({})".format(
-					current_app.config["APPLICATION_HOSTNAME"],
+					current_app.config["CATALOG_URL"],
 					rest_id,
 					meal_keys
 				),

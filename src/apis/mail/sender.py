@@ -29,8 +29,7 @@ class MailScheduler(Thread):
 				with self.server.connect() as conn:
 					for mail in self.mails:
 						msg = Message(**mail)
-						# print("email sent to:", mail['email'])
-						print('sent:', msg)
+						print("email sent to:", mail['recipients'])
 						# conn.send(msg)
 			self.mails = []
 
@@ -40,5 +39,8 @@ class MailScheduler(Thread):
 				time.sleep(60)
 				if len(self.mails) > 0:
 					self.send_mails()
-		finally:
-			self.send_mails()
+		except ConnectionRefusedError as e:
+			print(e)
+		else:
+			if len(self.mails) > 0:
+				self.send_mails()
