@@ -1,6 +1,6 @@
 import datetime
 
-from flask_restx import Resource
+from flask_restx import Resource, fields
 
 from .app import ns, api, session
 from .scheme import *
@@ -11,19 +11,45 @@ except ValueError:
 	#If running from inside apis folder
 	from utilities import payment
 
+meal_info = api.model("meal info", {
+	"meal" : fields.Integer(required=True, description="Meal id"),
+	"ammount" : fields.Integer(required=True, description="Ammount of this meal ordered"),
+	"comment" : fields.String(default="", description="Changes to the desired meal"),
+})
+
+rest = api.model("restaurant order", {
+	"rest" : fields.Integer(required=True, description="restaurant id"),
+	"meals" : fields.List(fields.Nested(meal_info), required=True,
+		description="List of meals to be ordered in this restaurant"
+	)
+})
+
+order = api.model("order", {
+	"order" : fields.List(fields.Nested(rest), required=True,
+		description="The order for each restaurant to be made"
+	),
+	"fee" : fields.Fixed(decimals=2, default=-1,
+		description="Raw value for the fee, if applicable"
+	),
+	"payment_method" : fields.String
+})
+
+
 @ns.route('/user/order')
 class CartHandler(Resource):
 
+	@ns.doc("Register order")
+	@ns.expect(order)
 	def post(self):
 		#separating each meal
 		order = []
-		for restaurant, meals in api.payload['order'].items():
-			for meal, mealinfo in meals.items():
+		for data in api.payload['order'].values():
+			restaurant = data['rest']
+			meals = data['meals']
+			for meal in meals.values():
 				order.append({
 					'rest' : restaurant,
-					'meal' : meal,
-					'ammount' : mealinfo["ammount"],
-					'comments' : mealinfo["comments"],
+					**meal
 				})
 
 		try:
