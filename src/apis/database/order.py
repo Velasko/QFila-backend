@@ -1,52 +1,44 @@
 import datetime
+import re
 
 from flask_restx import Resource, fields
+from sqlalchemy import exc
 
 from .app import ns, api, session
 from .scheme import *
 
 try:
 	from ..utilities import payment
+	from ..utilities.models.order import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import payment
+	from utilities.models.order import *
 
-meal_info = api.model("meal info", {
-	"meal" : fields.Integer(required=True, description="Meal id"),
-	"ammount" : fields.Integer(required=True, description="Ammount of this meal ordered"),
-	"comment" : fields.String(default="", description="Changes to the desired meal"),
-})
-
-rest = api.model("restaurant order", {
-	"rest" : fields.Integer(required=True, description="restaurant id"),
-	"meals" : fields.List(fields.Nested(meal_info), required=True,
-		description="List of meals to be ordered in this restaurant"
-	)
-})
-
-order = api.model("order", {
-	"order" : fields.List(fields.Nested(rest), required=True,
-		description="The order for each restaurant to be made"
-	),
-	"fee" : fields.Fixed(decimals=2, default=-1,
-		description="Raw value for the fee, if applicable"
-	),
-	"payment_method" : fields.String
-})
+api.add_model(meal_info.name, meal_info)
+api.add_model(rest.name, rest)
+api.add_model(payment_model.name, payment_model)
+api.add_model(order_contents.name, order_contents)
+api.add_model(order.name, order)
+api.add_model(db_order.name, db_order)
 
 
 @ns.route('/user/order')
 class CartHandler(Resource):
 
 	@ns.doc("Register order")
-	@ns.expect(order)
+	@ns.expect(db_order)
+	@ns.response(201, "Method executed successfully.")
+	@ns.response(400, "Bad payload")
+	@ns.response(409, "This order was already processed")
 	def post(self):
+
 		#separating each meal
 		order = []
-		for data in api.payload['order'].values():
+		for data in api.payload['order']:
 			restaurant = data['rest']
 			meals = data['meals']
-			for meal in meals.values():
+			for meal in meals:
 				order.append({
 					'rest' : restaurant,
 					**meal
@@ -54,24 +46,22 @@ class CartHandler(Resource):
 
 		try:
 			user = session.query(User).filter(User.email == api.payload['user']).first()
-			time = datetime.datetime.utcnow()
-			payment_method = api.payload['payment_method']
-			fee = api.payload['fee']
+			time = datetime.datetime.fromisoformat(api.payload['time'])
+			payment_method = api.payload['payment']['method']
 
 			items = []
 			total_price = 0
 			for item_data in order:
 				meal = session.query(Meal).filter(Meal.id == item_data['meal'], Meal.rest==item_data['rest']).first()
 				price = meal.price
-				item_price = price * int(item_data['ammount'])
+				item_price = price * getattr(item_data, 'ammount', 1)
 
 				total_price += item_price
 
 				item = Item(user=user.id, time=time, state='awaiting_payment', total_price=item_price, **item_data)
 				items.append(item)
 
-			if fee is None:
-				fee = payment.service_fee(total_price)
+			fee = getattr(api.payload, 'fee', payment.service_fee(total_price))
 
 			cart = Cart(time=time, user=user.id, order_total=total_price,
 				payment_method=payment_method, qfila_fee=fee
@@ -83,10 +73,16 @@ class CartHandler(Resource):
 				session.add(item)
 
 			session.commit()
+			return {}, 201
+		except exc.IntegrityError:
+			session.rollback()
+			return {'message' : 'This order was already made'}, 409
+		except exc.DataError as e:
+			session.rollback()
+			if "Data truncated for column \'payment_method\' at row 1" in e.args[0]:
+				return {'message' : "Invalid payment method"}, 400
+			raise(e)
 		except Exception as e:
 			session.rollback()
 			raise e
-			print("Inside catch")
 			api.abort(500)
-
-		return {}, 201

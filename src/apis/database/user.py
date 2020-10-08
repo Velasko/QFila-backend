@@ -214,7 +214,7 @@ class UserRecentsHandler(Resource):
 		).filter(
 			field == data
 		).order_by(
-			Item.time
+			Item.time.desc()
 		# ).distinct(
 		# 	# Restaurant
 		).limit(3)
