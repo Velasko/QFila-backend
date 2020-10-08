@@ -15,14 +15,14 @@ user = Model("User", {
 })
 
 meal = Model("Meal", {
-	"id": fields.Integer(required=True, description="Meal's id"),
 	"rest": fields.Integer(required=True, description="Restaurant's id"),
-	"name": fields.String(description="Meal's name"),
-	"foodtype": fields.String(required=True, description="Meal's type"),
 	"description": fields.String(description="Meal's description"),
+	"foodtype": fields.String(required=True, description="Meal's type"),
 	"section": fields.String(required=True, description="Restaurant's section on which this meal belongs to"),
-	"price": fields.Integer(required=True, description="Meal's price"),
+	"id": fields.Integer(required=True, description="Meal's id"),
 	"image": fields.String(description="Meal's image link"),
+	"price": fields.Integer(required=True, description="Meal's price"),
+	"name": fields.String(description="Meal's name"),
 })
 
 restaurant = Model("Restaurant", {
