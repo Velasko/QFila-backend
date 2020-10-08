@@ -12,6 +12,8 @@ class BaseConfig():
 		#url.com/test/ and url.com/test will be the same with this argument:
 		self.app.url_map.strict_slashes = False
 
+		self.app.config['RESTX_VALIDATE'] = True #doesn't seems to be working
+
 		self.app.config['TESTING'] = True
 		self.app.config['ENV'] = 'development'
 

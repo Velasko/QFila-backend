@@ -10,7 +10,7 @@ from .scheme import Base
 
 blueprint = Blueprint("Qfila database api", __name__)
 api = Api(blueprint, default='database', title="Qfila database api",
-	version='0.1', description='Database REST service',
+	version='0.1', description='Database REST service', validate=True
 )
 
 ns = Namespace('database')

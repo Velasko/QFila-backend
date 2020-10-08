@@ -15,7 +15,7 @@ except ValueError:
 
 blueprint = Blueprint("Qfila catalog api", __name__)
 api = Api(blueprint, default="catalog", title="Qfila catalog API",
-	version="0.1", description="Catalog REST service",
+	version="0.1", description="Catalog REST service", validate=True
 )
 
 ns = Namespace('catalog', description='Catalog queries')

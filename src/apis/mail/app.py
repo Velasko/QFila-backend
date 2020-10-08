@@ -6,7 +6,7 @@ from .sender import MailScheduler
 
 blueprint = Blueprint("Qfila mail api", __name__)
 api = Api(blueprint, version='0.1', title='Qfila-Mail',
-	description='A Mail REST interface for the Qfila application',
+	description='A Mail REST interface for the Qfila application', validate=True
 )
 
 ns = Namespace('mail')

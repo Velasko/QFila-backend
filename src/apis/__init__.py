@@ -1,7 +1,8 @@
 from flask_restx import Api
 
 api = Api(
-	title='Qfila'
+	title='Qfila', 
+	validate=True
 )
 
 #function created for the imports and adding the services to be runned here.
@@ -22,7 +23,8 @@ def config_api(app, libs):
 
 			for name, model in service.api.models.items():
 				if name in models:
-					raise NameError("Two models with the same name")
+					print(f"Two models with the same name: {name}")
+					continue
 				models[name] = model
 
 			app.register_blueprint(service.blueprint, url_prefix=f"/{service_name}")
