@@ -23,7 +23,6 @@ def config_api(app, libs):
 
 			for name, model in service.api.models.items():
 				if name in models:
-					print(f"Two models with the same name: {name}")
 					continue
 				models[name] = model
 
