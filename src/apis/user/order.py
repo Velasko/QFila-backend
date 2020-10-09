@@ -9,13 +9,19 @@ from .app import ns, api
 
 try:
 	from ..utilities import authentication, headers, payment
+	from ..utilities.models.order import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import authentication, headers, payment
+	from utilities.models.order import *
+
+for model in (meal_info, rest, payment_model, order_contents, order):
+	api.add_model(model.name, model)
 
 @ns.route('/order')
 class PlaceOrder(Resource):
 
+	@ns.expect(order)
 	@authentication.token_required()
 	def post(self, user):
 		"""This function expects a json with the fields "payment" and "order".
@@ -37,16 +43,13 @@ class PlaceOrder(Resource):
 		order = data['order']
 		payment_method = data['payment']['method']
 
-		fee = None
 		if 'fee' in order:
 			fee = order['fee']
 
 		resp = post('{}/database/user/order'.format(current_app.config['DATABASE_URL']),
 			json={
 				'user': user['email'],
-				'order' : order,
-				'payment_method' : payment_method,
-				'fee' : fee
+				**api.payload
 			},
 			headers=headers.json
 		)
@@ -56,7 +59,7 @@ class PlaceOrder(Resource):
 
 		resp = post('{}/mail/orderreview'.format(current_app.config['MAIL_URL']),
 			json={
-				'recipients' : (user['name'], user['email']),
+				'recipients' : {"name" : user['name'], "email" : user['email']},
 				'order' : order
 			},
 			headers=headers.json
