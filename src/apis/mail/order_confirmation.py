@@ -11,23 +11,28 @@ from . import template
 
 try:
 	from ..utilities import headers, payment
+	from ..utilities.models import order
 except ValueError:
 	#If running from inside apis folder
 	from utilities import headers, payment
+	from utilities.models import order
+
+for model in (order.meal_info, order.rest, order.order_contents, order.mail_order):
+	api.add_model(model.name, model)
 
 @ns.route('/orderreview')
 class OrderReview(Resource):
 	def decode(self, resp, data_type):
 		data = json.loads(resp.json())[data_type]
-		return { str(d['id']) : d for d in data}
+		return { d['id'] : d for d in data}
 
-
+	@ns.expect(order.mail_order)
 	def post(self):
 		data = api.payload
-		recipients = data['recipients']
+		recipients = list(data['recipients'].values())
 		order = data['order']
 
-		rest_ids = ",".join(order.keys())
+		rest_ids = ",".join([str(value['rest']) for value in order])
 		resp = get("{}/catalog/id/restaurant?restaurant=({})".format(
 						current_app.config["CATALOG_URL"],
 						rest_ids
@@ -38,8 +43,9 @@ class OrderReview(Resource):
 		total_value = 0
 
 		msg = template.head
-		for rest_id, meals in order.items():
-			meal_keys = ",".join(meals.keys())
+		for rest_order in order:
+			rest_id = rest_order['rest']
+			meal_keys = ",".join([str(meal['meal']) for meal in rest_order['meals']])
 			resp = get("{}/catalog/id/meal?restaurant={}?meal=({})".format(
 					current_app.config["CATALOG_URL"],
 					rest_id,
@@ -49,15 +55,14 @@ class OrderReview(Resource):
 			meal = self.decode(resp, 'meal')
 
 			rest_price = 0
-
 			msg += template.restaurant_body(rest[rest_id]['image'], rest[rest_id]['name'])
-			for meal_id, mealinfo in meals.items():
-				ammount = mealinfo['ammount']
-				ammt = int(ammount)
+			for meal_data in rest_order['meals']:
+				meal_id = meal_data['meal']
+				ammount = meal_data['ammount']
 				name = meal[meal_id]['name']
 				price = float(meal[meal_id]['price'])
 
-				rest_price += ammt * price
+				rest_price += ammount * price
 
 				msg += template.meal_body(name, ammount, price)
 
