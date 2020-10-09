@@ -8,9 +8,11 @@ from requests import post, get, put, delete
 
 try:
 	from ..utilities import headers
+	from ..utilities.models.catalog import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import headers
+	from utilities.models.catalog import *
 
 
 blueprint = Blueprint("Qfila catalog api", __name__)
@@ -21,10 +23,47 @@ api = Api(blueprint, default="catalog", title="Qfila catalog API",
 ns = Namespace('catalog', description='Catalog queries')
 api.add_namespace(ns)
 
-# @ns.route('/<string:qtype>')
-# @ns.route('/<string:qtype>/<string:keyword>')
-# @ns.route('(<string:category>/<string:qtype>/<string:keyword>')
-@ns.route('/<path:path>')
+for model in (meal, restaurant, foodcourt, catalog_response):
+	api.add_model(model.name, model)
+
+
+category_doc = """Possible categories of queries:
+	- id;
+	- name;
+	- type."""
+
+type_doc = """Possible types of returns:
+	- meal;
+	- restaurant;
+	- location."""
+
+parser = ns.parser()
+parser.add_argument("page", type=int, default=1)
+parser.add_argument("pagesize", type=int, default=5)
+
+parser.add_argument("city", type=str, default='fortaleza')
+parser.add_argument("state", type=str, default='ceara')
+
+parser.add_argument("courts", type=int, default=5,
+	help="Defines the ammount of food courts which should be fetched."
+)
+
+id_help = "If it's an id based query, this argument might be required."
+parser.add_argument("meal", type=int, help=id_help)
+parser.add_argument("restaurant", type=int, help=id_help)
+parser.add_argument("foodcourt", type=int, help=id_help)
+
+non_id_help = "If it's **NOT** an id based query, this argument is required."
+
+parser.add_argument("keyword", type=str, default="",
+	help=non_id_help + "\nUsed to filter by name or type. If not parsed/empty, will match every possibility. "
+)
+
+parser.add_argument('latitude', type=float, help=non_id_help)
+parser.add_argument('longitude', type=float, help=non_id_help)
+
+# @ns.route('/<path:path>')
+@ns.route('/<string:category>/<string:qtype>')
 class Catalog(Resource):
 	def __init__(self, *args, **kwargs):
 		"""
@@ -119,10 +158,32 @@ class Catalog(Resource):
 
 		return args
 
-	def get(self, path):
-		"""Method to query meals, restaurants and locations"""
+	@ns.doc(params={'category' : category_doc, 'qtype' : type_doc})
+	@ns.expect(parser)
+	@ns.response(200, "Method executed successfully", model=catalog_response)
+	@ns.response(404, "Couldn't find anything")
+	def get(self, category, qtype):
+		"""Method to query meals, restaurants and locations
+
+		The url should be something of the sort:
+		http://qfila.com/catalog/{category}/{type}?argument=value
+
+		How to use ID on the queries:
+
+			- With MEAL type query:
+				- If it's desired to search for a specific meal, parse both meal **and** restaurant's id.
+				- If it's desired to fetch a specific part of the restaurant's menu, parse a list of meals ids and a single restaurant's id.
+				- If it's desired to get **all** restaurant's meal, parse only the restaurant's.
+
+			- With RESTAURANT type query:
+				- If it's desired to search for a specific restaurant, it's only needed to parse the restaurant's id.
+				- If it's desired to fetch all restaurants in a food court, parse only the food court's id.
+
+			- With FOODCOURT type query:
+				- Parse the food court's id to retrieve.
+		"""
 		try:
-			category, qtype = self.match(path.lower())
+			# category, qtype = self.match(path.lower())
 
 			args = self.argument_parser(category, **dict(request.args))
 			args['category'] = category
@@ -136,13 +197,13 @@ class Catalog(Resource):
 		if qtype == 'all':
 			raise NotImplemented("Yet to assemble the junction of queries")
 
-		resp = get(
+		resp = post(
 			'{}/database/catalog'.format(current_app.config['DATABASE_URL']),
 			data=json.dumps(args),
 			headers=headers.json
 		)
 
-		if resp.status_code != 200:
-			return { 'message' : 'Error in query'}, resp.status_code
+		if not resp.status_code in (200, 404):
+			return { 'message' : 'Unexpected behaviour!' }, 500
 
-		return resp.json()
+		return resp.json(), resp.status_code

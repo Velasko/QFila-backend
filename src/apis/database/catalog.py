@@ -6,6 +6,15 @@ from flask_restx import Resource
 from .app import ns, session, api
 from .scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize
 
+try:
+	from ..utilities.models.catalog import *
+except ValueError:
+	#If running from inside apis folder
+	from utilities.models.catalog import *
+
+for model in (meal, restaurant, foodcourt, catalog_query, catalog_response):
+	api.add_model(model.name, model)
+
 @ns.route('/catalog')
 class CatalogHandler(Resource):
 
@@ -174,7 +183,9 @@ class CatalogHandler(Resource):
 
 
 	# @ns.expect(catalog_query)
-	def get(self):
+	@ns.response(200, "Method executed successfully", model=catalog_response)
+	@ns.response(404, "Couldn't find anything")
+	def post(self):
 		query_params = api.payload
 
 		qtype = query_params['type']
@@ -214,6 +225,9 @@ class CatalogHandler(Resource):
 		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
 		query = query.offset(offset).limit(limit)
 
-		response[query_params['type']] = [ safe_serialize(item) for item in query.all() ]
+		if query.count() == 0:
+			return {'message' : 'Nothing found'}, 404
 
-		return json.dumps(response), 200
+		response = { query_params['type'] : safe_serialize(item) for item in query.all() }
+
+		return json.dumps(response), code
