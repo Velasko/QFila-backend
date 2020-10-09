@@ -15,13 +15,8 @@ except ValueError:
 	from utilities import payment
 	from utilities.models.order import *
 
-api.add_model(meal_info.name, meal_info)
-api.add_model(rest.name, rest)
-api.add_model(payment_model.name, payment_model)
-api.add_model(order_contents.name, order_contents)
-api.add_model(order.name, order)
-api.add_model(db_order.name, db_order)
-
+for model in (meal_info, rest, payment_model, order_contents, order, db_order):
+	api.add_model(model.name, model)
 
 @ns.route('/user/order')
 class CartHandler(Resource):
