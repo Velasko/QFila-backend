@@ -15,8 +15,9 @@ from . import headers
 HASH_METHOD = 'sha256'
 
 class token_required():
-	def __init__(self, *args):
-		pass
+	def __init__(self, *args, namespace=None, expect=[]):
+		self.ns = namespace
+		self.expect = expect
 
 	def __call__(self, f):
 		@wraps(f)
@@ -51,6 +52,12 @@ class token_required():
 			#The self obj is actually the first item in args.
 			#parsing "f(current_user, *args, **kwargs)" leads to a headache in the function 
 			return f(args[0], current_user, *args[1:], **kwargs)
+
+		if not self.ns is None:
+			parser = self.ns.parser()
+			parser.add_argument('token', help="Authentication token", location='headers')
+			decorator = self.ns.expect(parser, *self.expect)(decorator)
+
 		return decorator
 
 
