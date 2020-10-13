@@ -16,7 +16,7 @@ except ValueError:
 @ns.route("/recent/<string:mode>")
 class Recent(Resource):
 
-	@authentication.token_required()
+	@authentication.token_required(namespace=ns)
 	def get(self, user, mode=None):
 		"""Get recent restaurants"""
 

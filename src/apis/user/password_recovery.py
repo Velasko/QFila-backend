@@ -47,7 +47,7 @@ class PasswordRecovery(Resource):
 
 		email = post(
 			'{}/mail/passwordrecovery'.format(current_app.config['MAIL_URL']),
-			data=json.dumps({'link' : link, 'email' : email, 'name': user['name']}),
+			data=json.dumps({'link' : link, 'recipients' : {'email' : email, 'name': user['name']}}),
 			headers=headers.json
 		)
 
@@ -57,7 +57,7 @@ class PasswordRecovery(Resource):
 		return email.json(), email.status_code, email.headers.items()
 		# except:
 
-	@authentication.token_required()
+	@authentication.token_required(namespace=ns)
 	def put(self, user):
 		passwd = api.payload['passwd']
 

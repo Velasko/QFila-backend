@@ -22,7 +22,7 @@ for model in (meal_info, rest, payment_model, order_contents, order):
 class PlaceOrder(Resource):
 
 	@ns.expect(order)
-	@authentication.token_required()
+	@authentication.token_required(namespace=ns)
 	def post(self, user):
 		"""This function expects a json with the fields "payment" and "order".
 		 - Payment : Must parse the payment data. (Yet to know which are those)

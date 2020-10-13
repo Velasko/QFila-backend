@@ -78,7 +78,7 @@ class Auth(Resource):
 @ns.route("/test")
 class User(Resource):
 
-	@authentication.token_required()
+	@authentication.token_required(namespace=ns)
 	def get(self, user):
 		#curl -X GET "http://localhost:5000/user/test" -H "accept: application/json" -H  "Content-Type: application/json" -H "token: "
 		return user, 200
