@@ -15,7 +15,7 @@ from . import headers
 HASH_METHOD = 'sha256'
 
 class token_required():
-	def __init__(self, *args, namespace=None, expect=[]):
+	def __init__(self, namespace, *args, expect=[]):
 		self.ns = namespace
 		self.expect = expect
 
@@ -45,9 +45,9 @@ class token_required():
 				#token expired
 				return {'message' : 'Token expired'}, 498
 			except TypeError:
-				return {'message' : 'could not connect to database'}
+				return {'message' : 'could not connect to database'}, 503
 			except:
-				return {'message': 'Authentication required'}
+				return {'message': 'Authentication required'}, 499
 
 			#The self obj is actually the first item in args.
 			#parsing "f(current_user, *args, **kwargs)" leads to a headache in the function 
@@ -57,6 +57,9 @@ class token_required():
 			parser = self.ns.parser()
 			parser.add_argument('token', help="Authentication token", location='headers')
 			decorator = self.ns.expect(parser, *self.expect)(decorator)
+			decorator = self.ns.response(498, "Token expired")(decorator)
+			decorator = self.ns.response(499, "Authentication required")(decorator)
+			decorator = self.ns.response(503, "Servica unavailable. (Likely could not connect to database)")(decorator)
 
 		return decorator
 
