@@ -15,9 +15,10 @@ from . import headers
 HASH_METHOD = 'sha256'
 
 class token_required():
-	def __init__(self, namespace, *args, expect=[]):
+	def __init__(self, namespace, *args, expect_args=[], expected_kwargs={}):
 		self.ns = namespace
-		self.expect = expect
+		self.expect_args = expect_args
+		self.expected_kwargs = expected_kwargs
 
 	def __call__(self, f):
 		@wraps(f)
@@ -56,7 +57,7 @@ class token_required():
 		if not self.ns is None:
 			parser = self.ns.parser()
 			parser.add_argument('token', help="Authentication token", location='headers')
-			decorator = self.ns.expect(parser, *self.expect)(decorator)
+			decorator = self.ns.expect(parser, *self.expect_args, **self.expected_kwargs)(decorator)
 			decorator = self.ns.response(498, "Token expired")(decorator)
 			decorator = self.ns.response(499, "Authentication required")(decorator)
 			decorator = self.ns.response(503, "Servica unavailable. (Likely could not connect to database)")(decorator)
