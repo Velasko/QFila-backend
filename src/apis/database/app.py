@@ -13,7 +13,7 @@ api = Api(blueprint, default='database', title="Qfila database api",
 	version='0.1', description='Database REST service', validate=True
 )
 
-ns = Namespace('database')
+ns = Namespace('database', description="database operations")
 api.add_namespace(ns)
 
 engine = create_engine(os.getenv('DATABASE_URI'))

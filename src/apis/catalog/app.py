@@ -133,7 +133,7 @@ class Catalog(Resource):
 				if mrf in raw_args:
 					args['id'][mrf] = raw_args[mrf]
 				else:
-					args['id'][mrf] = None
+					args['id'][mrf] = []
 		else:
 			if 'keyword' in raw_args:
 				args['keyword'] = raw_args['keyword']
