@@ -12,3 +12,11 @@ history = Model("History", {
 	'meals' : fields.List(fields.Nested(meal)),
 	'restaurants' : fields.List(fields.Nested(restaurant))
 })
+
+login_model = id.inherit("user.login", {
+	'passwd' : fields.String(required=True, description="User's password")
+})
+
+token = Model("token", {
+	'token' : fields.String(required=True)
+})

@@ -55,7 +55,7 @@ class UserHandler(Resource):
 			#checking obligatory fields and modifying as required.
 			data['birthday'] = date.fromisoformat(data['birthday'])
 			if not checkers.age_check(data['birthday']):
-				api.abort(403, "User below 12 years old")
+				return {'message' : "User below 12 years old"}, 403
 
 			data['name'] = data['name'].lower()
 			data['email'] = data['email'].lower()
