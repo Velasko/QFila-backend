@@ -27,6 +27,7 @@ class CartHandler(Resource):
 	@ns.response(400, "Bad payload")
 	@ns.response(409, "This order was already processed")
 	def post(self):
+		"""Register order"""
 
 		#separating each meal
 		order = []

@@ -3,7 +3,7 @@ import json
 import jwt
 
 from functools import wraps
-from requests import get
+from requests import get, exceptions
 
 from flask import request, current_app
 
@@ -45,7 +45,7 @@ class token_required():
 			except jwt.ExpiredSignatureError as e:
 				#token expired
 				return {'message' : 'Token expired'}, 498
-			except TypeError:
+			except exceptions.ConnectionError:
 				return {'message' : 'could not connect to database'}, 503
 			except:
 				return {'message': 'Authentication required'}, 499
