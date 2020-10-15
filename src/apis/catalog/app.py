@@ -4,7 +4,7 @@ import re
 from flask import Blueprint, request, current_app
 from flask_restx import Api, Resource, Namespace, fields, reqparse
 
-from requests import post, get, put, delete
+from requests import post, exceptions
 
 try:
 	from ..utilities import headers
@@ -162,6 +162,7 @@ class Catalog(Resource):
 	@ns.expect(parser)
 	@ns.response(200, "Method executed successfully", model=catalog_response)
 	@ns.response(404, "Couldn't find anything")
+	@ns.response(503, "Could not stablish connection to database")
 	def get(self, category, qtype):
 		"""Method to query meals, restaurants and locations
 
@@ -197,11 +198,14 @@ class Catalog(Resource):
 		if qtype == 'all':
 			raise NotImplemented("Yet to assemble the junction of queries")
 
-		resp = post(
-			'{}/database/catalog'.format(current_app.config['DATABASE_URL']),
-			data=json.dumps(args),
-			headers=headers.json
-		)
+		try:
+			resp = post(
+				'{}/database/catalog'.format(current_app.config['DATABASE_URL']),
+				data=json.dumps(args),
+				headers=headers.json
+			)
+		except exceptions.ConnectionError:
+			return {'message': 'could not stablish connection to database'}, 503
 
 		if not resp.status_code in (200, 404):
 			return { 'message' : 'Unexpected behaviour!' }, 500
