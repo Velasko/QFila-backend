@@ -29,26 +29,38 @@ class token_required():
 				token = request.headers['Token']
 
 			if not token:
-				return {'message': 'Authentication required'}
+				return {'message': 'Authentication required'}, 499
 
 			try:
 				data = jwt.decode(token, current_app.config['SECRET_KEY'])
+			except jwt.ExpiredSignatureError as e:
+				#token expired
+				return {'message' : 'Token expired'}, 498
+			except jwt.exceptions.DecodeError:
+				return {'message' : 'Token invalid'}, 498
+
+			if data['email'] is None:
+				id_key = 'phone'
+			else:
+				id_key = 'email'
+
+			try:
 				resp = get(
-					'{}/database/user'.format(current_app.config['DATABASE_URL']),
-					data=json.dumps({'email': data['email']}), headers=headers.json
+					'{}/database/user/{}/{}'.format(
+						current_app.config['DATABASE_URL'],
+						id_key,
+						data[id_key]
+					),
 				)
 				current_user = resp.json()
 
 				if current_user['passwd'] != data['passwd']:
 					raise Exception()
 
-			except jwt.ExpiredSignatureError as e:
-				#token expired
-				return {'message' : 'Token expired'}, 498
 			except exceptions.ConnectionError:
 				return {'message' : 'could not connect to database'}, 503
-			except:
-				return {'message': 'Authentication required'}, 499
+			# except:
+			# 	return {'message': 'Authentication required'}, 499
 
 			#The self obj is actually the first item in args.
 			#parsing "f(current_user, *args, **kwargs)" leads to a headache in the function 
@@ -58,7 +70,7 @@ class token_required():
 			parser = self.ns.parser()
 			parser.add_argument('token', help="Authentication token", location='headers')
 			decorator = self.ns.expect(parser, *self.expect_args, **self.expected_kwargs)(decorator)
-			decorator = self.ns.response(498, "Token expired")(decorator)
+			decorator = self.ns.response(498, "Token expired or invalid")(decorator)
 			decorator = self.ns.response(499, "Authentication required")(decorator)
 			decorator = self.ns.response(503, "Servica unavailable. (Likely could not connect to database)")(decorator)
 
@@ -81,6 +93,7 @@ def passwd_check(user, auth_attempt, config=None):
 	if check_password_hash(user['passwd'], auth_attempt['passwd']):
 		token = jwt.encode({
 			'email' : user['email'],
+			'phone' : user['phone'],
 			'passwd' : user['passwd'],
 			'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=config['session_ttl'])},
 			config['SECRET_KEY']
