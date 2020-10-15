@@ -29,9 +29,6 @@ order_contents = Model("order.contents", {
 })
 
 order = order_contents.inherit("order", {
-	# "order" : fields.List(fields.Nested(rest), required=True,
-	# 	description="The order for each restaurant to be made"
-	# ),
 	"fee" : fields.Fixed(decimals=2, default=None, min=0,
 		description="Raw value for the fee, if applicable"
 	),
