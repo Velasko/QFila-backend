@@ -174,7 +174,7 @@ class UserHandler_UrlParse(Resource):
 @ns.route('/user/recents/<string:query_mode>/email/<string:email>')
 class UserRecentsHandler(Resource):
 
-	@ns.doc("Get user's recent meals or restaurants")
+	@ns.doc("Get user's recent meals or restaurants", params={'query_mode' : "Query mode must be 'meals' or 'restaurants'"})
 	@ns.response(200, "Method executed successfully.", model=history)
 	@ns.response(400, "Invalid payload")
 	@ns.response(404, "Query type isn't neiter 'meals' nor 'restaurants'")
