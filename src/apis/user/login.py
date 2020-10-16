@@ -72,7 +72,12 @@ class Register(Resource):
 
 		for key, value in data.items():
 			if key == 'passwd':
-				data['passwd'] = authentication.hash_password(data['passwd'])
+				passwd = data['passwd']
+				data['passwd'] = authentication.hash_password(passwd)
+
+				if authentication.passwd_check(data['passwd'], passwd):
+					return {'message' : 'error in hashing password'}, 500
+
 			elif 'birthday' == value:
 				date = date.fromisoformat(value)
 				if not checkers.age_check(date):
