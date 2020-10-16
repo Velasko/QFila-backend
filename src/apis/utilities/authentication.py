@@ -8,11 +8,11 @@ from requests import get, exceptions
 from flask import request, current_app
 
 #password hash
-from werkzeug.security import generate_password_hash, check_password_hash
+from argon2 import PasswordHasher, exceptions
 
 from . import headers
 
-HASH_METHOD = 'sha256'
+HASHER = PasswordHasher()
 
 class token_required():
 	def __init__(self, namespace, *args, expect_args=[], expected_kwargs={}):
@@ -39,10 +39,12 @@ class token_required():
 			except jwt.exceptions.DecodeError:
 				return {'message' : 'Token invalid'}, 498
 
-			if data['email'] is None:
+			if 'email' in data and not data['email'] is None:
+				id_key = 'email'
+			elif 'email' in data and not data['email'] is None:
 				id_key = 'phone'
 			else:
-				id_key = 'email'
+				return {'message' : 'Token invalid'}, 498
 
 			try:
 				resp = get(
@@ -55,7 +57,7 @@ class token_required():
 				current_user = resp.json()
 
 				if current_user['passwd'] != data['passwd']:
-					raise Exception()
+					return {'message': 'Authentication required'}, 499
 
 			except exceptions.ConnectionError:
 				return {'message' : 'could not connect to database'}, 503
@@ -78,29 +80,45 @@ class token_required():
 
 
 def passwd_check(user, auth_attempt, config=None):
-	"""Function to check if the user authentication is correct and returns a token
-	if it is.
+	"""Function to check if the user authentication is correct.
+	If valid: tries to generate a token; if fails returns True.
 
-	Parameters:
-	 - user : dict. Must contain 'email' and 'passwd' fields
-	 - auth_attempt: dict. Must contain 'passwd' field.
-	 - config: dict. Application's dictionary with it's secret key and session time to live.
+	If invalid: raises KeyError
 	"""
 
 	if config is None:
 		config = current_app.config
 
-	if check_password_hash(user['passwd'], auth_attempt['passwd']):
-		token = jwt.encode({
-			'email' : user['email'],
-			'phone' : user['phone'],
-			'passwd' : user['passwd'],
-			'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=config['session_ttl'])},
-			config['SECRET_KEY']
-		)
+	if isinstance(user, str):
+		user_pass = user
+		user_type = str
+	else:
+		user_type = dict
+		user_pass = user['passwd']
 
-		return token.decode('UTF-8')
-	raise KeyError('invalid password')
+	if isinstance(auth_attempt, str):
+		auth_pass = user
+	else:
+		auth_pass = user['passwd']
+
+	try:
+		HASHER.verify(user_pass, auth_pass)
+
+		if user_type == str:
+			return True
+		else:
+			token = jwt.encode({
+				'email' : user['email'],
+				'phone' : user['phone'],
+				'passwd' : user['passwd'],
+				'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=config['session_ttl'])},
+				config['SECRET_KEY']
+			)
+
+			return token.decode('UTF-8')
+
+	except exceptions.VerifyMismatchError:
+		raise KeyError('invalid password')
 
 def generate_token(data, config, duration=None):
 	"""This function generates a token with an expiration time.
@@ -118,5 +136,5 @@ def generate_token(data, config, duration=None):
 	token = jwt.encode(data, config['SECRET_KEY']).decode('UTF-8')
 	return token
 
-def hash_password(passwd, hash=HASH_METHOD):
-	return generate_password_hash(passwd, hash)
+def hash_password(passwd):
+	return HASHER.hash(passwd)
