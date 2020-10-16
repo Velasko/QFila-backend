@@ -30,6 +30,7 @@ class MailScheduler(Thread):
 					for mail in self.mails:
 						msg = Message(**mail)
 						print("email sent to:", mail['recipients'])
+						print(mail['html'])
 						# conn.send(msg)
 			self.mails = []
 

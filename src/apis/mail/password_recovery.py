@@ -23,7 +23,7 @@ class PasswordRecovery(Resource):
 
 		msg = {
 			'subject' : "Requisição de mudança de senha do Qfila",
-			'recipients' : [(name, email)],
+			'recipients' : recipients,
 			'html' : f'Você requisitou uma mudança de senha. <a href="{link}">Clique aqui</a>'
 		}
 
