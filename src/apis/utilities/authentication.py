@@ -97,9 +97,9 @@ def passwd_check(user, auth_attempt, config=None):
 		user_pass = user['passwd']
 
 	if isinstance(auth_attempt, str):
-		auth_pass = user
+		auth_pass = auth_attempt
 	else:
-		auth_pass = user['passwd']
+		auth_pass = auth_attempt['passwd']
 
 	try:
 		HASHER.verify(user_pass, auth_pass)
@@ -117,8 +117,10 @@ def passwd_check(user, auth_attempt, config=None):
 
 			return token.decode('UTF-8')
 
-	except exceptions.VerifyMismatchError:
-		raise KeyError('invalid password')
+	except exceptions.VerifyMismatchError as e:
+		print(e)
+		# return False
+		raise KeyError('wrong password')
 
 def generate_token(data, config, duration=None):
 	"""This function generates a token with an expiration time.
