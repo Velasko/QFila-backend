@@ -213,21 +213,15 @@ class ForgottenPassword(Resource):
 		header = headers.json.copy()
 		header['token'] = token
 
-		# print("Igualdade:", '{}/user/changepassword/'.format(current_app.config['APPLICATION_HOSTNAME']) == "http://localhost:5000/user/changepassword")
-		# print('{}/user/changepassword/'.format(current_app.config['APPLICATION_HOSTNAME']))
-		# print("http://localhost:5000/user/changepassword")
-
 		try:
 			resp = put(
 				'{}/user/changepassword'.format(current_app.config['APPLICATION_HOSTNAME']),
 				data=json.dumps({'passwd': passwd}), headers=header
 			)
 		except exceptions.ConnectionError:
-			return {'message' : "email service unavailable"}, 503
+			return {'message' : "service unavailable"}, 503
 
 		if resp.status_code == 200:
 			return "Senha modificada com sucesso", resp.status_code, {'Content-Type': 'text/html'}
 
-		# print(dir(resp))
-		# print(resp.raw)
 		#send notification of password change (email/phone)
