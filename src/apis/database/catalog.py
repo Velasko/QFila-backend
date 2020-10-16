@@ -4,7 +4,7 @@ from flask import current_app
 from flask_restx import Resource
 
 from .app import ns, session, api
-from .scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize
+from .scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, Item, safe_serialize
 
 @ns.route('/catalog')
 class CatalogHandler(Resource):
@@ -217,3 +217,37 @@ class CatalogHandler(Resource):
 		response[query_params['type']] = [ safe_serialize(item) for item in query.all() ]
 
 		return json.dumps(response), 200
+
+
+@ns.route("/catalog/restaurant/<int:rest_id>/categories")
+class RestaurantCategories(Resource):
+
+	@ns.doc(params={"rest_id" : "Restaurant'is id to get it's menu categories"})
+	def get(self, rest_id):
+		query = session.query(MenuSection.name).filter(MenuSection.rest == rest_id)
+
+		return [item[0] for item in query.all()]
+
+@ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")
+class RestaurantMenu(Resource):
+
+	@ns.doc(params={
+		'rest_id' : "Restaurant's id to get data from.",
+		'qtype' : "Type of search (name|foodtype|section)",
+		'keyword' : "Keyword to search by"
+		})
+	def get(self, rest_id, qtype, keyword):
+		"""
+			- Name
+			- meal type (foodtype)
+			- restaurant's category (section)
+		"""
+
+		query = session.query(
+				Meal
+			).filter(
+				Meal.rest == rest_id,
+				getattr(Meal, qtype).like(f"%{keyword}%")
+			)
+
+		return [safe_serialize(item) for item in query.all()]
