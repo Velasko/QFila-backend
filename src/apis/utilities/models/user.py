@@ -4,7 +4,7 @@ from flask_restx.model import Model
 from .database import user, meal, restaurant
 
 id = Model('Identifyiers', {
-	'email' : fields.String(required=True, description='User email'),
+	'email' : fields.String(description='User email'),
 	'phone' : fields.Integer(description='User phone number')
 })
 
@@ -19,4 +19,8 @@ login_model = id.inherit("user.login", {
 
 token = Model("token", {
 	'token' : fields.String(required=True)
+})
+
+passwd = Model("password", {
+	'passwd' : fields.String(required=True)
 })
