@@ -193,7 +193,6 @@ class CatalogHandler(Resource):
 
 		if query_params['category'] == 'id':
 			kwargs = query_params['id']
-			print('IDS:', kwargs)
 		else:
 			location = query_params['location']
 			kwargs = {
@@ -228,6 +227,6 @@ class CatalogHandler(Resource):
 		if query.count() == 0:
 			return {'message' : 'Nothing found'}, 404
 
-		response = { query_params['type'] : safe_serialize(item) for item in query.all() }
+		response = { query_params['type'] : [safe_serialize(item) for item in query.all()] }
 
 		return json.dumps(response), 200
