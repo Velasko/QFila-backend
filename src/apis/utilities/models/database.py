@@ -2,10 +2,10 @@ from flask_restx import fields
 from flask_restx.model import Model
 
 user = Model("User", {
-	'name' : fields.String(required=True, description='User name'),
-	'email' : fields.String(required=True, description='User email'),
-	'passwd' : fields.String(required=True, description='User password'),
-	'birthday' : fields.Date(required=True, description='User birthday', dt_format="iso8601"),
+	'name' : fields.String(description='User name'),
+	'email' : fields.String(description='User email'),
+	'passwd' : fields.String(description='User password'),
+	'birthday' : fields.Date(description='User birthday', dt_format="iso8601"),
 	'phone' : fields.Integer(description='User phone number')
 })
 
