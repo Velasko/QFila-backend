@@ -48,7 +48,7 @@ parser.add_argument("courts", default=5,
 	help="Defines the ammount of food courts which should be fetched."
 )
 
-id_help = "If it's an id based query, this argument might be required."
+id_help = "If it's an id based query, this argument might be required (check at the top). Those arguments are expected to have a parenthesys, to be some sort of list."
 parser.add_argument("meal", type=tuple, help=id_help)
 parser.add_argument("restaurant", type=tuple, help=id_help)
 parser.add_argument("foodcourt", type=tuple, help=id_help)
