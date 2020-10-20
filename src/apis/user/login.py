@@ -75,7 +75,9 @@ class Register(Resource):
 				passwd = data['passwd']
 				data['passwd'] = authentication.hash_password(passwd)
 
-				if authentication.passwd_check(data['passwd'], passwd):
+				try:
+					authentication.passwd_check(data['passwd'], passwd)
+				except KeyError:
 					return {'message' : 'error in hashing password'}, 500
 
 			elif 'birthday' == value:

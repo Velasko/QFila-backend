@@ -94,8 +94,9 @@ class ChangePassword(Resource):
 		passwd = api.payload['passwd']
 		passwd_hash = authentication.hash_password(passwd)
 
-		if not authentication.passwd_check(passwd_hash, passwd):
-			#rethink of returned code
+		try:
+			authentication.passwd_check(passwd_hash, passwd)
+		except KeyError:
 			return {'message' : 'error in hashing password'}, 500
 
 		data = {
