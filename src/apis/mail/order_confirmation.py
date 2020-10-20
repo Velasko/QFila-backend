@@ -26,6 +26,7 @@ class OrderReview(Resource):
 		data = json.loads(resp.json())[data_type]
 		return { d['id'] : d for d in data}
 
+	@ns.response(201, "Email added to the queue")
 	@ns.expect(order.mail_order)
 	def post(self):
 		data = api.payload

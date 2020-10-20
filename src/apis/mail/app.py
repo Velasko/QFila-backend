@@ -9,7 +9,7 @@ api = Api(blueprint, version='0.1', title='Qfila-Mail',
 	description='A Mail REST interface for the Qfila application', validate=True
 )
 
-ns = Namespace('mail')
+ns = Namespace('mail', description="Mail service")
 api.add_namespace(ns)
 
 mail = Mail()
