@@ -23,7 +23,7 @@ api = Api(blueprint, default="catalog", title="Qfila catalog API",
 ns = Namespace('catalog', description='Catalog queries')
 api.add_namespace(ns)
 
-for model in (meal, restaurant, foodcourt, catalog_response):
+for model in (meal, restaurant, foodcourt):
 	api.add_model(model.name, model)
 
 
@@ -41,17 +41,17 @@ parser = ns.parser()
 parser.add_argument("page", type=int, default=1)
 parser.add_argument("pagesize", type=int, default=5)
 
-parser.add_argument("city", type=str, default='fortaleza')
-parser.add_argument("state", type=str, default='ceara')
+parser.add_argument("city", default='fortaleza')
+parser.add_argument("state", default='ceara')
 
-parser.add_argument("courts", type=int, default=5,
+parser.add_argument("courts", default=5,
 	help="Defines the ammount of food courts which should be fetched."
 )
 
 id_help = "If it's an id based query, this argument might be required."
-parser.add_argument("meal", type=int, help=id_help)
-parser.add_argument("restaurant", type=int, help=id_help)
-parser.add_argument("foodcourt", type=int, help=id_help)
+parser.add_argument("meal", type=tuple, help=id_help)
+parser.add_argument("restaurant", type=tuple, help=id_help)
+parser.add_argument("foodcourt", type=tuple, help=id_help)
 
 non_id_help = "If it's **NOT** an id based query, this argument is required."
 
@@ -131,7 +131,15 @@ class Catalog(Resource):
 			args['id'] = {}
 			for mrf in ('meal', 'restaurant', 'foodcourt'):
 				if mrf in raw_args:
-					args['id'][mrf] = raw_args[mrf]
+					if isinstance(raw_args[mrf], str):
+						try:
+							args['id'][mrf]  = [ int(item) for item in  raw_args[mrf].strip("()[]").split(",")]
+						except ValueError:
+							return {'message' : f'{mrf} field is invalid'}
+					elif isinstance(raw_args[mrf], int):
+						args['id'][mrf] = [raw_args[mrf]]
+					else:
+						args['id'][mrf] = raw_args[mrf]
 				else:
 					args['id'][mrf] = []
 		else:
@@ -184,7 +192,6 @@ class Catalog(Resource):
 				- Parse the food court's id to retrieve.
 		"""
 		try:
-			# category, qtype = self.match(path.lower())
 
 			args = self.argument_parser(category, **dict(request.args))
 			args['category'] = category
