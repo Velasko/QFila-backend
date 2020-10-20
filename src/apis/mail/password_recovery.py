@@ -29,3 +29,20 @@ class PasswordRecovery(Resource):
 
 		mail_scheduler.append(msg)
 		return {'message' : 'email added to queue'}, 201
+
+@ns.route("/passwordrecovery/notify")
+class NotifyPasswordRecovery(Resource):
+
+	@ns.expect(email_model)
+	@ns.response(201, "Email added to the queue")
+	def post(self):
+		recipients = [recipient.values() for recipient in api.payload['recipients']]
+
+		msg = {
+			'subject' : "Senha modificada com sucesso!",
+			'recipients' : recipients,
+			'html' : f'Olá, {recipients[0][0]}! Sua senha Qfila foi modificada com sucesso.'
+		}
+
+		mail_scheduler.append(msg)
+		return {'message' : 'email added to queue'}, 201
