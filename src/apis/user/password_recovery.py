@@ -87,18 +87,22 @@ class PasswordRecovery(Resource):
 class ChangePassword(Resource):
 
 	@ns.response(200, "Password modified successfully.")
+	@ns.response(503, "Database/email/phone service unavailable.")
 	@authentication.token_required(namespace=ns, expect_args=[passwd])
 	def put(self, user):
 		"""Official method to modify the user's password"""
 
+		#Generating password hash
 		passwd = api.payload['passwd']
 		passwd_hash = authentication.hash_password(passwd)
 
+		#Verifying the hash is properly working
 		try:
 			authentication.passwd_check(passwd_hash, passwd)
 		except KeyError:
 			return {'message' : 'error in hashing password'}, 500
 
+		#Generating payload to send to database
 		data = {
 			'passwd' : passwd_hash
 		}
@@ -108,6 +112,7 @@ class ChangePassword(Resource):
 		else:
 			key = 'phone'
 
+		#Updating password in database
 		try:
 			resp = put('{}/database/user/{}/{}'.format(
 					current_app.config['DATABASE_URL'],
@@ -117,11 +122,31 @@ class ChangePassword(Resource):
 				data=json.dumps(data), headers=headers.json
 			)
 		except exceptions.ConnectionError:
-			return {'message' : "email service unavailable"}, 503
+			return {'message' : "database service unavailable"}, 503
 
-		if resp.status_code == 200:
-			return resp.json(), 200, resp.headers.items()
-		return {'message' : 'Unexpected answer from database'}, 500
+		if resp.status_code != 200:
+			return {'message' : 'Unexpected answer from database'}, 500
+		
+		#Notifying user of password change
+		if key == 'email':
+			try:
+				resp = post('{}/mail/passwordrecovery/notify'.format(current_app.config['MAIL_URL']),
+					data=json.dumps({'recipients' : [{
+						"name": user['name'],
+						"email": user['email']
+					}]}),
+					headers=headers.json
+				)
+			except exceptions.ConnectionError:
+				return {'message' : "email service unavailable"}, 503
+		else:#if key == 'phone':
+			raise NotImplemented('Phone service unimplemented')
+
+		if resp.status_code != 201:
+			print(resp.json())
+			return {'message' : 'Unexpected answer from mail service', 'mail' : resp.json()}, 500
+
+		return resp.json(), 200, resp.headers.items()
 
 
 class NewPasswordForm(FlaskForm):
@@ -176,19 +201,19 @@ class ForgottenPassword(Resource):
 
 		template = head + """
 {% block content %}
-    <h1>Sign In</h1>
-    <form action="" method="post" novalidate>
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.passwd.label }}<br>
-            {{ form.passwd() }}
-        </p>
-        <p>
-            Verifica&#231;&#227;o:<br>
-            {{ form.verify() }}
-        </p>
-        <p>{{ form.submit() }}</p>
-    </form>
+	<h1>Sign In</h1>
+	<form action="" method="post" novalidate>
+		{{ form.hidden_tag() }}
+		<p>
+			{{ form.passwd.label }}<br>
+			{{ form.passwd() }}
+		</p>
+		<p>
+			Verifica&#231;&#227;o:<br>
+			{{ form.verify() }}
+		</p>
+		<p>{{ form.submit() }}</p>
+	</form>
 {% endblock %}
 """
 		
