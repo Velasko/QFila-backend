@@ -159,7 +159,6 @@ class Catalog(Resource):
 				args['location'][loc] = float(raw_args[loc])
 
 		#food court distance
-		args['courts'] = None
 		if 'courts' in raw_args:
 			args['courts'] = int(raw_args['courts'])
 

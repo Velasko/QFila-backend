@@ -34,7 +34,7 @@ catalog_query = Model("Catalog.query", {
 	'id' : fields.Nested(catalog_id_model),
 	'keyword' : fields.String(),
 	'location' : fields.Nested(catalog_location),
-	'courts' : fields.Integer(required=True, description="ammount of courts allowed in the response"),
+	'courts' : fields.Integer(description="ammount of courts allowed in the response"),
 	'category' : fields.String(required=True, enum=catalog_query_categories,
 		help="the category of query"
 	),

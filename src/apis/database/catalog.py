@@ -188,12 +188,12 @@ class CatalogHandler(Resource):
 		query_params = api.payload
 
 		qtype = query_params['type']
-		foodcourt_ammout = query_params['courts']
 
 
 		if query_params['category'] == 'id':
 			kwargs = query_params['id']
 		else:
+			foodcourt_ammout = query_params['courts']
 			location = query_params['location']
 			kwargs = {
 				'keyword': "%{}%".format(query_params['keyword']),
