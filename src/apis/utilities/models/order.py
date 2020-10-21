@@ -1,6 +1,8 @@
 from flask_restx import fields
 from flask_restx.model import Model
 
+from .mail import recipient_model
+
 
 meal_info = Model("order.meal", {
 	"meal" : fields.Integer(required=True, description="Meal id"),
@@ -40,11 +42,6 @@ db_order = order.inherit("order_db", {
 	"time" : fields.DateTime(required=True, description="Time of purchase")
 })
 
-recipients = Model("mail_recipient", {
-	"name" : fields.String(description="Name to be displayed in the mail"),
-	"email" : fields.String(required=True, description="Email address to send the email")
-})
-
-mail_order = order_contents.inherit("order_db", {
-	"recipients" : fields.Nested(recipients, required=True)
+mail_order = order_contents.inherit("order_mail", {
+	"recipients" : fields.Nested(recipient_model, required=True)
 })
