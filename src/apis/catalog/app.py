@@ -23,9 +23,8 @@ api = Api(blueprint, default="catalog", title="Qfila catalog API",
 ns = Namespace('catalog', description='Catalog queries')
 api.add_namespace(ns)
 
-for model in (meal, restaurant, foodcourt):
+for model in (meal, restaurant, foodcourt, catalog_response):
 	api.add_model(model.name, model)
-
 
 category_doc = """Possible categories of queries:
 	- id;
