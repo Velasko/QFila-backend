@@ -19,7 +19,7 @@ class PasswordRecovery(Resource):
 	@ns.response(201, "Email added to the queue")
 	def post(self):
 		link = api.payload['link']
-		recipients = [recipient.values() for recipient in api.payload['recipients']]
+		recipients = [list(recipient.values()) for recipient in api.payload['recipients']]
 
 		msg = {
 			'subject' : "Requisição de mudança de senha do Qfila",
@@ -36,7 +36,7 @@ class NotifyPasswordRecovery(Resource):
 	@ns.expect(email_model)
 	@ns.response(201, "Email added to the queue")
 	def post(self):
-		recipients = [recipient.values() for recipient in api.payload['recipients']]
+		recipients = [list(recipient.values()) for recipient in api.payload['recipients']]
 
 		msg = {
 			'subject' : "Senha modificada com sucesso!",
