@@ -15,14 +15,14 @@ except ValueError:
 	from utilities import authentication, headers, payment
 	from utilities.models.order import *
 
-for model in (meal_info, rest, payment_model, order_contents, order):
+for model in (meal_info, rest, payment_model, order_contents, order, recipient_model, mail_order):
 	api.add_model(model.name, model)
 
 @ns.route('/order')
 class PlaceOrder(Resource):
 
 	@ns.response(503, "Could not stablish connection to database")
-	@authentication.token_required(namespace=ns, expect_args=[order])
+	@authentication.token_required(namespace=ns, expect_args=[mail_order])
 	def post(self, user):
 		"""Method to make the order
 

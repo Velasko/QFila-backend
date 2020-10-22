@@ -1,6 +1,6 @@
 import json
 
-from requests import get
+from requests import get, exceptions
 
 from flask import current_app
 from flask_restx import Resource
@@ -26,19 +26,26 @@ class OrderReview(Resource):
 		data = json.loads(resp.json())[data_type]
 		return { d['id'] : d for d in data}
 
-	@ns.response(201, "Email added to the queue")
 	@ns.expect(order.mail_order)
+	@ns.response(201, "Email added to the queue")
+	@ns.response(503, "Could not connect to catalog or database service")
 	def post(self):
 		data = api.payload
 		recipients = list(data['recipients'].values())
 		order = data['order']
 
 		rest_ids = ",".join([str(value['rest']) for value in order])
-		resp = get("{}/catalog/id/restaurant?restaurant=({})".format(
-						current_app.config["CATALOG_URL"],
-						rest_ids
+		try:
+			resp = get("{}/catalog/id/restaurant?restaurant=({})".format(
+							current_app.config["CATALOG_URL"],
+							rest_ids
+							)
 						)
-					)
+			if resp.status_code == 503:
+				return {'message': 'could not stablish connection to database'}, 503
+		except exceptions.ConnectionError:
+			return {'message': 'could not stablish connection to catalog'}, 503
+
 		rest = self.decode(resp, 'restaurant')
 
 		total_value = 0
@@ -47,12 +54,22 @@ class OrderReview(Resource):
 		for rest_order in order:
 			rest_id = rest_order['rest']
 			meal_keys = ",".join([str(meal['meal']) for meal in rest_order['meals']])
-			resp = get("{}/catalog/id/meal?restaurant={}?meal=({})".format(
-					current_app.config["CATALOG_URL"],
-					rest_id,
-					meal_keys
-				),
-			)
+
+			try:
+				resp = get("{}/catalog/id/meal?restaurant=({})&meal=({})".format(
+						current_app.config["CATALOG_URL"],
+						rest_id,
+						meal_keys
+					),
+				)
+				if resp.status_code == 503:
+					return {'message': 'could not stablish connection to database'}, 503
+				elif resp.status_code != 200:
+					print(resp.json(), resp.status_code)
+					return {}, 500
+			except exceptions.ConnectionError:
+				return {'message': 'could not stablish connection to catalog'}, 503
+
 			meal = self.decode(resp, 'meal')
 
 			rest_price = 0

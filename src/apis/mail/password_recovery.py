@@ -9,7 +9,7 @@ except ValueError:
 	#If running from inside apis folder
 	from utilities.models.mail import *
 
-for model in (recipient_model, email_model, recover_passwd_model):
+for model in (recipient_model, recipient_model, email_model, recover_passwd_model):
 	api.add_model(model.name, model)
 
 @ns.route('/passwordrecovery')
