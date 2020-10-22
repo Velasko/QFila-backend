@@ -28,6 +28,8 @@ class OrderReview(Resource):
 
 	@ns.expect(order.mail_order)
 	@ns.response(201, "Email added to the queue")
+	@ns.response(500, "Catalog could not find items")
+	#If the item could not be found when __confirming__ it, there sure is an error.
 	@ns.response(503, "Could not connect to catalog or database service")
 	def post(self):
 		data = api.payload
@@ -43,6 +45,8 @@ class OrderReview(Resource):
 						)
 			if resp.status_code == 503:
 				return {'message': 'could not stablish connection to database'}, 503
+			elif resp.status_code == 404:
+				return {'message': 'could not stablish connection to database'}, 500
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to catalog'}, 503
 
@@ -64,9 +68,8 @@ class OrderReview(Resource):
 				)
 				if resp.status_code == 503:
 					return {'message': 'could not stablish connection to database'}, 503
-				elif resp.status_code != 200:
-					print(resp.json(), resp.status_code)
-					return {}, 500
+				elif resp.status_code == 404:
+					return {'message': 'could not stablish connection to database'}, 500
 			except exceptions.ConnectionError:
 				return {'message': 'could not stablish connection to catalog'}, 503
 
