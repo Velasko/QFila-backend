@@ -177,7 +177,7 @@ class UserRecentsHandler(Resource):
 	@ns.doc("Get user's recent meals or restaurants", params={'query_mode' : "Query mode must be 'meals' or 'restaurants'"})
 	@ns.response(200, "Method executed successfully.", model=history)
 	@ns.response(400, "Invalid payload")
-	@ns.response(404, "Query type isn't neiter 'meals' nor 'restaurants'")
+	@ns.response(404, "Query type isn't neiter 'meals' nor 'restaurants'/invalid url")
 	def get(self, query_mode, email=None, phone=None):
 		"""Returns user recent meals/restaurants
 		"""
