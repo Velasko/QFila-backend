@@ -30,7 +30,6 @@ class Authenticator(Resource):
 	@ns.response(503, "Could not stablish connection to database")
 	def post(self):
 		"""Method to be authenticated"""
-		# curl -X GET "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{ \"email\": \"f.l.velasko@gmail.com\", \"passwd\": \"string\" }"
 
 		auth = api.payload
 
@@ -67,7 +66,6 @@ class Register(Resource):
 	@ns.response(503, "Could not stablish connection to database")
 	def post(self):
 		"""method to create the user"""
-		# curl -X POST "http://localhost:5000/user/login" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"name\": \"Velasco\", \"email\": \"f.l.velasko@gmail.com\", \"passwd\": \"string\", \"birthday\": \"1997-04-30\", \"phone\": 0}"
 		data = api.payload
 
 		for key, value in data.items():
@@ -98,16 +96,6 @@ class Register(Resource):
 			if resp.status_code == 201:
 				return {'message' : 'user created'}
 			elif resp.status_code in (400, 403, 409):
-				return resp.json(), 400
+				return resp.json(), resp.status_code
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
-
-#a test method for the required authentication
-@ns.route("/test")
-class User(Resource):
-
-	@authentication.token_required(namespace=ns)
-	def get(self, user):
-		"""A simple token test, unofficial for the end system"""
-		#curl -X GET "http://localhost:5000/user/test" -H "accept: application/json" -H  "Content-Type: application/json" -H "token: "
-		return user, 200
