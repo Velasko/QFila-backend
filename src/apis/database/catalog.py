@@ -6,6 +6,15 @@ from flask_restx import Resource
 from .app import ns, session, api
 from .scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, Item, safe_serialize
 
+try:
+	from ..utilities.models.catalog import *
+except ValueError:
+	#If running from inside apis folder
+	from utilities.models.catalog import *
+
+for model in (meal, restaurant, foodcourt, pagination_model, catalog_id_model, catalog_location, catalog_query, catalog_response):
+	api.add_model(model.name, model)
+
 @ns.route('/catalog')
 class CatalogHandler(Resource):
 
@@ -68,9 +77,9 @@ class CatalogHandler(Resource):
 		meal : int list = the meal's id made by such restaurant.
 				if meal is an empty list, all the restaurant's meals will be returned."""
 
-		if ids['meal'] is None:
-			return session.query(Meal).filter(Meal.rest == ids['restaurant'])
-		return session.query(Meal).filter(Meal.id.in_(ids['meal']), Meal.rest == ids['restaurant'])
+		if ids['meal'] is None or ids['meal'] == []:
+			return session.query(Meal).filter(Meal.rest.in_(ids['restaurant']))
+		return session.query(Meal).filter(Meal.id.in_(ids['meal']), Meal.rest.in_(ids['restaurant']))
 
 	def restaurant_id_query(self, **ids):
 		"""A function to return restaurants based on it's ids.
@@ -81,7 +90,7 @@ class CatalogHandler(Resource):
 		"""
 
 		if ids['restaurant'] is None:
-			return session.query(Restaurant).filter(Restaurant.location == ids['foodcourt'])
+			return session.query(Restaurant).filter(Restaurant.location.in_(ids['foodcourt']))
 		return session.query(Restaurant).filter(Restaurant.id.in_(ids['restaurant']))
 
 	def location_id_query(self, **ids):
@@ -90,7 +99,7 @@ class CatalogHandler(Resource):
 		foodcourt : int = the foodcourt's id to be returned.
 		"""
 
-		return session.query(FoodCourt).filter(FoodCourt.id == ids['foodcourt'])
+		return session.query(FoodCourt).filter(FoodCourt.id.in_(ids['foodcourt']))
 
 #----------- Name Queries -----------#
 
@@ -172,18 +181,19 @@ class CatalogHandler(Resource):
 
 		return query
 
-
-	# @ns.expect(catalog_query)
-	def get(self):
+	@ns.expect(catalog_query)
+	@ns.response(200, "Method executed successfully", model=catalog_response)
+	@ns.response(404, "Couldn't find anything")
+	def post(self):
 		query_params = api.payload
 
 		qtype = query_params['type']
-		foodcourt_ammout = query_params['courts']
 
 
 		if query_params['category'] == 'id':
 			kwargs = query_params['id']
 		else:
+			foodcourt_ammout = query_params['courts']
 			location = query_params['location']
 			kwargs = {
 				'keyword': "%{}%".format(query_params['keyword']),
@@ -214,7 +224,10 @@ class CatalogHandler(Resource):
 		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
 		query = query.offset(offset).limit(limit)
 
-		response[query_params['type']] = [ safe_serialize(item) for item in query.all() ]
+		if query.count() == 0:
+			return {'message' : 'Nothing found'}, 404
+
+		response = { query_params['type'] : [safe_serialize(item) for item in query.all()] }
 
 		return json.dumps(response), 200
 

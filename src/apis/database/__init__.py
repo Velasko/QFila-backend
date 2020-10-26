@@ -1,2 +1,2 @@
-from .app import api, session
+from .app import session
 from .scheme import *
