@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask
+from flask_cors import CORS
 
 from .app import blueprint
 from .config import Config
@@ -10,6 +11,7 @@ if __name__ == '__main__':
 	import argparse
 
 	app = Flask("Qfila user")
+	CORS(app)
 	config = Config(app)
 
 	parser = argparse.ArgumentParser(description='User interface section of the back-end')
