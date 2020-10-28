@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
 
 	if args.run:
-		app.run(host=args.host, debug=args.debug, port=args.port)
+		app.run(host=args.host, debug=args.debug, port=args.port, ssl_context='adhoc')
 	elif args.test:
 		raise NotImplementedError()
 	else:
