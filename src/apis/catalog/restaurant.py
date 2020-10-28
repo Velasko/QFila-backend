@@ -37,14 +37,14 @@ class RestaurantMenu(Resource):
 		"""
 
 		try:
-			resp = get("{}/database/restaurant/{}/{}/{}".format(
+			resp = get("{}/database/catalog/restaurant/{}/{}/{}".format(
 					current_app.config['DATABASE_URL'],
 					rest_id, qtype, keyword
 			))
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
 
-		return resp.json(), resp.status_code
+		return resp.json(), 200
 
 @ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>")
 class RestaurantSections(Resource):
@@ -66,7 +66,7 @@ class RestaurantSections(Resource):
 		"""
 
 		try:
-			resp = get("{}/database/restaurant/{}/{}/{}".format(
+			resp = get("{}/database/catalog/restaurant/{}/{}".format(
 					current_app.config['DATABASE_URL'],
 					rest_id, qtype
 			))

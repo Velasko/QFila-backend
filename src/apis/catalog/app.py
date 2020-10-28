@@ -10,3 +10,4 @@ ns = Namespace('catalog', description='Catalog queries')
 api.add_namespace(ns)
 
 from . import general
+from . import restaurant
