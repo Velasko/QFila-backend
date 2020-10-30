@@ -68,6 +68,8 @@ class Register(Resource):
 		"""method to create the user"""
 		data = api.payload
 
+		print("data:", data)
+
 		for key, value in data.items():
 			if key == 'passwd':
 				passwd = data['passwd']
@@ -94,8 +96,10 @@ class Register(Resource):
 			)
 
 			if resp.status_code == 201:
-				return {'message' : 'user created'}
+				return {'message' : 'user created'}, 201
 			elif resp.status_code in (400, 403, 409):
 				return resp.json(), resp.status_code
+			else:
+				return {'message' : 'unexpected database behaviour'}, 500
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503

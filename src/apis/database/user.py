@@ -53,15 +53,18 @@ class UserHandler(Resource):
 
 		try:
 			#checking obligatory fields and modifying as required.
-			data['birthday'] = date.fromisoformat(data['birthday'])
-			if not checkers.age_check(data['birthday']):
-				return {'message' : "User below 12 years old"}, 403
+			try:
+				data['birthday'] = date.fromisoformat(data['birthday'])
+				if not checkers.age_check(data['birthday']):
+					return {'message' : "User below 12 years old"}, 403
+			except ValueError:
+				return {'message': "Invalid data format."}, 400
 
 			data['name'] = data['name'].lower()
 			data['email'] = data['email'].lower()
 
 			if not checkers.valid_email(data['email']):
-				api.abort(400, "Invalid email.")
+				return {'message': "Invalid email."}, 400
 
 			data['passwd']
 
@@ -121,9 +124,12 @@ class UserHandler_UrlParse(Resource):
 			update = api.payload
 
 			if 'birthday' in update:
-				update['birthday'] = date.fromisoformat(update['birthday'])
-				if not checkers.age_check(update['birthday']):
-					return {'message' : "User below 12 years old"}, 403
+				try:
+					update['birthday'] = date.fromisoformat(update['birthday'])
+					if not checkers.age_check(update['birthday']):
+						return {'message' : "User below 12 years old"}, 403
+				except ValueError:
+					return {'message': "Invalid data format."}, 400
 
 			if 'email' in update:
 				if not checkers.valid_email(update['email']):
