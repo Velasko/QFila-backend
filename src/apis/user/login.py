@@ -68,8 +68,6 @@ class Register(Resource):
 		"""method to create the user"""
 		data = api.payload
 
-		print("data:", data)
-
 		for key, value in data.items():
 			if key == 'passwd':
 				passwd = data['passwd']
