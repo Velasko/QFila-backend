@@ -18,8 +18,8 @@ if __name__ == '__main__':
 
 	ssl_group = parser.add_argument_group('SSL parameters')
 	ssl_group.add_argument('--no-ssl', action='store_true', help="Parse it if desired to run without ssl.")
-	ssl_group.add_argument('--cert', default='cert.pem', help='certification filename')
-	ssl_group.add_argument('--key', default='key.pem', help='key filename')
+	ssl_group.add_argument('--cert', default='fullchain.pem', help='certification filename')
+	ssl_group.add_argument('--key', default='privkey.pem', help='key filename')
 
 	service_group = parser.add_argument_group('Service parameters')
 	service_group.add_argument('-s', '--services', nargs='+', help='specifies the REST services to be runned. It is case sensitive!')
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
 	#If some services were selected, there is default url only to those selected.
 	#The others will recieve None, which is considered a failure in config.verify() .
-	url = f'https://{args.host}:{args.port}'
+	url = f'https://velasko.ddns.net:{args.port}'
 	if args.services is None:
 		args.services = services_list
 
