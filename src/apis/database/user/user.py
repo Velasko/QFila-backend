@@ -99,7 +99,7 @@ class UserHandler_UrlParse(Resource):
 			query = session.query(User).filter(field == data)
 			user = query.first().serialize()
 
-			return user
+			return user, 200
 		except AttributeError:
 			return {'message' : 'User not found.'}, 404
 
