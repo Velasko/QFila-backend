@@ -1,7 +1,8 @@
 from flask_restx import Api
 
 api = Api(
-	title='Qfila'
+	title='Qfila', 
+	validate=True
 )
 
 #function created for the imports and adding the services to be runned here.
@@ -15,14 +16,21 @@ def config_api(app, libs):
 		libs = ('database', 'user', 'catalog', 'mail')
 
 	try:
+		configs = []
+		models = api.models
 		for service_name in libs:
 			service = importlib.import_module('.app', f"{__package__}.{service_name}")
 
-			api.add_namespace(service.ns)
-			service.ns._path = service_name
+			for name, model in service.api.models.items():
+				if name in models:
+					continue
+				models[name] = model
 
-			if service_name == 'mail':
-				service.mail_scheduler.init_app(app)
+			app.register_blueprint(service.blueprint, url_prefix=f"/{service_name}")
+			api.add_namespace(service.ns)
+
+			config = importlib.import_module('.config', f"{__package__}.{service_name}")
+			configs.append(config.Config)
 
 	except ModuleNotFoundError as e:
 		import sys
@@ -33,3 +41,8 @@ def config_api(app, libs):
 
 		print("There is no service named '{}'".format(module))
 		sys.exit()
+
+	class Config(*configs):
+		pass
+
+	return Config(app)

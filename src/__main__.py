@@ -6,38 +6,52 @@ from .apis import api, config_api
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Execution of full application')
-
+	services_list = ("database", "catalog", "mail")
 
 	group = parser.add_mutually_exclusive_group()
-	group.add_argument('-r', '--run', action='store_true', help="Runs the full REST application")
-	group.add_argument('-t', '--test', action='store_true', help='Runs the unittest')
+	group.add_argument('-r', '--run', action='store_true', help="runs the full REST application")
+	group.add_argument('-t', '--test', action='store_true', help='runs the unittest')
 
-	parser.add_argument('-d', '--debug', action='store_true', help="Runs with debug")
-	parser.add_argument('-p', '--port', default=5000, help="Which port to run the application on")
+	parser.add_argument('-d', '--debug', action='store_true', help="runs with debug")
+	parser.add_argument('--host', default='127.0.0.1', help="defines the host")
+	parser.add_argument('-p', '--port', default=5000, help="which port to run the application on")
 	parser.add_argument('-s', '--services', nargs='+', help='specifies the REST services to be runned. It is case sensitive!')
-	parser.add_argument('--database', default=None, type=str, help="Database url for connection.")
+
+	for service in services_list:
+		parser.add_argument(f'--{service}', default=None, type=str, help=f"{service} url for connection.")
 
 	args = parser.parse_args()
 
-	#If some services are selected,
-	#either database is one of those services
-	#or the url to access the database must be provided
-	if not args.services is None:
-		if 'database' in args.services and args.database is None:
-			app.config['DATABASE_URL'] = f'http://localhost:{args.port}'
-		elif not ('database' in args.services or args.database is None):
-			#database is parsed
-			app.config['DATABASE_URL'] = args.database
-		else:
-			print("The database must be one of the services or it's url must be parsed via --database.")
-			sys.exit()
-	else:
-		app.config['DATABASE_URL'] = f'http://localhost:{args.port}'
+	config = config_api(app, args.services)
+	config.configure(auto_verify=False)
 
-	config_api(app, args.services)
+	#If some services were selected, there is default url only to those selected.
+	#The others will recieve None, which is considered a failure in config.verify() .
+	url = f'http://{args.host}:{args.port}'
+	if args.services is None:
+		args.services = services_list
+
+	for service in services_list: 
+		config_name = service.upper() + "_URL"
+		if service in args.services:
+			app.config[config_name] = url
+		else:
+			app.config[config_name] = getattr(args, service)
+
+	try:
+		config.verify()
+	except KeyError as e:
+		#if service url was not parsed:
+		service = e.key.lower().split("_")[0]
+		if service in services_list:
+			print(f"The {service} must be one of the services or it's url must be parsed via --{service}.")
+			sys.exit()
+
+		raise e
+
 
 	if args.run:
-		app.run(debug=args.debug, port=args.port)
+		app.run(host=args.host, debug=args.debug, port=args.port)
 	elif args.test:
 		raise NotImplementedError()
 	else:

@@ -3,20 +3,22 @@ import json
 import jwt
 
 from functools import wraps
-from requests import get
+from requests import get, exceptions
 
 from flask import request, current_app
 
 #password hash
-from werkzeug.security import generate_password_hash, check_password_hash
+from argon2 import PasswordHasher, exceptions
 
 from . import headers
 
-HASH_METHOD = 'sha256'
+HASHER = PasswordHasher()
 
 class token_required():
-	def __init__(self, *args):
-		pass
+	def __init__(self, namespace, *args, expect_args=[], expected_kwargs={}):
+		self.ns = namespace
+		self.expect_args = expect_args
+		self.expected_kwargs = expected_kwargs
 
 	def __call__(self, f):
 		@wraps(f)
@@ -27,56 +29,98 @@ class token_required():
 				token = request.headers['Token']
 
 			if not token:
-				return {'message': 'Authentication required'}
+				return {'message': 'Authentication required'}, 499
 
 			try:
 				data = jwt.decode(token, current_app.config['SECRET_KEY'])
+			except jwt.ExpiredSignatureError as e:
+				#token expired
+				return {'message' : 'Token expired'}, 498
+			except jwt.exceptions.DecodeError:
+				return {'message' : 'Token invalid'}, 498
+
+			if 'email' in data and not data['email'] is None:
+				id_key = 'email'
+			elif 'email' in data and not data['email'] is None:
+				id_key = 'phone'
+			else:
+				return {'message' : 'Token invalid'}, 498
+
+			try:
 				resp = get(
-					'{}/database/user'.format(current_app.config['DATABASE_URL']),
-					data=json.dumps({'email': data['email']}), headers=headers.json
+					'{}/database/user/{}/{}'.format(
+						current_app.config['DATABASE_URL'],
+						id_key,
+						data[id_key]
+					),
 				)
 				current_user = resp.json()
 
 				if current_user['passwd'] != data['passwd']:
-					raise Exception()
+					return {'message': 'Authentication required'}, 499
 
-			except jwt.ExpiredSignatureError as e:
-				#token expired
-				return {'message' : 'Token expired'}, 498
-			except TypeError:
-				return {'message' : 'could not connect to database'}
-			except:
-				return {'message': 'Authentication required'}
+			except exceptions.ConnectionError:
+				return {'message' : 'could not connect to database'}, 503
+			# except:
+			# 	return {'message': 'Authentication required'}, 499
 
 			#The self obj is actually the first item in args.
 			#parsing "f(current_user, *args, **kwargs)" leads to a headache in the function 
 			return f(args[0], current_user, *args[1:], **kwargs)
+
+		if not self.ns is None:
+			parser = self.ns.parser()
+			parser.add_argument('token', help="Authentication token", location='headers')
+			decorator = self.ns.expect(parser, *self.expect_args, **self.expected_kwargs)(decorator)
+			decorator = self.ns.response(498, "Token expired or invalid")(decorator)
+			decorator = self.ns.response(499, "Authentication required")(decorator)
+			decorator = self.ns.response(503, "Servica unavailable. (Likely could not connect to database)")(decorator)
+
 		return decorator
 
 
 def passwd_check(user, auth_attempt, config=None):
-	"""Function to check if the user authentication is correct and returns a token
-	if it is.
+	"""Function to check if the user authentication is correct.
+	If valid: tries to generate a token; if fails returns True.
 
-	Parameters:
-	 - user : dict. Must contain 'email' and 'passwd' fields
-	 - auth_attempt: dict. Must contain 'passwd' field.
-	 - config: dict. Application's dictionary with it's secret key and session time to live.
+	If invalid: raises KeyError
 	"""
 
 	if config is None:
 		config = current_app.config
 
-	if check_password_hash(user['passwd'], auth_attempt['passwd']):
-		token = jwt.encode({
-			'email' : user['email'],
-			'passwd' : user['passwd'],
-			'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=config['session_ttl'])},
-			config['SECRET_KEY']
-		)
+	if isinstance(user, str):
+		user_pass = user
+		user_type = str
+	else:
+		user_type = dict
+		user_pass = user['passwd']
 
-		return token.decode('UTF-8')
-	raise KeyError('invalid password')
+	if isinstance(auth_attempt, str):
+		auth_pass = auth_attempt
+	else:
+		auth_pass = auth_attempt['passwd']
+
+	try:
+		HASHER.verify(user_pass, auth_pass)
+
+		if user_type == str:
+			return True
+		else:
+			token = jwt.encode({
+				'email' : user['email'],
+				'phone' : user['phone'],
+				'passwd' : user['passwd'],
+				'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=config['session_ttl'])},
+				config['SECRET_KEY']
+			)
+
+			return token.decode('UTF-8')
+
+	except exceptions.VerifyMismatchError as e:
+		print(e)
+		# return False
+		raise KeyError('wrong password')
 
 def generate_token(data, config, duration=None):
 	"""This function generates a token with an expiration time.
@@ -94,5 +138,5 @@ def generate_token(data, config, duration=None):
 	token = jwt.encode(data, config['SECRET_KEY']).decode('UTF-8')
 	return token
 
-def hash_password(passwd, hash=HASH_METHOD):
-	return generate_password_hash(passwd, hash)
+def hash_password(passwd):
+	return HASHER.hash(passwd)

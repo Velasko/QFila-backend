@@ -1,4 +1,4 @@
-json = headers = {
+json = {
 	"accept": "application/json",
 	"Content-Type": "application/json"
 }
