@@ -1,21 +1,23 @@
 import json
 
-from datetime import date
+from datetime import date, datetime
 from flask_restx import Resource, fields
 from sqlalchemy import exc
 
 from ..app import ns, session, api
-from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize
+from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize, serialize
 
 try:
-	from ...utilities import checkers
+	from ...utilities import checkers, authentication
 	from ...utilities.models.user import *
 except ValueError:
 	#If running from inside apis folder
-	from utilities import checkers
+	from utilities import checkers, authentication
 	from utilities.models.user import *
 
-for model in (meal, restaurant, history):
+
+#meal_info, rest, payment_model, order_contents, order -> history_response)
+for model in (meal, restaurant, history, history_query, meal_info, rest, payment_model, order_contents, order, history_response):
 	api.add_model(model.name, model)
 
 @ns.route('/user/recents/<string:query_mode>/phone/<string:phone>')
@@ -68,3 +70,75 @@ class UserRecentsHandler(Resource):
 		).limit(3)
 
 		return {query_mode : [safe_serialize(rest) for rest in query.all()]}, 200
+
+
+@ns.route('/user/history')
+class HistoryHandler(Resource):
+
+	@ns.expect(history_query)
+	@ns.response(200, "Query executed successfully", model=history_response)	
+	def post(self):
+		print('kek')
+		print(api.payload)
+
+		user_id = api.payload['user']
+		offset = api.payload['offset']
+		limit = api.payload['limit']
+		detailed = api.payload.get('detailed', True)
+		time = api.payload.get('time', False)
+
+		if time:
+			time = datetime.fromisoformat(time)
+			base_query = session.query(Cart).filter(Cart.user == user_id, Cart.time == time)
+		else:
+			base_query = session.query(Cart).filter(Cart.user == user_id)
+
+		data = []
+		for cart in base_query.order_by(Cart.time).offset(offset).limit(limit):
+			cart = cart.serialize()
+			del cart['user']
+			cart['order'] = []
+
+			meal_query = session.query(
+				Item, Meal.name
+			).filter(
+				Item.user == user_id,
+				Item.time == cart['time']
+			).join(
+				Meal,
+			)
+
+			aux = {} #auxiliary variable to help separate by restaurant
+			for meal, name in meal_query:
+				meal = serialize(meal)
+				rest = meal['rest']
+
+				#removing redundant data
+				del meal['time'], meal['user'], meal['rest']
+
+				if not rest in aux:
+					aux[rest] = []
+
+				if detailed:
+					meal['name'] = name
+
+				aux[rest].append(meal) 
+
+			for rest, order in aux.items():
+
+				rest_data = {
+					'rest' : rest,
+					'meals' : order
+				}
+
+				if detailed:
+					rest_data['name'], rest_data['image'] = session.query(
+						Restaurant.name, Restaurant.image
+					).filter(Restaurant.id == rest).first()
+
+
+				cart['order'].append(rest_data)
+
+			data.append(cart)
+
+		return data
