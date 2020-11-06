@@ -3,11 +3,11 @@ import json
 from flask import current_app
 from flask_restx import Resource
 
-from .app import ns, session, api
-from .scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize
+from ..app import ns, session, api
+from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, Item, safe_serialize
 
 try:
-	from ..utilities.models.catalog import *
+	from ...utilities.models.catalog import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities.models.catalog import *

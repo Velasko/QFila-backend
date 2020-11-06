@@ -118,8 +118,6 @@ def passwd_check(user, auth_attempt, config=None):
 			return token.decode('UTF-8')
 
 	except exceptions.VerifyMismatchError as e:
-		print(e)
-		# return False
 		raise KeyError('wrong password')
 
 def generate_token(data, config, duration=None):

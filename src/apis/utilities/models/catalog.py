@@ -42,3 +42,8 @@ catalog_query = Model("Catalog.query", {
 		help="the type of query"
 	)
 })
+
+catalog_restaurant_qtype = Model('catalog.rest.qtype',{
+	'foodtype' : fields.List(fields.String),
+	'section' : fields.List(fields.String)
+})
