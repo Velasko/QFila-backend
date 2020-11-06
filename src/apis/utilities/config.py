@@ -3,6 +3,7 @@ import os
 class BaseConfig():
 	def __init__(self, app):
 		self.app = app
+		self._env = None
 
 	def config_base(self):
 		self.app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
@@ -43,3 +44,9 @@ class BaseConfig():
 				error = KeyError(f"No {config} in app.config")
 				error.key = config
 				raise error
+
+
+	def env_folder(self):
+		if self._env is None:
+			self._env = os.getenv("VIRTUAL_ENV") 
+		return self._env
