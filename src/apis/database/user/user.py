@@ -99,9 +99,6 @@ class UserHandler_UrlParse(Resource):
 			query = session.query(User).filter(field == data)
 			user = query.first().serialize()
 
-			#hiding user id
-			del user['id']
-
 			return user
 		except AttributeError:
 			return {'message' : 'User not found.'}, 404
