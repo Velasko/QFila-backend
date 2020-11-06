@@ -3,18 +3,25 @@ from flask_restx.model import Model
 
 from .mail import recipient_model
 
-
+meal_states = ('cancelled', 'served', 'preparing', 'awaiting_payment')
 meal_info = Model("order.meal", {
 	"meal" : fields.Integer(required=True, description="Meal id"),
 	"ammount" : fields.Integer(default=1, description="Ammount of this meal ordered", min=1),
-	"comments" : fields.String(default="", description="Changes to the desired meal", max_length=255),
+	"comments" : fields.String(default="", description="Observations to the desired meal", max_length=255),
+
+	"name" : fields.String(readonly=True),
+	"state" : fields.String(enum=meal_states, readonly=True),
+	"total_price" : fields.Fixed(decimals=2, readonly=True),
 })
 
 rest = Model("order.restaurant", {
 	"rest" : fields.Integer(required=True, description="Restaurant id"),
 	"meals" : fields.List(fields.Nested(meal_info), required=True,
-		description="List of meals to be ordered in this restaurant"
-	)
+		description="List of meals in this restaurant"
+	),
+
+	"name" : fields.String(readonly=True),
+	"image" : fields.String(readonly=True),
 })
 
 
@@ -26,7 +33,7 @@ payment_model = Model("order.payment", {
 
 order_contents = Model("order.contents", {
 	"order" : fields.List(fields.Nested(rest), required=True,
-		description="The order for each restaurant to be made"
+		description="The order on each restaurant"
 	)
 })
 

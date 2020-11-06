@@ -2,6 +2,7 @@ from flask_restx import fields
 from flask_restx.model import Model
 
 from .database import user, meal, restaurant
+from .order import *
 
 id = Model('Identifyiers', {
 	'email' : fields.String(description='User email'),
@@ -23,4 +24,22 @@ token = Model("token", {
 
 passwd = Model("password", {
 	'passwd' : fields.String(required=True)
+})
+
+history_query = Model("history_query", {
+	'user' : fields.Integer(required=True, description="User's id"),
+	'offset' : fields.Integer(required=True),
+	'limit' : fields.Integer(required=True, description="total responses"),
+	'detailed' : fields.Boolean(default=True, description="if wants object's names and images"),
+	'time' : fields.DateTime(description="parse a time if you want a specific response")
+})
+
+
+history_response = order_contents.inherit("history_response", {
+	"time" : fields.DateTime(required=True, description="Time of purchase"),
+	"qfila_fee" : fields.Fixed(decimals=2, min=0,
+		description="Raw value for the fee, if applicable"
+	),
+	"order_total" : fields.Fixed(decimals=2),
+	"payment_method" : fields.String(enum=payment_methods),
 })

@@ -30,6 +30,8 @@ def serialize(data):
 	for key, value in data.items():
 		if isinstance(value, date): 
 			data[key] = value.isoformat()
+		elif isinstance(value, enum.Enum):
+			data[key] = value.name
 
 	return data
 
@@ -122,7 +124,6 @@ class PaymentMethods(enum.Enum):
 	apple_pay = 3
 	samsung_pay = 4
 	pix = 5
-
 
 class Cart(Base, Serializable):
 	__tablename__ = 'Carts'
