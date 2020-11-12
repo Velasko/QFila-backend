@@ -46,6 +46,7 @@ class PasswordRecovery(Resource):
 		try:
 			user = get(
 				'{}/database/user/{}/{}'.format(current_app.config['DATABASE_URL'], key, value),
+				headers=headers.system_authentication
 			)
 		except exceptions.ConnectionError:
 			return {'message' : "database service unavailable"}, 503
@@ -119,7 +120,7 @@ class ChangePassword(Resource):
 					key,
 					user[key]
 				),
-				data=json.dumps(data), headers=headers.json
+				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message' : "database service unavailable"}, 503
