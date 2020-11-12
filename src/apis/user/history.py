@@ -49,7 +49,7 @@ class Recent(Resource):
 					id_
 				),
 				data=json.dumps(data),
-				headers=headers.json
+				headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
@@ -80,18 +80,16 @@ class HistoryHandler(Resource):
 				'limit' : int(request.args['pagesize']),
 		}
 
-		print(json.dumps(data))
 		try:
 			resp = post(
 				'{}/database/user/history'.format(
 					current_app.config['DATABASE_URL']
 				),
-				data=json.dumps(data), headers=headers.json
+				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
 
 		if resp.status_code != 200:
-			print(resp.json())
 			return {'message' : 'unexpected database response'}, resp.status_code
 		return resp.json(), 200
