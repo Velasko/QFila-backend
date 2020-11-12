@@ -1,9 +1,15 @@
 import os
 
+from flask import request
+
 class BaseConfig():
 	def __init__(self, app):
 		self.app = app
 		self._env = None
+
+		#Those are used to limit service access to the exterior
+		self._keys = [] #on use keys
+		self._blockedservices = [] #services secured
 
 	def config_base(self):
 		self.app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
@@ -17,6 +23,13 @@ class BaseConfig():
 
 		self.app.config['TESTING'] = True
 		self.app.config['ENV'] = 'development'
+
+		#limiting access
+		for e in range(1, 4):
+			key = os.getenv(f"SECURITY_HEADER{e}")
+			if not key is None:
+				self._keys.append(key)
+		self.app.before_request(self.block_outside_requests)
 
 	def configure(self, auto_verify=True):
 		"""Makes any execution required to configure the app"""
@@ -45,8 +58,16 @@ class BaseConfig():
 				error.key = config
 				raise error
 
-
 	def env_folder(self):
 		if self._env is None:
 			self._env = os.getenv("VIRTUAL_ENV") 
 		return self._env
+
+	def limit_service_access(self, service_name):
+		self._blockedservices.append(service_name)
+
+	def block_outside_requests(self):
+		ns = request.full_path.split("/")[1]
+		if ns in self._blockedservices:
+			if not request.headers.get('security_header', False) in self._keys:
+				return {"message": "Not authorized"}, 403
