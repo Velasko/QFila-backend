@@ -200,7 +200,7 @@ class Catalog(Resource):
 			resp = post(
 				'{}/database/catalog'.format(current_app.config['DATABASE_URL']),
 				data=json.dumps(args),
-				headers=headers.json
+				headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503

@@ -6,9 +6,11 @@ from flask_restx import Resource
 from .app import api, ns
 
 try:
+	from ..utilities import headers
 	from ..utilities.models.catalog import *
 except ValueError:
 	#If running from inside apis folder
+	from utilities import headers
 	from utilities.models.catalog import *
 
 #meal, restaurant, foodcourt
@@ -40,7 +42,9 @@ class RestaurantMenu(Resource):
 			resp = get("{}/database/catalog/restaurant/{}/{}/{}".format(
 					current_app.config['DATABASE_URL'],
 					rest_id, qtype, keyword
-			))
+				),
+				headers=headers.system_authentication
+			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
 
@@ -69,7 +73,9 @@ class RestaurantSections(Resource):
 			resp = get("{}/database/catalog/restaurant/{}/{}".format(
 					current_app.config['DATABASE_URL'],
 					rest_id, qtype
-			))
+				),
+				headers=headers.system_authentication
+			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
 
