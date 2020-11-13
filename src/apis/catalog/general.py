@@ -1,7 +1,7 @@
 import json
 import re
 
-from flask import Blueprint, request, current_app
+from flask import request, current_app
 from flask_restx import Resource
 
 from requests import post, exceptions
