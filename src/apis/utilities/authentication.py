@@ -54,6 +54,7 @@ class token_required():
 						id_key,
 						data[id_key]
 					),
+					headers=headers.system_authentication
 				)
 				current_user = resp.json()
 

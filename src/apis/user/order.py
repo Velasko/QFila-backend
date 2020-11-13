@@ -40,7 +40,7 @@ class PlaceOrder(Resource):
 					'user': user['email'],
 					**api.payload
 				},
-				headers=headers.json
+				headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503

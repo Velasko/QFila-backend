@@ -11,4 +11,4 @@ class Config(BaseConfig):
 		self.app.config['DATABASE_PAGE_SIZE_DEFAULT'] = 5 
 		self.app.config['DATABASE_PAGE_SIZE_LIMIT'] = 10
 
-		# self.limit_service_access('database')
+		self.limit_service_access('database')

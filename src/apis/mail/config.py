@@ -18,7 +18,7 @@ class Config(BaseConfig):
 
 		mail_scheduler.init_app(self.app)
 
-		# self.limit_service_access('mail')
+		self.limit_service_access('mail')
 
 	def verify_mail(self):
 		required_config = ['CATALOG_URL']

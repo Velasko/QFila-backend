@@ -49,7 +49,7 @@ class Recent(Resource):
 					id_
 				),
 				data=json.dumps(data),
-				headers=headers.json
+				headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
@@ -85,7 +85,7 @@ class HistoryHandler(Resource):
 				'{}/database/user/history'.format(
 					current_app.config['DATABASE_URL']
 				),
-				data=json.dumps(data), headers=headers.json
+				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
@@ -110,7 +110,7 @@ class HistoryHandler(Resource):
 				'{}/database/user/history'.format(
 					current_app.config['DATABASE_URL']
 				),
-				data=json.dumps(data), headers=headers.json
+				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
@@ -128,7 +128,7 @@ class HistoryHandler(Resource):
 		try:
 			resp = post(
 				'{}/mail/orderreview'.format(current_app.config['MAIL_URL']),
-				data=json.dumps(mail_model), headers=headers.json
+				data=json.dumps(mail_model), headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to mail service'}, 503

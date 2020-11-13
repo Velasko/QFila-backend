@@ -42,18 +42,19 @@ class Authenticator(Resource):
 
 		try:
 			resp = get(
-				'{0}{1}'.format(current_app.config['DATABASE_URL'], path)
+				'{0}{1}'.format(current_app.config['DATABASE_URL'], path),
+				headers=headers.system_authentication
 			)
 
 			user = resp.json()
 
 			if ( token := authentication.passwd_check(user, auth, current_app.config)):
 				return {'token' : token}, 200
-		except KeyError as e:
+		except KeyError:
 			return {'message' : "Not authorized"}, 401
 
-		except exceptions.ConnectionError:
-			return {'message': 'could not stablish connection to database'}, 503
+		# except exceptions.ConnectionError:
+		# 	return {'message': 'could not stablish connection to database'}, 503
 
 
 
@@ -92,7 +93,7 @@ class Register(Resource):
 		try:
 			resp = post(
 				'{}/database/user'.format(current_app.config['DATABASE_URL']),
-				data=json.dumps(data), headers=headers.json
+				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
 			)
 
 			if resp.status_code == 201:
