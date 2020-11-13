@@ -28,12 +28,15 @@ passwd = Model("password", {
 
 history_query = Model("history_query", {
 	'user' : fields.Integer(required=True, description="User's id"),
-	'offset' : fields.Integer(required=True),
-	'limit' : fields.Integer(required=True, description="total responses"),
+	'offset' : fields.Integer(),
+	'limit' : fields.Integer(description="total responses"),
 	'detailed' : fields.Boolean(default=True, description="if wants object's names and images"),
 	'time' : fields.DateTime(description="parse a time if you want a specific response")
 })
 
+resend_order_model = Model("resend model", {
+	'time' : fields.DateTime(description="time of order")
+})
 
 history_response = order_contents.inherit("history_response", {
 	"time" : fields.DateTime(required=True, description="Time of purchase"),
@@ -43,3 +46,4 @@ history_response = order_contents.inherit("history_response", {
 	"order_total" : fields.Fixed(decimals=2),
 	"payment_method" : fields.String(enum=payment_methods),
 })
+

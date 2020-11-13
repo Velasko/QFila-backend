@@ -15,7 +15,7 @@ except ValueError:
 	from utilities import authentication, headers
 	from utilities.models.user import *
 
-for model in (meal_info, rest, payment_model, order_contents, history_response):
+for model in (meal_info, rest, payment_model, order_contents, history_response, resend_order_model):
 	api.add_model(model.name, model)
 
 @ns.route("/recent/<string:mode>")
@@ -80,7 +80,6 @@ class HistoryHandler(Resource):
 				'limit' : int(request.args['pagesize']),
 		}
 
-		print(json.dumps(data))
 		try:
 			resp = post(
 				'{}/database/user/history'.format(
@@ -92,6 +91,50 @@ class HistoryHandler(Resource):
 			return {'message': 'could not stablish connection to database'}, 503
 
 		if resp.status_code != 200:
-			print(resp.json())
 			return {'message' : 'unexpected database response'}, resp.status_code
 		return resp.json(), 200
+
+	@ns.response(200, "Method executed successfully")
+	@ns.response(503, "Could not stablish connection to database or mail service")
+	@authentication.token_required(namespace=ns, expect_args=[resend_order_model])
+	def post(self, user):
+		"""Resends email of the requested order"""
+
+		data = {
+			'user' : user['id'],
+			'time' : api.payload['time']
+		}
+
+		try:
+			db_resp = post(
+				'{}/database/user/history'.format(
+					current_app.config['DATABASE_URL']
+				),
+				data=json.dumps(data), headers=headers.json
+			)
+		except exceptions.ConnectionError:
+			return {'message': 'could not stablish connection to database'}, 503
+
+		mail_model = {
+			'recipients' : {"name" : user['name'], "email" : user['email']},
+			'order' : db_resp.json()[0]['order']
+		}
+
+		for n, rest in enumerate(mail_model['order']):
+			for m, meal in enumerate(rest['meals']):
+				if meal['comments'] is None:
+					del mail_model['order'][n]['meals'][m]['comments']
+
+		try:
+			resp = post(
+				'{}/mail/orderreview'.format(current_app.config['MAIL_URL']),
+				data=json.dumps(mail_model), headers=headers.json
+			)
+		except exceptions.ConnectionError:
+			return {'message': 'could not stablish connection to mail service'}, 503
+
+		if resp != 201:
+			return resp.json()
+			return {'message' : 'an error ocurred in the mail service'}, 503
+
+		return {'message' : 'mail successfully sent'}, 200

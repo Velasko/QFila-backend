@@ -78,12 +78,9 @@ class HistoryHandler(Resource):
 	@ns.expect(history_query)
 	@ns.response(200, "Query executed successfully", model=history_response)	
 	def post(self):
-		print('kek')
-		print(api.payload)
-
 		user_id = api.payload['user']
-		offset = api.payload['offset']
-		limit = api.payload['limit']
+		offset = api.payload.get('offset', 0)
+		limit = api.payload.get('limit', 1)
 		detailed = api.payload.get('detailed', True)
 		time = api.payload.get('time', False)
 
