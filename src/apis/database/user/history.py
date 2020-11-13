@@ -80,8 +80,8 @@ class HistoryHandler(Resource):
 	def post(self):
 
 		user_id = api.payload['user']
-		offset = api.payload['offset']
-		limit = api.payload['limit']
+		offset = api.payload.get('offset', 0)
+		limit = api.payload.get('limit', 1)
 		detailed = api.payload.get('detailed', True)
 		time = api.payload.get('time', False)
 
