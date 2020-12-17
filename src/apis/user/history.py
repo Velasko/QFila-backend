@@ -1,17 +1,22 @@
 import json
 
-from requests import get
+from requests import get, post
 
-from flask import current_app
+from flask import current_app, request
 from flask_restx import Resource
 
-from .app import ns
+from .app import ns, api
 
 try:
 	from ..utilities import authentication, headers
+	from ..utilities.models.user import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import authentication, headers
+	from utilities.models.user import *
+
+for model in (meal_info, rest, payment_model, order_contents, history_response, resend_order_model):
+	api.add_model(model.name, model)
 
 @ns.route("/recent/<string:mode>")
 class Recent(Resource):
@@ -44,7 +49,7 @@ class Recent(Resource):
 					id_
 				),
 				data=json.dumps(data),
-				headers=headers.json
+				headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
@@ -57,3 +62,79 @@ class Recent(Resource):
 
 		return resp.json()
 				
+parser = ns.parser()
+parser.add_argument("page", type=int, default=1)
+parser.add_argument("pagesize", type=int, default=5)
+
+@ns.route('/history')
+class HistoryHandler(Resource):
+	
+	@ns.response(200, "Method executed successfully", model=history_response)
+	@ns.response(503, "Could not stablish connection to database")
+	@authentication.token_required(namespace=ns, expect_args=[parser])
+	def get(self, user):
+		"""Returns the user history"""
+
+		data = {'user' : user['id'],
+				'offset' : int(request.args['pagesize'])*(int(request.args['page']) -1),
+				'limit' : int(request.args['pagesize']),
+		}
+
+		try:
+			resp = post(
+				'{}/database/user/history'.format(
+					current_app.config['DATABASE_URL']
+				),
+				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
+			)
+		except exceptions.ConnectionError:
+			return {'message': 'could not stablish connection to database'}, 503
+
+		if resp.status_code != 200:
+			return {'message' : 'unexpected database response'}, resp.status_code
+		return resp.json(), 200
+
+	@ns.response(200, "Method executed successfully")
+	@ns.response(503, "Could not stablish connection to database or mail service")
+	@authentication.token_required(namespace=ns, expect_args=[resend_order_model])
+	def post(self, user):
+		"""Resends email of the requested order"""
+
+		data = {
+			'user' : user['id'],
+			'time' : api.payload['time']
+		}
+
+		try:
+			db_resp = post(
+				'{}/database/user/history'.format(
+					current_app.config['DATABASE_URL']
+				),
+				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
+			)
+		except exceptions.ConnectionError:
+			return {'message': 'could not stablish connection to database'}, 503
+
+		mail_model = {
+			'recipients' : {"name" : user['name'], "email" : user['email']},
+			'order' : db_resp.json()[0]['order']
+		}
+
+		for n, rest in enumerate(mail_model['order']):
+			for m, meal in enumerate(rest['meals']):
+				if meal['comments'] is None:
+					del mail_model['order'][n]['meals'][m]['comments']
+
+		try:
+			resp = post(
+				'{}/mail/orderreview'.format(current_app.config['MAIL_URL']),
+				data=json.dumps(mail_model), headers={**headers.json, **headers.system_authentication}
+			)
+		except exceptions.ConnectionError:
+			return {'message': 'could not stablish connection to mail service'}, 503
+
+		if resp != 201:
+			return resp.json()
+			return {'message' : 'an error ocurred in the mail service'}, 503
+
+		return {'message' : 'mail successfully sent'}, 200

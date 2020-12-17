@@ -3,7 +3,8 @@ import json
 import jwt
 
 from functools import wraps
-from requests import get, exceptions
+from requests import get
+from requests import exceptions as req_exc
 
 from flask import request, current_app
 
@@ -53,13 +54,14 @@ class token_required():
 						id_key,
 						data[id_key]
 					),
+					headers=headers.system_authentication
 				)
 				current_user = resp.json()
 
 				if current_user['passwd'] != data['passwd']:
 					return {'message': 'Authentication required'}, 499
 
-			except exceptions.ConnectionError:
+			except req_exc.ConnectionError:
 				return {'message' : 'could not connect to database'}, 503
 			# except:
 			# 	return {'message': 'Authentication required'}, 499

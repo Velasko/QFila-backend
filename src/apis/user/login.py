@@ -34,24 +34,27 @@ class Authenticator(Resource):
 		auth = api.payload
 
 		if 'email' in auth:
-			url = f'/database/user/email/{auth["email"]}'
+			path = f'/database/user/email/{auth["email"]}'
 		elif 'phone' in auth:
-			url = f'/database/user/phone/{auth["phone"]}'
+			path = f'/database/user/phone/{auth["phone"]}'
 		else:
 			return {'message' : "Id not parsed"}, 417 #change to proper code
 
 		try:
-			user = get(
-				'{0}{1}'.format(current_app.config['DATABASE_URL'], url)
-			).json()
+			resp = get(
+				'{0}{1}'.format(current_app.config['DATABASE_URL'], path),
+				headers=headers.system_authentication
+			)
+
+			user = resp.json()
 
 			if ( token := authentication.passwd_check(user, auth, current_app.config)):
 				return {'token' : token}, 200
-		except KeyError as e:
+		except KeyError:
 			return {'message' : "Not authorized"}, 401
 
-		except exceptions.ConnectionError:
-			return {'message': 'could not stablish connection to database'}, 503
+		# except exceptions.ConnectionError:
+		# 	return {'message': 'could not stablish connection to database'}, 503
 
 
 
@@ -90,7 +93,7 @@ class Register(Resource):
 		try:
 			resp = post(
 				'{}/database/user'.format(current_app.config['DATABASE_URL']),
-				data=json.dumps(data), headers=headers.json
+				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
 			)
 
 			if resp.status_code == 201:

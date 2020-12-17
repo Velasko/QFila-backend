@@ -1,5 +1,6 @@
 import argparse
 import sys
+import re
 
 from . import app
 from .apis import api, config_api
@@ -31,9 +32,32 @@ if __name__ == '__main__':
 	config = config_api(app, args.services)
 	config.configure(auto_verify=False)
 
+	#defining the hostname, handling ssl and
+	hostname = args.host
+	ip_address_regex = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+	if re.match(ip_address_regex, args.host):
+		#blocking ssl with ip as host
+		args.no_ssl = True
+	else:
+		args.host = "0.0.0.0"
+
+
+	if args.no_ssl:
+		http = "http"
+		ssl_kwargs = {}
+	else:
+		http = "https"
+		ssl_kwargs = {
+			'ssl_context' : (
+				"{}/{}".format(config.env_folder(), args.cert),
+				"{}/{}".format(config.env_folder(), args.key)
+			)
+		}
+
+	url = f'{http}://{hostname}:{args.port}'
+
 	#If some services were selected, there is default url only to those selected.
-	#The others will recieve None, which is considered a failure in config.verify() .
-	url = f'https://velasko.ddns.net:{args.port}'
+	#The others will recieve None, which is considered a failure in config.verify() .	
 	if args.services is None:
 		args.services = services_list
 
@@ -54,13 +78,6 @@ if __name__ == '__main__':
 			sys.exit()
 
 		raise e
-
-	#if desired to use ssl
-	ssl_kwargs = {
-		'ssl_context' : (
-			"{}/{}".format(config.env_folder(), args.cert),
-			"{}/{}".format(config.env_folder(), args.key))
-	} if not args.no_ssl else {}
 
 	if args.run:
 		app.run(host=args.host, debug=args.debug, port=args.port, **ssl_kwargs)
