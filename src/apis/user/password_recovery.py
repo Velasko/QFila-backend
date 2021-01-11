@@ -69,7 +69,7 @@ class PasswordRecovery(Resource):
 				email = post(
 					'{}/mail/passwordrecovery'.format(current_app.config['MAIL_URL']),
 					data=json.dumps({'link' : link, 'recipients' : [{'email' : value, 'name': user['name']}]}),
-					headers=headers.json
+					headers={**headers.json, **headers.system_authentication}
 				)
 				if email.status_code == 404:
 					raise exceptions.ConnectionError
@@ -136,7 +136,7 @@ class ChangePassword(Resource):
 						"name": user['name'],
 						"email": user['email']
 					}]}),
-					headers=headers.json
+					headers={**headers.json, **headers.system_authentication}
 				)
 			except exceptions.ConnectionError:
 				return {'message' : "email service unavailable"}, 503
@@ -190,6 +190,7 @@ class ForgottenPassword(Resource):
 		try:
 			user = get(
 				'{}/database/user/{}/{}'.format(current_app.config['DATABASE_URL'], key, value),
+				headers={**headers.json, **headers.system_authentication}
 			).json()
 		except exceptions.ConnectionError:
 			return {'message': 'Could not stablish connection to database'}, 503
@@ -242,7 +243,7 @@ class ForgottenPassword(Resource):
 
 		try:
 			resp = put(
-				'{}/user/changepassword'.format(current_app.config['APPLICATION_HOSTNAME']),
+				'{}/user/changepassword'.format(current_app.config['DATABASE_URL']),
 				data=json.dumps({'passwd': passwd}), headers=header
 			)
 		except exceptions.ConnectionError:
@@ -250,5 +251,7 @@ class ForgottenPassword(Resource):
 
 		if resp.status_code == 200:
 			return "Senha modificada com sucesso", resp.status_code, {'Content-Type': 'text/html'}
+
+		return resp.json(), resp.status_code
 
 		#send notification of password change (email/phone)
