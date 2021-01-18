@@ -50,7 +50,6 @@ class UserHandler(Resource):
 		"""Method to create the user.
 		"""
 		data = api.payload
-
 		try:
 			#checking obligatory fields and modifying as required.
 			try:
