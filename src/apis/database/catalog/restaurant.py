@@ -38,7 +38,7 @@ class RestaurantMenu(Resource):
 					Meal
 				).filter(
 					Meal.rest == rest_id,
-					getattr(Meal, qtype).like(f"%{keyword}%")
+					getattr(Meal, qtype).ilike(f"%{keyword}%")
 				)
 
 			return { 'meal' : [safe_serialize(item) for item in query.all()]}

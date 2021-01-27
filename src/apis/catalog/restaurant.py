@@ -38,6 +38,8 @@ class RestaurantMenu(Resource):
 			- restaurant's category (section)
 		"""
 
+		keyword = keyword.lower()
+
 		try:
 			resp = get("{}/database/catalog/restaurant/{}/{}/{}".format(
 					current_app.config['DATABASE_URL'],
