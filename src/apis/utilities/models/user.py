@@ -6,7 +6,7 @@ from .order import *
 
 id = Model('Identifyiers', {
 	'email' : fields.String(description='User email'),
-	'phone' : fields.Integer(description='User phone number')
+	'phone' : fields.String(description='User phone number')
 })
 
 history = Model("History", {
