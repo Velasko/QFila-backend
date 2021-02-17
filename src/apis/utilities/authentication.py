@@ -42,7 +42,7 @@ class token_required():
 
 			if 'email' in data and not data['email'] is None:
 				id_key = 'email'
-			elif 'email' in data and not data['email'] is None:
+			elif 'phone' in data and not data['phone'] is None:
 				id_key = 'phone'
 			else:
 				return {'message' : 'Token invalid'}, 498
