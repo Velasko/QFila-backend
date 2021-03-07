@@ -111,7 +111,7 @@ class CatalogHandler(Resource):
 			order,
 			rest_id == order.c.id #on
 		).filter(
-			db_class.name.like(keyword)
+			db_class.name.ilike(keyword)
 		).order_by(
 			order.c.sort,
 			db_class.name
@@ -129,7 +129,7 @@ class CatalogHandler(Resource):
 		query = session.query(
 			FoodCourt
 		).filter(
-			FoodCourt.name.like(keyword)
+			FoodCourt.name.ilike(keyword)
 		).join(
 			order,
 			FoodCourt.id == order.c.id
@@ -141,7 +141,7 @@ class CatalogHandler(Resource):
 
 #----------- Type Queries -----------#
 	def get_types(self, keyword):
-		return session.query(FoodType.name).filter(FoodType.name.like(keyword)).all()
+		return session.query(FoodType.name).filter(FoodType.name.ilike(keyword)).all()
 
 	def meal_type_query(self, keyword, order):
 
@@ -188,7 +188,6 @@ class CatalogHandler(Resource):
 		query_params = api.payload
 
 		qtype = query_params['type']
-
 
 		if query_params['category'] == 'id':
 			kwargs = query_params['id']

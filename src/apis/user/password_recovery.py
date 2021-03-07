@@ -33,7 +33,7 @@ class PasswordRecovery(Resource):
 	@ns.expect(id)
 	@ns.response(201, "Message to be sent")
 	@ns.response(404, "User not found")
-	@ns.response(503, "Email or database unavailable.")
+	@ns.response(503, "Email, phone or database unavailable.")
 	def post(self):
 
 		if 'email' in api.payload:
@@ -69,7 +69,7 @@ class PasswordRecovery(Resource):
 				email = post(
 					'{}/mail/passwordrecovery'.format(current_app.config['MAIL_URL']),
 					data=json.dumps({'link' : link, 'recipients' : [{'email' : value, 'name': user['name']}]}),
-					headers=headers.json
+					headers={**headers.json, **headers.system_authentication}
 				)
 				if email.status_code == 404:
 					raise exceptions.ConnectionError
@@ -78,9 +78,19 @@ class PasswordRecovery(Resource):
 				return {'message' : "email service unavailable"}, 503
 
 			return email.json(), email.status_code, email.headers.items()
+
 		elif key == 'phone':
-			print('link:', link)
-			raise NotImplemented("Password recovery using phone is unavailable")
+			try:
+				phone = post(
+					'{}/phone/passwordrecovery'.format(current_app.config['PHONE_URL']),
+					data=json.dumps({'link' : link, 'user': user['id'], 'phone' : value}),
+					headers={**headers.json, **headers.system_authentication}
+				)
+
+				return phone.json(), phone.status_code, phone.headers.items()
+			except exceptions.ConnectionError:
+				return {'message' : 'phone service unavailable'}, 504
+
 		else:
 			return {'message' : 'Unexpected behaviour'}, 500
 
@@ -92,7 +102,6 @@ class ChangePassword(Resource):
 	@authentication.token_required(namespace=ns, expect_args=[passwd])
 	def put(self, user):
 		"""Official method to modify the user's password"""
-
 		#Generating password hash
 		passwd = api.payload['passwd']
 		passwd_hash = authentication.hash_password(passwd)
@@ -136,7 +145,7 @@ class ChangePassword(Resource):
 						"name": user['name'],
 						"email": user['email']
 					}]}),
-					headers=headers.json
+					headers={**headers.json, **headers.system_authentication}
 				)
 			except exceptions.ConnectionError:
 				return {'message' : "email service unavailable"}, 503
@@ -190,6 +199,7 @@ class ForgottenPassword(Resource):
 		try:
 			user = get(
 				'{}/database/user/{}/{}'.format(current_app.config['DATABASE_URL'], key, value),
+				headers={**headers.json, **headers.system_authentication}
 			).json()
 		except exceptions.ConnectionError:
 			return {'message': 'Could not stablish connection to database'}, 503
@@ -250,5 +260,7 @@ class ForgottenPassword(Resource):
 
 		if resp.status_code == 200:
 			return "Senha modificada com sucesso", resp.status_code, {'Content-Type': 'text/html'}
+
+		return resp.json(), resp.status_code
 
 		#send notification of password change (email/phone)

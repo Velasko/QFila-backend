@@ -7,7 +7,7 @@ from .apis import api, config_api
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Execution of full application')
-	services_list = ("database", "catalog", "mail")
+	services_list = ("database", "catalog", "mail", "phone")
 
 	parser.add_argument('-d', '--debug', action='store_true', help="runs with debug")
 	parser.add_argument('--host', default='127.0.0.1', help="defines the host")

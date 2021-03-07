@@ -13,7 +13,7 @@ def config_api(app, libs):
 	import importlib
 
 	if libs is None:
-		libs = ('database', 'user', 'catalog', 'mail')
+		libs = ('database', 'user', 'catalog', 'mail', 'phone')
 
 	try:
 		configs = []

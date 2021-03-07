@@ -9,7 +9,7 @@ except ValueError:
 	#If running from inside apis folder
 	from utilities.models.mail import *
 
-for model in (recipient_model, recipient_model, email_model, recover_passwd_model):
+for model in (recipient_model, email_model, recover_passwd_model):
 	api.add_model(model.name, model)
 
 @ns.route('/passwordrecovery')
@@ -41,7 +41,7 @@ class NotifyPasswordRecovery(Resource):
 		msg = {
 			'subject' : "Senha modificada com sucesso!",
 			'recipients' : recipients,
-			'html' : f'Olá, {recipients[0][0]}! Sua senha Qfila foi modificada com sucesso.'
+			'html' : f'Olá, {recipients[0][0].title()}! Sua senha Qfila foi modificada com sucesso.'
 		}
 
 		mail_scheduler.append(msg)

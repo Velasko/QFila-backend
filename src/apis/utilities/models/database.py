@@ -6,7 +6,7 @@ user = Model("User", {
 	'email' : fields.String(description='User email'),
 	'passwd' : fields.String(description='User password'),
 	'birthday' : fields.Date(description='User birthday', dt_format="iso8601"),
-	'phone' : fields.Integer(description='User phone number')
+	'phone' : fields.String(description='User phone number')
 })
 
 meal = Model("Meal", {

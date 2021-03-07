@@ -5,7 +5,7 @@ import enum
 from datetime import date
 
 from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint
-from sqlalchemy import Float, BigInteger, Integer, SmallInteger 
+from sqlalchemy import Float, Integer, SmallInteger 
 from sqlalchemy import String
 from sqlalchemy import Date, DateTime
 from sqlalchemy import Enum
@@ -51,10 +51,19 @@ class User(Base, Serializable):
 	birthday = Column(Date)
 	email = Column(String(255), unique=True)
 	passwd = Column(String(255))
-	phone = Column(BigInteger, unique=True)
+	phone = Column(String(16), unique=True)
 
 	def __repr__(self):
 		return f"User: {self.name}"
+
+class SentSMS(Base, Serializable):
+	__tablename__ = 'SentSMS'
+
+	aws_id = Column(String(255), primary_key=True)
+	user_id = Column(Integer, ForeignKey('Users.id', ondelete='RESTRICT'), nullable=False)
+	time = Column(DateTime, nullable=False)
+	operation = Column(String(255))
+
 
 class FoodCourt(Base, Serializable):
 	__tablename__ = 'FoodCourts'

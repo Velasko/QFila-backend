@@ -183,7 +183,6 @@ class Catalog(Resource):
 				- Parse the food court's id to retrieve.
 		"""
 		try:
-
 			args = self.argument_parser(category, **dict(request.args))
 			args['category'] = category
 			args['type'] = qtype

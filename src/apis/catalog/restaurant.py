@@ -17,7 +17,7 @@ except ValueError:
 for model in (meal, restaurant, foodcourt, catalog_response, catalog_restaurant_qtype):
 	api.add_model(model.name, model)
 
-@ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")
+@ns.route("/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")
 class RestaurantMenu(Resource):
 
 	@ns.doc(params={
@@ -38,6 +38,8 @@ class RestaurantMenu(Resource):
 			- restaurant's category (section)
 		"""
 
+		keyword = keyword.lower()
+
 		try:
 			resp = get("{}/database/catalog/restaurant/{}/{}/{}".format(
 					current_app.config['DATABASE_URL'],
@@ -50,7 +52,7 @@ class RestaurantMenu(Resource):
 
 		return resp.json(), 200
 
-@ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>")
+@ns.route("/restaurant/<int:rest_id>/<string:qtype>")
 class RestaurantSections(Resource):
 
 	@ns.doc(params={
