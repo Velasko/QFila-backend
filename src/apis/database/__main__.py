@@ -59,9 +59,9 @@ if __name__ == '__main__':
 			if key != confirmation:
 				print("Key incorrect, operation cancelled!")
 			else:
-				from .scheme import Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User
+				from .scheme import Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User, Shortner
 
-				for table in (Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User):
+				for table in (Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User, Shortner):
 					try:
 						table.__table__.drop()
 					except Exception as e:
