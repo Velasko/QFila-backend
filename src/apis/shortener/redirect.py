@@ -59,8 +59,7 @@ class ShortCreation(Resource):
 				headers={**headers.json, **headers.system_authentication}
 			)
 
-			if resp.status_code == 200:
-				return resp.json(), 200
+			return resp.json(), resp.status_code
 
 		except requests.exceptions.ConnectionError:
 			return {'message': 'Could not stablish connection to database'}, 503

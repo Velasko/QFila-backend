@@ -19,6 +19,8 @@ except ValueError:
 for model in (short_request, short_request_database, short_response, long_request, long_response):
 	api.add_model(model.name, model)
 
+characters = string.ascii_letters + "123456789"
+
 @ns.route('/shortner')
 class ShortnerHandler(Resource):
 
@@ -42,7 +44,6 @@ class ShortnerHandler(Resource):
 	def post(self):
 		"""Method to generate a short url"""
 		data = api.payload
-		print('data:', data)
 
 		if len(data['long_url']) > 511:
 			return {'message' : 'long_url too large'}, 400
@@ -56,7 +57,7 @@ class ShortnerHandler(Resource):
 
 		for _ in range(15):
 			try:
-				short_path = data['initial_section'] + ''.join(random.choice(string.ascii_letters) for _ in range(path_size))
+				short_path = data['initial_section'] + ''.join(random.choice(characters) for _ in range(path_size))
 				short = Shortner(
 					short=short_path,
 					long=data['long_url'],
