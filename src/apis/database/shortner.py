@@ -1,7 +1,10 @@
 import random
 import string
 
+import time
 from datetime import date
+import threading
+
 from flask import current_app
 from flask_restx import Resource
 from sqlalchemy import exc
@@ -74,3 +77,21 @@ class ShortnerHandler(Resource):
 				print("tried:", short_path)
 
 		return {'message' : 'could not generate an url'}, 500
+
+def url_cleanup():
+	import datetime
+	while True:
+		try:
+			now = datetime.datetime.utcnow()
+			query = session.query(Shortner).filter(
+				Shortner.delete_time < now
+			)
+			query.delete()
+			session.commit()
+		except TypeError as e:
+			session.rollback()
+		time.sleep(60)
+
+t = threading.Thread(target=url_cleanup)
+t.daemon = True
+t.start()
