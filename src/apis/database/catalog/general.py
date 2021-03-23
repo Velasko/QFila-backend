@@ -12,7 +12,7 @@ except ValueError:
 	#If running from inside apis folder
 	from utilities.models.catalog import *
 
-for model in (meal, restaurant, foodcourt, pagination_model, catalog_id_model, catalog_location, catalog_query, catalog_response):
+for model in (compl_item, complement, meal, restaurant, foodcourt, pagination_model, catalog_id_model, catalog_location, catalog_query, catalog_response):
 	api.add_model(model.name, model)
 
 @ns.route('/catalog')

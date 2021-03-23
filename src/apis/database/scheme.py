@@ -101,6 +101,7 @@ class Restaurant(Base, Serializable):
 
 	id = Column(Integer	, primary_key=True)
 	name = Column(String(255), nullable=False)
+	description = Column(String(511))
 	bank_info = Column(String(255), nullable=False)
 	login = Column(String(255), unique=True, nullable=False)
 	passwd = Column(String(255), nullable=False)
