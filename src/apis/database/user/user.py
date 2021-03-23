@@ -5,7 +5,7 @@ from flask_restx import Resource, fields
 from sqlalchemy import exc
 
 from ..app import ns, session, api
-from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize
+from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, safe_serialize
 
 try:
 	from ...utilities import checkers

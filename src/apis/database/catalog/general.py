@@ -4,7 +4,7 @@ from flask import current_app
 from flask_restx import Resource
 
 from ..app import ns, session, api
-from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, Item, safe_serialize
+from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
 
 try:
 	from ...utilities.models.catalog import *
@@ -226,6 +226,6 @@ class CatalogHandler(Resource):
 		if query.count() == 0:
 			return {'message' : 'Nothing found'}, 404
 
-		response = { query_params['type'] : [safe_serialize(item) for item in query.all()] }
+		response = { query_params['type'] : [safe_serialize(Orderitem) for Orderitem in query.all()] }
 
 		return json.dumps(response), 200

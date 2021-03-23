@@ -5,7 +5,7 @@ from flask_restx import Resource, fields
 from sqlalchemy import exc
 
 from ..app import ns, session, api
-from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, Item, safe_serialize, serialize
+from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, OrderItem, safe_serialize, serialize
 
 try:
 	from ...utilities import checkers, authentication
@@ -44,27 +44,27 @@ class UserRecentsHandler(Resource):
 			initial_query = session.query(
 					Meal
 				).join(
-					Item,
-					Item.rest == Meal.rest and \
-					Item.meal == Meal.id
+					OrderItem,
+					OrderItem.rest == Meal.rest and \
+					OrderItem.meal == Meal.id
 				)
 		elif query_mode == 'restaurants':
 			initial_query = session.query(
 					Restaurant
 				).join(
-					Item,
-					Item.rest == Restaurant.id
+					OrderItem,
+					OrderItem.rest == Restaurant.id
 				)
 		else:
 			api.abort(404)
 
 		query = initial_query.join(
 			User,
-			User.id == Item.user
+			User.id == OrderItem.user
 		).filter(
 			field == data
 		).order_by(
-			Item.time.desc()
+			OrderItem.time.desc()
 		# ).distinct(
 		# 	# Restaurant
 		).limit(3)
@@ -98,10 +98,10 @@ class HistoryHandler(Resource):
 			cart['order'] = []
 
 			meal_query = session.query(
-				Item, Meal.name
+				OrderItem, Meal.name
 			).filter(
-				Item.user == user_id,
-				Item.time == cart['time']
+				OrderItem.user == user_id,
+				OrderItem.time == cart['time']
 			).join(
 				Meal,
 			)
@@ -122,7 +122,7 @@ class HistoryHandler(Resource):
 
 				aux[rest].append(meal) 
 
-			for rest, order in aux.items():
+			for rest, order in aux.Orderitems():
 
 				rest_data = {
 					'rest' : rest,

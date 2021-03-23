@@ -2,7 +2,7 @@ from flask_restx import Resource
 
 from ..app import ns, session, api
 
-from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, Item, safe_serialize
+from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
 
 try:
 	from ...utilities.models.catalog import *
