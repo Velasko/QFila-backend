@@ -47,3 +47,8 @@ history_response = order_contents.inherit("history_response", {
 	"payment_method" : fields.String(enum=payment_methods),
 })
 
+user_update = Model('user.update', {
+	"old_password" : fields.String(required=True),
+	"user" : fields.Nested(user)
+})
+

@@ -13,3 +13,4 @@ from . import login
 from . import order
 from . import history
 from . import password_recovery
+from . import update
