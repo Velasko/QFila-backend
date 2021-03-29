@@ -8,7 +8,7 @@ Table Users as U {
   birthday date
   email email
   passwd varchar
-  phone int
+  phone string
 }
 
 Table SentSMS as sms {
@@ -36,6 +36,7 @@ Table Restaurants as R {
   bank_info bank
   login varchar
   passwd varchar
+  phone string
   location int
   image link
   //CNPj???
@@ -57,8 +58,6 @@ Table Meal {
   price float
   description varchar
   image link
-  //Add complements?
-  //Sortings?
 }
 
 Ref: Meal.rest > R.id 
@@ -78,9 +77,9 @@ Table Cart as C {
   time datetime [pk]
   user int [pk]
   price float
+  qfila_fee int
   payment_method string
   payment_status string
-  qfila_fee int
 }
 
 Ref: C.user > U.id
@@ -100,7 +99,7 @@ Ref: O.user > C.user
 Ref: O.time > C.time
 Ref: O.rest > Meal.rest
 
-Table Item as I {
+Table OrderItem as I {
   time datetime [pk]
   user int [pk]
   rest int [pk]
@@ -118,9 +117,9 @@ Ref: I.time > O.time
 Ref: I.rest > O.rest
 Ref: I.meal > Meal.id
 
-Table Complemento as poll {
+Table Complement as poll {
   rest int [pk]
-  cid int [pk]
+  id int [pk]
   head string
   name string
   min int
@@ -139,27 +138,27 @@ Table Meal_Compl_Relation as mcr {
 
 Ref: mcr.rest > R.id
 Ref: mcr.meal > Meal.id
-Ref: mcr.compl > poll.cid
+Ref: mcr.compl > poll.id
 
 Table comp_tag {
   rest int [pk]
-  cid int [pk]
+  compl int [pk]
   tag string [pk]
 }
 
 Ref: comp_tag.rest > poll.rest
-Ref: comp_tag.cid > poll.cid
+Ref: comp_tag.compl > poll.id
 
 Table comp_item as PI {
   rest int [pk]
-  cid int [pk]
-  Iid int [pk]
+  compl int [pk]
+  id int [pk]
   item_name string
   price_modification int
 }
 
 Ref: PI.rest > poll.rest
-Ref: PI.cid > poll.cid
+Ref: PI.compl > poll.id
 
 Table order_item_compl as oic {
   time datetime [pk]
@@ -168,7 +167,7 @@ Table order_item_compl as oic {
   meal int [pk]
   
   data string [pk]
-  value_mod int [pk]
+  price int [pk]
 }
 
 Ref: oic.time > I.time

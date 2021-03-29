@@ -2,7 +2,7 @@ from flask_restx import Resource
 
 from ..app import ns, session, api
 
-from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, Item, safe_serialize
+from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
 
 try:
 	from ...utilities.models.catalog import *
@@ -10,7 +10,7 @@ except ValueError:
 	#If running from inside apis folder
 	from utilities.models.catalog import *
 
-for model in (meal, restaurant, foodcourt, catalog_response, catalog_restaurant_qtype):
+for model in (compl_item, complement, meal, restaurant, foodcourt, catalog_response, catalog_restaurant_qtype):
 	api.add_model(model.name, model)
 
 @ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")

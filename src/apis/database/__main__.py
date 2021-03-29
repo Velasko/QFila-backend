@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 
 from sqlalchemy import create_engine
 from flask import Flask
@@ -59,11 +60,12 @@ if __name__ == '__main__':
 			if key != confirmation:
 				print("Key incorrect, operation cancelled!")
 			else:
-				from .scheme import Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User, Shortner
+				from .app import engine
+				from .scheme import *
 
-				for table in (Item, Cart, Meal, MenuSection, FoodType, Restaurant, FoodCourt, User, Shortner):
+				for table in Tables():
 					try:
-						table.__table__.drop()
+						table.__table__.drop(engine)
 					except Exception as e:
 						print("An exception has occured with", table.__tablename__)
 					else:

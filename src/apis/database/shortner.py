@@ -90,8 +90,11 @@ def url_cleanup():
 			session.commit()
 		except TypeError as e:
 			session.rollback()
+		except exc.ProgrammingError:
+			session.rollback()
 		time.sleep(60)
 
-t = threading.Thread(target=url_cleanup)
-t.daemon = True
-t.start()
+def url_cleanup_daemon():
+	t = threading.Thread(target=url_cleanup)
+	t.daemon = True
+	t.start()

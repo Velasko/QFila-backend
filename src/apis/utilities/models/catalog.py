@@ -1,7 +1,7 @@
 from flask_restx import fields
 from flask_restx.model import Model
 
-from .database import meal, restaurant, foodcourt
+from .database import compl_item, complement, meal, restaurant, foodcourt
 
 catalog_response = Model("catalog.response", {
 	'meal' : fields.List(fields.Nested(meal)),

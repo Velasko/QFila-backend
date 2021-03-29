@@ -16,7 +16,7 @@ except ValueError:
 	from utilities import headers
 	from utilities.models.catalog import *
 
-for model in (meal, restaurant, foodcourt, catalog_response):
+for model in (compl_item, complement, meal, restaurant, foodcourt, catalog_response):
 	api.add_model(model.name, model)
 
 category_doc = """Possible categories of queries:

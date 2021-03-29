@@ -57,6 +57,7 @@ class token_required():
 					headers=headers.system_authentication
 				)
 				current_user = resp.json()
+				current_user['id_key'] = id_key
 
 				if current_user['passwd'] != data['passwd']:
 					return {'message': 'Authentication required'}, 499

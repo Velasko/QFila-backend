@@ -4,7 +4,6 @@ from requests import post, get, exceptions
 
 from flask import current_app
 from flask_restx import Resource
-from flask_restx import Resource, fields
 
 from .app import ns, api
 
