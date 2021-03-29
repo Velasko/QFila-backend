@@ -35,7 +35,7 @@ if __name__ == '__main__':
 	#defining the hostname, handling ssl and
 	hostname = args.host
 	ip_address_regex = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
-	if re.match(ip_address_regex, args.host):
+	if re.match(ip_address_regex, args.host) or args.host == 'localhost':
 		#blocking ssl with ip as host
 		args.no_ssl = True
 	else:
