@@ -174,3 +174,10 @@ class Item(Base, Serializable):
 
 	total_price = Column(Float, nullable=False)
 	comments = Column(String(255))
+
+class Shortner(Base, Serializable):
+	__tablename__ = 'ShortenMap'
+
+	short = Column(String(255), primary_key=True)
+	long = Column(String(511), nullable=False)
+	delete_time = Column(DateTime, nullable=False)

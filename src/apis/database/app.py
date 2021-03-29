@@ -26,3 +26,4 @@ session = DBSession()
 from . import user
 from . import catalog
 from . import order
+from . import shortner
