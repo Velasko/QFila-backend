@@ -2,7 +2,7 @@ from flask_restx import fields
 from flask_restx.model import Model
 
 short_request = Model('Short url request',{
-	'long_url' : fields.String(required=True, max=511),
+	'long_url' : fields.String(required=True, max_length=511),
 	'ttl' : fields.DateTime(description="Time to live/when it's supposed to be deleted"),
 	'max_size' : fields.Integer(default=140, description=""),
 })

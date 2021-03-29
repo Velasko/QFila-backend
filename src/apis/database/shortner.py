@@ -1,7 +1,10 @@
 import random
 import string
 
+import time
 from datetime import date
+import threading
+
 from flask import current_app
 from flask_restx import Resource
 from sqlalchemy import exc
@@ -18,6 +21,8 @@ except ValueError:
 
 for model in (short_request, short_request_database, short_response, long_request, long_response):
 	api.add_model(model.name, model)
+
+characters = string.ascii_letters + "123456789"
 
 @ns.route('/shortner')
 class ShortnerHandler(Resource):
@@ -42,7 +47,6 @@ class ShortnerHandler(Resource):
 	def post(self):
 		"""Method to generate a short url"""
 		data = api.payload
-		print('data:', data)
 
 		if len(data['long_url']) > 511:
 			return {'message' : 'long_url too large'}, 400
@@ -56,7 +60,7 @@ class ShortnerHandler(Resource):
 
 		for _ in range(15):
 			try:
-				short_path = data['initial_section'] + ''.join(random.choice(string.ascii_letters) for _ in range(path_size))
+				short_path = data['initial_section'] + ''.join(random.choice(characters) for _ in range(path_size))
 				short = Shortner(
 					short=short_path,
 					long=data['long_url'],
@@ -73,3 +77,21 @@ class ShortnerHandler(Resource):
 				print("tried:", short_path)
 
 		return {'message' : 'could not generate an url'}, 500
+
+def url_cleanup():
+	import datetime
+	while True:
+		try:
+			now = datetime.datetime.utcnow()
+			query = session.query(Shortner).filter(
+				Shortner.delete_time < now
+			)
+			query.delete()
+			session.commit()
+		except TypeError as e:
+			session.rollback()
+		time.sleep(60)
+
+t = threading.Thread(target=url_cleanup)
+t.daemon = True
+t.start()
