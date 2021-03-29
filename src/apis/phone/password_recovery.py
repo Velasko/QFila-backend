@@ -1,5 +1,4 @@
 from flask_restx import Resource
-from flask_mail import Message
 
 from .app import ns, api, sms_service
 
