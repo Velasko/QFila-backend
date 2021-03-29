@@ -136,7 +136,7 @@ class UserHandler_UrlParse(Resource):
 				return {'message' : 'No user with such id'}, 404
 			query.update(update)
 			session.commit()
-			return {}, 200
+			return {'message' : 'update sucessfull'}, 200
 		except KeyError as e:
 			session.rollback()
 			return {'message' : e.args[0]}, 400
