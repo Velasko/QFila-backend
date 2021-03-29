@@ -1,3 +1,3 @@
-# Food App API
+# QFILA APP API
 
-## Simple Menu CRUD API
+## APIs de acesso ao back end do QFILA
