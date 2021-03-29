@@ -10,6 +10,7 @@ user = Model("User", {
 })
 
 compl_item = Model("Complement.Item", {
+	"id" : fields.Integer(description="Item's ID. Must be associated with restaurant and complement table for it to be unique"),
 	"name" : fields.String(description="Name of the complement's item"),
 	"price" : fields.Fixed(decimals=2, description="The price of the complement")
 })
@@ -20,7 +21,7 @@ complement = Model("Complement", {
 	"name" : fields.String(description="A simple name for the restaurant to identify"),
 	"min" : fields.Integer(description="Minimal ammount of items to be selected", default=0, min=0),
 	"max" : fields.Integer(description="Maximum ammount of items to be selected", default=1, min=1),
-	"stackable" : fields.Boolean(description="Defines if the same item can be selected multiple times", default=False),
+	"stackable" : fields.Integer(description="Defines if the same item can be selected multiple times", min=1),
 	"items" : fields.List(fields.Nested(compl_item))
 })
 
