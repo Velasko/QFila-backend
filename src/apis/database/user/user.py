@@ -1,4 +1,5 @@
 import json
+import re
 
 from datetime import date
 from flask_restx import Resource, fields
@@ -71,10 +72,11 @@ class UserHandler(Resource):
 			session.add(user)
 
 			session.commit()
-		except (exc.InvalidRequestError, exc.IntegrityError) as e:
-			#I don't get why they seem to change between the two.
+		except exc.IntegrityError as e:
 			session.rollback()
-			api.abort(409, e._message().split(".")[-1][:-3] + " already in use.")
+			message = e._message()
+			key, value = re.findall('Key \((.+)\)=\((.+)\) already exists.', message)[0]
+			api.abort(409, key + " already exists.")
 		except KeyError as e:
 			"Required value is missing"
 			session.rollback()

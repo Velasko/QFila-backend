@@ -101,5 +101,5 @@ class Register(Resource):
 				return resp.json(), resp.status_code
 			else:
 				return {'message' : 'unexpected database behaviour'}, 500
-		except exceptions.ConnectionError:
+		except exceptions.ConnectionError as e:
 			return {'message': 'could not stablish connection to database'}, 503
