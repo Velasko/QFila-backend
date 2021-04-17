@@ -2,7 +2,7 @@
 #https://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/
 import re
 
-import enum
+import enum, decimal
 from datetime import date
 
 from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint
@@ -42,6 +42,8 @@ def serialize(data):
 			data[key] = value.isoformat()
 		elif isinstance(value, enum.Enum):
 			data[key] = value.name
+		elif isinstance(value, decimal.Decimal):
+			data[key] = float(value)
 
 	return data
 

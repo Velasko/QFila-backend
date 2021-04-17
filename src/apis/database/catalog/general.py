@@ -4,7 +4,7 @@ from flask import current_app
 from flask_restx import Resource
 
 from ..app import ns, session, api
-from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
+from ..scheme import *
 
 try:
 	from ...utilities.models.catalog import *
@@ -181,6 +181,44 @@ class CatalogHandler(Resource):
 
 		return query
 
+	def fetch_meal_complements(self, response):
+		for meal in response['meal']:
+			complements = []
+			meal['complements'] = complements
+
+			compl_query = session.query(
+				Complement, MealComplRel.ammount
+			).join(
+				MealComplRel,
+				Complement.rest == MealComplRel.rest and \
+				Complement.compl == MealComplRel.compl
+			).filter(
+				MealComplRel.meal == meal['id'],
+				MealComplRel.rest == meal['rest']
+			)
+
+			for compl in compl_query:
+				compl_data = serialize(compl[0])
+				rest, compl_id = compl_data['rest'], compl_data['compl']
+
+				item_query = session.query(
+					ComplementItem
+				).filter(
+					ComplementItem.rest == rest,
+					ComplementItem.compl == compl_id
+				)
+
+				compl_data['items'] = [{
+					key: value for key, value in item.serialize().items()
+						if key not in ('rest', 'compl')
+				} for item in item_query]
+
+				complements['max'] *= compl[1] #the ammount
+				complements['min'] *= compl[1]
+				complements.append(compl_data)
+
+				del compl_data['rest'], compl_data['compl']
+
 	@ns.expect(catalog_query)
 	@ns.response(200, "Method executed successfully", model=catalog_response)
 	@ns.response(404, "Couldn't find anything")
@@ -223,9 +261,14 @@ class CatalogHandler(Resource):
 		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
 		query = query.offset(offset).limit(limit)
 
+
 		if query.count() == 0:
 			return {'message' : 'Nothing found'}, 404
 
 		response = { query_params['type'] : [safe_serialize(Orderitem) for Orderitem in query.all()] }
+
+		self.fetch_meal_complements(response)
+		print('fetch_meal_complements finished')
+
 
 		return json.dumps(response), 200
