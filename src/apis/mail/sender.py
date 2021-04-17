@@ -1,9 +1,9 @@
 import time
-from threading import Thread, Lock
+from threading import Lock
 
 from flask_mail import Message
 
-class MailScheduler(Thread):
+class MailScheduler():
 	def __init__(self, mail, *args, **kwargs):
 		self.lock = Lock()
 		self.mails = []
@@ -17,7 +17,6 @@ class MailScheduler(Thread):
 	def init_app(self, app):
 		self.app = app
 		self.server.init_app(app)
-		self.start()
 
 	def append(self, mail):
 		with self.lock:
@@ -34,10 +33,10 @@ class MailScheduler(Thread):
 						# conn.send(msg)
 			self.mails = []
 
-	def run(self):
+	async def main(self):
 		try:
 			while True:
-				time.sleep(60)
+				await asyncio.sleep(60)
 				if len(self.mails) > 0:
 					self.send_mails()
 		except ConnectionRefusedError as e:

@@ -77,24 +77,3 @@ class ShortnerHandler(Resource):
 				print("tried:", short_path)
 
 		return {'message' : 'could not generate an url'}, 500
-
-def url_cleanup():
-	import datetime
-	while True:
-		try:
-			now = datetime.datetime.utcnow()
-			query = session.query(Shortner).filter(
-				Shortner.delete_time < now
-			)
-			query.delete()
-			session.commit()
-		except TypeError as e:
-			session.rollback()
-		except exc.ProgrammingError:
-			session.rollback()
-		time.sleep(60)
-
-def url_cleanup_daemon():
-	t = threading.Thread(target=url_cleanup)
-	t.daemon = True
-	t.start()

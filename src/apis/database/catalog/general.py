@@ -213,8 +213,8 @@ class CatalogHandler(Resource):
 						if key not in ('rest', 'compl')
 				} for item in item_query]
 
-				complements['max'] *= compl[1] #the ammount
-				complements['min'] *= compl[1]
+				compl_data['max'] *= compl[1] #the ammount
+				compl_data['min'] *= compl[1]
 				complements.append(compl_data)
 
 				del compl_data['rest'], compl_data['compl']
@@ -268,7 +268,5 @@ class CatalogHandler(Resource):
 		response = { query_params['type'] : [safe_serialize(Orderitem) for Orderitem in query.all()] }
 
 		self.fetch_meal_complements(response)
-		print('fetch_meal_complements finished')
-
 
 		return json.dumps(response), 200

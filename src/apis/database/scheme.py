@@ -327,9 +327,3 @@ class Shortner(Base, Serializable):
 	short = Column(String(255), primary_key=True)
 	long = Column(String(511), nullable=False)
 	delete_time = Column(DateTime, nullable=False)
-
-
-def kek(x):
-	from . import scheme
-	print('s')
-	return getattr(scheme, x).__tablename__

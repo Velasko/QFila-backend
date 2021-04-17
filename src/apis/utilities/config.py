@@ -2,7 +2,10 @@ import os
 
 from flask import request
 
-class BaseConfig():
+import threading
+import asyncio
+
+class BaseConfig(threading.Thread):
 	def __init__(self, app):
 		self.app = app
 		self._env = None
@@ -10,6 +13,10 @@ class BaseConfig():
 		#Those are used to limit service access to the exterior
 		self._keys = [] #on use keys
 		self._blockedservices = [] #services secured
+
+		super().__init__()
+		self.daemon = True
+		self._loop = asyncio.new_event_loop()
 
 	def config_base(self):
 		self.app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
@@ -30,6 +37,9 @@ class BaseConfig():
 			if not key is None:
 				self._keys.append(key)
 		self.app.before_request(self.block_outside_requests)
+
+		self.app.run = self.run_wrapper(self.app.run)
+		self._tasks = []
 
 	def configure(self, auto_verify=True):
 		"""Makes any execution required to configure the app"""
@@ -71,3 +81,27 @@ class BaseConfig():
 		if ns in self._blockedservices:
 			if not request.headers.get('security_header', False) in self._keys:
 				return {"message": "Not authorized"}, 403
+
+	def run_wrapper(self, run):
+		def wrapped(*args, **kwargs):
+			self.start()
+			try:
+				run(*args, **kwargs)
+			finally:
+				self.stop()
+				# self.join()
+
+		return wrapped
+
+	def run(self):
+		asyncio.set_event_loop(self._loop)
+		self._loop.run_forever()
+
+	def add_task(self, coroutine):
+		task = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
+		self._tasks.append(task)
+
+	def stop(self, *args):
+		for task in self._tasks:
+			task.cancel()
+		self._loop.stop()
