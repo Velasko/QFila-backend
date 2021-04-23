@@ -182,6 +182,9 @@ class CatalogHandler(Resource):
 		return query
 
 	def fetch_meal_complements(self, response):
+		if not 'meal' in response:
+			return 
+
 		for meal in response['meal']:
 			complements = []
 			meal['complements'] = complements
@@ -245,11 +248,12 @@ class CatalogHandler(Resource):
 				)
 			)(**kwargs)
 
-		except KeyError as e:
-			raise e
-
 		except AttributeError as e:
 			api.abort(404)
+
+		except Exception as e:
+			session.rollback()
+			raise e
 
 		response = {
 			'meal' : [],

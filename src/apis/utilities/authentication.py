@@ -64,7 +64,7 @@ class token_required():
 
 			except req_exc.ConnectionError:
 				return {'message' : 'could not connect to database'}, 503
-			# except:
+			# except Exception:
 			# 	return {'message': 'Authentication required'}, 499
 
 			#The self obj is actually the first item in args.

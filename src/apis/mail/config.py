@@ -17,7 +17,7 @@ class Config(BaseConfig):
 		self.app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD') # enter your password here
 
 		mail_scheduler.init_app(self.app)
-		self.add_task(mail_scheduler.main())
+		self.add_task(mail_scheduler.main)
 
 		self.limit_service_access('mail')
 

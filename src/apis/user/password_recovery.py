@@ -207,7 +207,7 @@ class ForgottenPassword(Resource):
 		try:
 			if data['passwd'] != user['passwd']:
 				api.abort(404)
-		except:
+		except Exception:
 			api.abort(404)
 
 		template = head + """

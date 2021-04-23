@@ -89,7 +89,16 @@ class BaseConfig(threading.Thread):
 				run(*args, **kwargs)
 			finally:
 				self.stop()
-				# self.join()
+				pass
+
+		return wrapped
+
+	def coroutine_wrapper(self, function):
+		async def wrapped(*args, **kwargs):
+			try:
+				return await function(*args, **kwargs)
+			except asyncio.CancelledError:
+				pass
 
 		return wrapped
 
@@ -97,11 +106,16 @@ class BaseConfig(threading.Thread):
 		asyncio.set_event_loop(self._loop)
 		self._loop.run_forever()
 
-	def add_task(self, coroutine):
-		task = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
+	def add_task(self, coroutine, *args, **kwargs):
+		coro = self.coroutine_wrapper(coroutine)(*args, **kwargs)
+		task = asyncio.run_coroutine_threadsafe(coro, self._loop)
 		self._tasks.append(task)
 
 	def stop(self, *args):
+		print("running config.stop")
 		for task in self._tasks:
 			task.cancel()
-		self._loop.stop()
+
+		# import time
+		# time.sleep(1)
+		# self._loop.stop()

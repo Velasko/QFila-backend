@@ -38,7 +38,7 @@ if __name__ == '__main__':
 	if database_url is None:
 		try:
 			database_url = os.getenv('DATABASE_URI')
-		except:
+		except Exception:
 			print("__main__.py: error: the following arguments are required: --database")
 			sys.exit()
 
