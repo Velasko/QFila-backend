@@ -6,6 +6,8 @@ from flask_restx import Resource
 from ..app import ns, session, api
 from ..scheme import *
 
+from . import common
+
 try:
 	from ...utilities.models.catalog import *
 except ValueError:
@@ -181,47 +183,6 @@ class CatalogHandler(Resource):
 
 		return query
 
-	def fetch_meal_complements(self, response):
-		if not 'meal' in response:
-			return 
-
-		for meal in response['meal']:
-			complements = []
-			meal['complements'] = complements
-
-			compl_query = session.query(
-				Complement, MealComplRel.ammount
-			).join(
-				MealComplRel,
-				Complement.rest == MealComplRel.rest and \
-				Complement.compl == MealComplRel.compl
-			).filter(
-				MealComplRel.meal == meal['id'],
-				MealComplRel.rest == meal['rest']
-			)
-
-			for compl in compl_query:
-				compl_data = serialize(compl[0])
-				rest, compl_id = compl_data['rest'], compl_data['compl']
-
-				item_query = session.query(
-					ComplementItem
-				).filter(
-					ComplementItem.rest == rest,
-					ComplementItem.compl == compl_id
-				)
-
-				compl_data['items'] = [{
-					key: value for key, value in item.serialize().items()
-						if key not in ('rest', 'compl')
-				} for item in item_query]
-
-				compl_data['max'] *= compl[1] #the ammount
-				compl_data['min'] *= compl[1]
-				complements.append(compl_data)
-
-				del compl_data['rest'], compl_data['compl']
-
 	@ns.expect(catalog_query)
 	@ns.response(200, "Method executed successfully", model=catalog_response)
 	@ns.response(404, "Couldn't find anything")
@@ -271,6 +232,6 @@ class CatalogHandler(Resource):
 
 		response = { query_params['type'] : [safe_serialize(Orderitem) for Orderitem in query.all()] }
 
-		self.fetch_meal_complements(response)
+		common.fetch_meal_complements(response)
 
 		return json.dumps(response), 200

@@ -1,8 +1,9 @@
 from flask_restx import Resource
 
 from ..app import ns, session, api
-
 from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
+
+from . import common
 
 try:
 	from ...utilities.models.catalog import *
@@ -41,7 +42,11 @@ class RestaurantMenu(Resource):
 					getattr(Meal, qtype).ilike(f"%{keyword}%")
 				)
 
-			return { 'meal' : [safe_serialize(item) for item in query.all()]}
+			response = { 'meal' : [safe_serialize(item) for item in query.all()]}
+
+			common.fetch_meal_complements(response)
+
+			return response
 
 		return {'message' : 'invalid qtype'}, 400
 
