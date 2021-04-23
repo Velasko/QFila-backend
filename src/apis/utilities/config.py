@@ -112,7 +112,6 @@ class BaseConfig(threading.Thread):
 		self._tasks.append(task)
 
 	def stop(self, *args):
-		print("running config.stop")
 		for task in self._tasks:
 			task.cancel()
 

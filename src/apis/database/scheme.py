@@ -60,6 +60,12 @@ class Money(Numeric):
 		kwargs['scale'] = 2
 		super().__init__(*args, **kwargs)
 
+class UserConfirmation(enum.Enum):
+	none = 0
+	email = 1
+	phone = 2
+	both = 3
+
 class User(Base, Serializable):
 	__tablename__ = 'Users'
 
@@ -69,6 +75,7 @@ class User(Base, Serializable):
 	email = Column(String(255), unique=True)
 	passwd = Column(String(255))
 	phone = Column(String(16), unique=True)
+	confirmed = Column(Enum(UserConfirmation), nullable=False)
 
 	def __repr__(self):
 		return f"User: {self.name}"
@@ -134,7 +141,7 @@ class Meal(Base, Serializable):
 	price = Column(Float, nullable=False)
 	description = Column(String(511))
 	image = Column(String(200))
-
+	available = Column(SmallInteger, default=1)
 
 class MenuSection(Base, Serializable):
 	__tablename__ = 'MenuSections'
