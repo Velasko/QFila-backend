@@ -15,18 +15,17 @@ except ValueError:
 	from utilities import authentication, headers
 	from utilities.models.user import *
 
-for model in (meal_info, rest, payment_model, order_contents, history_response, resend_order_model):
+for model in (recent_model, meal_info, rest, payment_model, order_contents, history_response, resend_order_model):
 	api.add_model(model.name, model)
 
-@ns.route("/recent/<string:mode>")
+@ns.route("/recents")
 class Recent(Resource):
 
 	@authentication.token_required(namespace=ns)
-	@ns.response(400, "Invalid request mode")
+	@ns.response(200, "Success", model=recent_model)
 	@ns.response(503, "Could not stablish connection to database")
-	@ns.doc(params={"mode" : "Defines which mode is desired to see the history 'restaurants' or 'meals'"})
 	def get(self, user, mode=None):
-		"""Get user's recent restaurants or meals"""
+		"""Get user's recent restaurants"""
 
 		data = {'user' : user['name']}
 

@@ -11,9 +11,11 @@ from sqlalchemy import String
 from sqlalchemy import Date, DateTime
 from sqlalchemy import Enum
 
+from sqlalchemy import create_engine
+from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy import create_engine
+from sqlalchemy.sql.functions import func
 
 Base = declarative_base()
 
@@ -75,7 +77,7 @@ class User(Base, Serializable):
 	email = Column(String(255), unique=True)
 	passwd = Column(String(255))
 	phone = Column(String(16), unique=True)
-	confirmed = Column(Enum(UserConfirmation), nullable=False)
+	confirmed = Column(Enum(UserConfirmation), nullable=False, default=UserConfirmation(0))
 
 	def __repr__(self):
 		return f"User: {self.name}"
@@ -93,8 +95,10 @@ class SentSMS(Base, Serializable):
 class FoodCourt(Base, Serializable):
 	__tablename__ = 'FoodCourts'
 
-	id = Column(Integer	, primary_key=True)
+	id = Column(Integer, primary_key=True)
 	name = Column(String(255), nullable=False)
+	shopping = Column(String(63))
+	description = Column(String(255))
 	state = Column(String(255), nullable=False) 
 	city = Column(String(255), nullable=False)
 	address = Column(String(255), nullable=False)
@@ -108,7 +112,7 @@ class FoodCourt(Base, Serializable):
 class Restaurant(Base, Serializable):
 	__tablename__ = 'Restaurants'
 
-	id = Column(Integer	, primary_key=True)
+	id = Column(Integer, primary_key=True)
 	name = Column(String(255), nullable=False)
 	description = Column(String(511))
 	bank_info = Column(String(255), nullable=False)
@@ -134,8 +138,8 @@ class FoodType(Base, Serializable):
 class Meal(Base, Serializable):
 	__tablename__ = 'Meals'
 
-	id = Column(Integer	, primary_key=True)
-	rest = Column(Integer, ForeignKey('FoodCourts.id', ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True)
+	id = Column(Integer , primary_key=True)
+	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True)
 	name = Column(String(255), nullable=False)
 	foodtype = Column(String(255), ForeignKey('FoodTypes.name', ondelete='RESTRICT', onupdate='CASCADE'))
 	price = Column(Float, nullable=False)
@@ -181,7 +185,7 @@ class Cart(Base, Serializable):
 	price = Column(Money, nullable=False)
 	qfila_fee = Column(Money, nullable=False)
 	payment_method = Column(Enum(PaymentMethods), nullable=False)
-	payment_status = Column(Enum(PaymentStatuses), nullable=False)
+	payment_status = Column(Enum(PaymentStatuses), nullable=False, default=PaymentStatuses(0))
 
 class Order(Base, Serializable):
 	__tablename__ = 'Orders'
@@ -230,31 +234,49 @@ class OrderItem(Base, Serializable):
 	time = Column(DateTime, primary_key=True)
 	rest = Column(Integer, primary_key=True)
 	meal = Column(Integer, primary_key=True)
+	id = Column(SmallInteger, primary_key=True)
 
 	ammount = Column(SmallInteger, nullable=False, default=1)
 	state = Column(Enum(ItemState), nullable=False)
 
-	price = Column(Float, nullable=False)
+	price = Column(Money, nullable=False)
 	comments = Column(String(255))
+
+	@staticmethod
+	def increment(mapper, connection, orderitem):
+		from .app import session
+		previous = session.query(
+			func.max(OrderItem.id)
+		).filter(
+			OrderItem.user == orderitem.user,
+			OrderItem.time == orderitem.time,
+			OrderItem.rest == orderitem.rest,
+			OrderItem.meal == orderitem.meal
+		).first()
+
+		orderitem.id = previous[0] + 1 if previous[0] else 1
+
+listen(OrderItem, "before_insert", OrderItem.increment)
 
 
 class OrderItemComplement(Base, Serializable):
 	__tablename__ = 'OrderItemComplement'
 	__table_args__ = (
 		ForeignKeyConstraint(
-			['user', 'time', 'rest', 'meal'],
-			['OrderItems.user', 'OrderItems.time', 'OrderItems.rest', 'OrderItems.meal'],
+			['user', 'time', 'rest', 'meal', 'id'],
+			['OrderItems.user', 'OrderItems.time', 'OrderItems.rest', 'OrderItems.meal', 'OrderItems.id'],
 			ondelete='CASCADE',
 			onupdate='CASCADE'
 		),
-	)	
+	)
 
 	user = Column(Integer, primary_key=True)
 	time = Column(DateTime, primary_key=True)
 	rest = Column(Integer, primary_key=True)
 	meal = Column(Integer, primary_key=True)
+	id = Column(SmallInteger, primary_key=True)
 
-	data = Column(String(255), nullable=False)
+	data = Column(String(255), primary_key=True)
 	price = Column(Money)
 
 
@@ -268,7 +290,7 @@ class Complement(Base, Serializable):
 	name = Column(String(15), nullable=False)
 	min = Column(SmallInteger, nullable=False, default=0)
 	max = Column(SmallInteger, nullable=False, default=1)
-	stackable = Column(SmallInteger) #if the same item can be seleceted multiple times
+	stackable = Column(SmallInteger, default=1) #if the same item can be seleceted multiple times
 
 class ComplementItem(Base, Serializable):
 	__tablename__ = 'ComplementItems'
@@ -283,11 +305,19 @@ class ComplementItem(Base, Serializable):
 
 	rest = Column(Integer, primary_key=True)
 	compl = Column(Integer, primary_key=True)
-	id = Column(Integer, primary_key=True)
-
-	name = Column(String(15), nullable=False)
+	name = Column(String(15), primary_key=True)
 	price = Column(Money, nullable=False)
 
+	available = Column(SmallInteger, default=1)
+
+	def __repr__(self):
+		return f"ComplementItem: {self.name}"
+
+	def __eq__(self, other):
+		if isinstance(other, str):
+			return other.lower() == self.name.lower()
+		else:
+			return super().__eq__(other)
 
 class MealComplRel(Base, Serializable):
 	__tablename__ = 'MealComplementRelationship'
