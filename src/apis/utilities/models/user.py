@@ -51,3 +51,11 @@ user_update = Model("user.update", {
 	"old_password" : fields.String(require=True),
 	"user" : fields.Nested(user)
 })
+
+recent_model = Model("recent.return", {
+	"id": fields.Integer(required=True, description="Restaurant's id"),
+	"name": fields.String(description="Restaurant's name"),
+	"image": fields.Url(description="Restaurant's logo link"),
+	"foodcourt_name" : fields.String(max_length=255),
+ 	"shopping" : fields.String(max_length=63),
+})
