@@ -91,8 +91,11 @@ class CatalogHandler(Resource):
 			if this argument is parsed, it will return every restaurant in it.
 		"""
 
-		if ids['restaurant'] is None:
-			return session.query(Restaurant).filter(Restaurant.location.in_(ids['foodcourt']))
+		print(ids)
+		if ids['restaurant'] is None or ids['restaurant'] == []:
+			query = session.query(Restaurant).filter(Restaurant.location.in_(ids['foodcourt']))
+			print('query:', query.all())
+			return query
 		return session.query(Restaurant).filter(Restaurant.id.in_(ids['restaurant']))
 
 	def location_id_query(self, **ids):
@@ -122,7 +125,7 @@ class CatalogHandler(Resource):
 		return query
 
 	def meal_name_query(self, keyword, order):
-		return self.base_name_query(db_class=Meal, rest_id=Meal.rest, keyword=keyword, order=order)
+		return self.base_name_query(db_class=Meal, rest_id=Meal.rest, keyword=keyword, order=order).filter(Meal.available == 1)
 
 	def restaurant_name_query(self, keyword, order):
 		return self.base_name_query(db_class=Restaurant, rest_id=Restaurant.id, keyword=keyword, order=order)
@@ -155,7 +158,8 @@ class CatalogHandler(Resource):
 			order,
 			Meal.rest == order.c.id
 		).filter(
-			Meal.foodtype.in_([row[0] for row in types])
+			Meal.foodtype.in_([row[0] for row in types]),
+			Meal.available == 1
 		).order_by(
 			order.c.sort,
 			Meal.name
@@ -164,7 +168,7 @@ class CatalogHandler(Resource):
 		return query
 
 	def restaurant_type_query(self, keyword, order):
-		types = self.get_types(keyword)		
+		types = self.get_types(keyword)
 
 		query = session.query(
 			Restaurant
