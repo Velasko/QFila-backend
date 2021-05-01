@@ -3,6 +3,8 @@ import json
 from flask import current_app
 from flask_restx import Resource
 
+from sqlalchemy.sql.expression import case
+
 from ..app import ns, session, api
 from ..scheme import *
 
@@ -91,10 +93,22 @@ class CatalogHandler(Resource):
 			if this argument is parsed, it will return every restaurant in it.
 		"""
 
-		print(ids)
 		if ids['restaurant'] is None or ids['restaurant'] == []:
-			query = session.query(Restaurant).filter(Restaurant.location.in_(ids['foodcourt']))
-			print('query:', query.all())
+			#sorting solution from https://stackoverflow.com/questions/21157513/sqlalchemy-custom-integer-sort-order
+			# The order of restaurants must be based on the order of
+			# the parsed food courts
+			_whens = {key: n for n, key in enumerate(ids['foodcourt'])}
+
+			query = session.query(
+				Restaurant
+			).filter(
+				Restaurant.location.in_(
+					ids['foodcourt']
+				)
+			).order_by(
+				case(value=Restaurant.location, whens=_whens)
+			)
+
 			return query
 		return session.query(Restaurant).filter(Restaurant.id.in_(ids['restaurant']))
 
