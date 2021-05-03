@@ -66,8 +66,6 @@ class CartHandler(Resource):
 				item = OrderItem(user=user.id, time=time, state='awaiting_payment', price=item_price, id=item_id, **item_data)
 				items.append(item)
 
-				print('item:', item.serialize())
-
 				for compl in complements:
 					query = session.query(
 						Complement, MealComplRel.ammount
@@ -123,7 +121,6 @@ class CartHandler(Resource):
 							price=ammnt * compl_item.price
 						)
 
-						print('compl:', new_compl.serialize())
 						compl_list.append(new_compl)
 
 			total_price = sum([value for rest, value in prices_per_rest.items()])

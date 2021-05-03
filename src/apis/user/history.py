@@ -59,7 +59,7 @@ class Recent(Resource):
 			# both of which is impossible (mode was verified here and url patternt was followed)
 			return {'message' : 'unexpected error'}, 500
 
-		return resp.json()
+		return resp.json(), 200
 				
 parser = ns.parser()
 parser.add_argument("page", type=int, default=1)
