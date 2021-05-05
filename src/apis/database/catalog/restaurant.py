@@ -107,4 +107,4 @@ class RestaurantSections(Resource):
 		else:
 			return {'message' : 'invalid qtype'}, 400
 
-		return { qtype : [item[0] for item in query.all()]}
+		return { qtype : [item[0] for item in query.distinct().all()]}
