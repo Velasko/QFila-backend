@@ -1,5 +1,7 @@
 from flask_restx import Resource
 
+from flask import current_app
+
 from ..app import ns, session, api
 from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
 
@@ -18,13 +20,15 @@ for model in (compl_item, complement, meal, restaurant, foodcourt, catalog_respo
 class RestaurantMenu(Resource):
 
 	@ns.doc(params={
+		'page' : "Page to be fetched",
+		'pagesize' : "The ammount of items to be fetched",
 		'rest_id' : "Restaurant's id to get data from.",
 		'qtype' : "Type of search (name|foodtype|section)",
 		'keyword' : "Keyword to search by"
 	})
 	@ns.response(200, 'Success. Returning meals', model=catalog_response)
 	@ns.response(400, 'invalid qtype')
-	def get(self, rest_id, qtype, keyword):
+	def get(self, rest_id, qtype, keyword, page=1, pagesize=None):
 		"""
 		Queryies the internal restaurant's menu.
 
@@ -34,7 +38,12 @@ class RestaurantMenu(Resource):
 			- restaurant's category (section)
 		"""
 
-		if qtype in ('name', 'foodtype', 'section'):
+		if pagesize is None:
+			pagesize = current_app.config['CATALOG_PAGE_SIZE_DEFAULT']
+		else:
+			pagesize = int(pagesize)
+
+		if qtype in ('name', 'foodtype'):
 			query = session.query(
 					Meal
 				).filter(
@@ -42,13 +51,31 @@ class RestaurantMenu(Resource):
 					getattr(Meal, qtype).ilike(f"%{keyword}%")
 				)
 
-			response = { 'meal' : [safe_serialize(item) for item in query.all()]}
+		elif qtype == 'section':
+				query = session.query(
+					Meal
+				).join(
+					MenuSection,
+					MenuSection.meal == Meal.id and \
+					MenuSection.rest == Meal.rest
+				).filter(
+					Meal.rest == rest_id,
+					MenuSection.name == keyword
+				)
 
-			common.fetch_meal_complements(response)
+		else:
+			return {'message' : 'invalid qtype'}, 400
 
-			return response
 
-		return {'message' : 'invalid qtype'}, 400
+		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], pagesize)
+		offset = (int(page) - 1) * pagesize
+		query = query.offset(offset).limit(limit)
+
+		response = { 'meal' : [safe_serialize(item) for item in query.all()]}
+
+		common.fetch_meal_complements(response)
+
+		return response
 
 @ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>")
 class RestaurantSections(Resource):

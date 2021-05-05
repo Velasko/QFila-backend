@@ -2,7 +2,6 @@ from ..app import session
 from ..scheme import *
 
 def fetch_meal_complements(response):
-	print(response)
 	if not 'meal' in response:
 		return 
 
@@ -29,12 +28,13 @@ def fetch_meal_complements(response):
 				ComplementItem
 			).filter(
 				ComplementItem.rest == rest,
-				ComplementItem.compl == compl_id
+				ComplementItem.compl == compl_id,
+				ComplementItem.available == 1
 			)
 
 			compl_data['items'] = [{
 				key: value for key, value in item.serialize().items()
-					if key not in ('rest', 'compl')
+					if key not in ('rest', 'compl', 'available')
 			} for item in item_query]
 
 			compl_data['max'] *= compl[1] #the ammount

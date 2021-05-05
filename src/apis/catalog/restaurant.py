@@ -21,6 +21,8 @@ for model in (meal, restaurant, foodcourt, catalog_response, catalog_restaurant_
 class RestaurantMenu(Resource):
 
 	@ns.doc(params={
+		'page' : "Page to be fetched",
+		'pagesize' : "The ammount of items to be fetched",
 		'rest_id' : "Restaurant's id to get data from.",
 		'qtype' : "Type of search (name|foodtype|section)",
 		'keyword' : "Keyword to search by"
@@ -28,7 +30,7 @@ class RestaurantMenu(Resource):
 	@ns.response(200, 'Success. Returning meals', model=catalog_response)
 	@ns.response(400, 'invalid qtype')
 	@ns.response(503, 'Database unavailable')
-	def get(self, rest_id, qtype, keyword):
+	def get(self, rest_id, qtype, keyword, page=1, pagesize=5):
 		"""
 		Queryies the internal restaurant's menu.
 
@@ -43,14 +45,17 @@ class RestaurantMenu(Resource):
 		try:
 			resp = get("{}/database/catalog/restaurant/{}/{}/{}".format(
 					current_app.config['DATABASE_URL'],
-					rest_id, qtype, keyword
+					rest_id, qtype, keyword, page, pagesize
 				),
 				headers=headers.system_authentication
 			)
 		except exceptions.ConnectionError:
 			return {'message': 'could not stablish connection to database'}, 503
 
-		return resp.json(), 200
+		try:
+			return resp.json(), 200
+		except Exception:
+			return {'message' : 'undexpected database response'}, 500
 
 @ns.route("/restaurant/<int:rest_id>/<string:qtype>")
 class RestaurantSections(Resource):
