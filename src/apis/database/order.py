@@ -54,7 +54,7 @@ class CartHandler(Resource):
 			for item_id, item_data in enumerate(order, start=1):
 				meal = session.query(Meal).filter(Meal.id == item_data['meal'], Meal.rest==item_data['rest']).first()
 				price = meal.price
-				item_price = price * getattr(item_data, 'ammount', 1)
+				item_price = price * item_data.get('ammount', 1)
 
 				prices_per_rest[item_data['rest']] += item_price
 
@@ -123,6 +123,8 @@ class CartHandler(Resource):
 
 						compl_list.append(new_compl)
 
+						prices_per_rest[item.rest] += ammnt * compl_item.price
+
 			total_price = sum([value for rest, value in prices_per_rest.items()])
 			fee = getattr(api.payload, 'fee', payment.service_fee(total_price))
 
@@ -148,7 +150,7 @@ class CartHandler(Resource):
 			session.commit()
 
 			return {}, 201
-		except exc.IntegrityError:
+		except exc.IntegrityError as e:
 			session.rollback()
 			return {'message' : 'This order was already made'}, 409
 		except exc.DataError as e:
