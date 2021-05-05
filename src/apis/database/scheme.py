@@ -187,6 +187,13 @@ class Cart(Base, Serializable):
 	payment_method = Column(Enum(PaymentMethods), nullable=False)
 	payment_status = Column(Enum(PaymentStatuses), nullable=False, default=PaymentStatuses(0))
 
+
+class ItemState(enum.Enum):
+	cancelled = -1
+	awaiting_payment = 0
+	preparing = 1
+	served = 2
+
 class Order(Base, Serializable):
 	__tablename__ = 'Orders'
 	__table_args__ = (
@@ -206,12 +213,6 @@ class Order(Base, Serializable):
 	comment = Column(String(255))
 	rest_order_id = Column(String(16))
 
-
-class ItemState(enum.Enum):
-	cancelled = -1
-	awaiting_payment = 0
-	preparing = 1
-	served = 2
 
 class OrderItem(Base, Serializable):
 	__tablename__ = 'OrderItems'
@@ -242,21 +243,28 @@ class OrderItem(Base, Serializable):
 	price = Column(Money, nullable=False)
 	comments = Column(String(255))
 
-	@staticmethod
-	def increment(mapper, connection, orderitem):
-		from .app import session
-		previous = session.query(
-			func.max(OrderItem.id)
-		).filter(
-			OrderItem.user == orderitem.user,
-			OrderItem.time == orderitem.time,
-			OrderItem.rest == orderitem.rest,
-			OrderItem.meal == orderitem.meal
-		).first()
+	# @staticmethod
+	# def increment(mapper, connection, orderitem):
 
-		orderitem.id = previous[0] + 1 if previous[0] else 1
+	# 	#The fetch was always empty. Likely because it was trying
+	# 	#to add two items in the same commit.
+	#	#As I was parsing the id while adding them, I deactivated this code
 
-listen(OrderItem, "before_insert", OrderItem.increment)
+	# 	from .app import session
+	# 	previous = session.query(
+	# 		OrderItem
+	# 	).filter(
+	# 		OrderItem.user == orderitem.user,
+	# 		OrderItem.time == orderitem.time,
+	# 		OrderItem.rest == orderitem.rest,
+	# 		OrderItem.meal == orderitem.meal
+	# 	).order_by(
+	# 		OrderItem.id
+	# 	).all()
+	#	# print('next id:', previous[0] + 1 if previous or previous[0] else 1)
+	#	# orderitem.id = 1 if not previous[0] else previous[0] + 1
+
+# listen(OrderItem, "before_insert", OrderItem.increment)
 
 
 class OrderItemComplement(Base, Serializable):

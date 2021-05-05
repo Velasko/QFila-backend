@@ -1,11 +1,12 @@
 import json
-
 from datetime import date, datetime
+
 from flask_restx import Resource, fields
+
 from sqlalchemy import exc
 
 from ..app import ns, session, api
-from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, OrderItem, safe_serialize, serialize
+from ..scheme import *
 
 try:
 	from ...utilities import checkers, authentication
@@ -72,6 +73,9 @@ class UserRecentsHandler(Resource):
 		return {query_mode : [safe_serialize(rest) for rest in query.all()]}, 200
 
 
+q_order_colmns = ['rest', 'price', 'rest_order_id']
+q_compl_colmns = ['data', 'price']
+
 @ns.route('/user/history')
 class HistoryHandler(Resource):
 
@@ -95,48 +99,53 @@ class HistoryHandler(Resource):
 		for cart in base_query.order_by(Cart.time).offset(offset).limit(limit):
 			cart = cart.serialize()
 			del cart['user']
-			cart['order'] = []
 
-			meal_query = session.query(
-				OrderItem, Meal.name
+			cart['orders'] = []			
+
+			#for order in cart:
+			for order in session.query(
+				Order
 			).filter(
-				OrderItem.user == user_id,
-				OrderItem.time == cart['time']
-			).join(
-				Meal,
-			)
+				Order.user == user_id,
+				Order.time == cart['time']
+			):
 
-			aux = {} #auxiliary variable to help separate by restaurant
-			for meal, name in meal_query:
-				meal = serialize(meal)
-				rest = meal['rest']
+				order = order.serialize()
+				order['items'] = []
 
-				#removing redundant data
-				del meal['time'], meal['user'], meal['rest']
+				#for item in order:
+				for item in session.query(
+					OrderItem
+				).filter(
+					OrderItem.user == user_id,
+					OrderItem.time == cart['time'],
+					OrderItem.rest == order['rest']
+				):
+					item = item.serialize()
 
-				if not rest in aux:
-					aux[rest] = []
+					#item['complements'] = complements of that item
+					item['complements'] = []
+					for compl in session.query(
+						OrderItemComplement
+					).filter(
+						OrderItemComplement.user == user_id,
+						OrderItemComplement.time == cart['time'],
+						OrderItemComplement.rest == order['rest'],
+						OrderItemComplement.meal == item['meal'],
+						OrderItemComplement.id == item['id']
+					):
+						compl = compl.serialize()
+						for column in ['user', 'time', 'rest', 'meal', 'id']:
+							del compl[column]
+						item['complements'].append(compl)
 
-				if detailed:
-					meal['name'] = name
+					for column in ['user', 'time', 'rest', 'id', 'comments']:
+						del item[column]
+					order['items'].append(item)
 
-				aux[rest].append(meal) 
-
-			for rest, order in aux.Orderitems():
-
-				rest_data = {
-					'rest' : rest,
-					'meals' : order
-				}
-
-				if detailed:
-					rest_data['name'], rest_data['image'] = session.query(
-						Restaurant.name, Restaurant.image
-					).filter(Restaurant.id == rest).first()
-
-
-				cart['order'].append(rest_data)
+				for column in ['user', 'time', 'comment']:
+					del order[column]
+				cart['orders'].append(order)
 
 			data.append(cart)
-
 		return data
