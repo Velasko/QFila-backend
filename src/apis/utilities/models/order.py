@@ -31,7 +31,6 @@ rest = Model("order.restaurant", {
 	"comment" : fields.String
 })
 
-
 payment_methods = ('credit', 'debit', 'google_pay', 'apple_pay', 'samsung_pay', 'pix')
 payment_model = Model("order.payment", {
 	"method" : fields.String(enum=payment_methods),

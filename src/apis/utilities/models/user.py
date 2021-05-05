@@ -38,13 +38,43 @@ resend_order_model = Model("resend model", {
 	'time' : fields.DateTime(description="time of order")
 })
 
-history_response = order_contents.inherit("history_response", {
-	"time" : fields.DateTime(required=True, description="Time of purchase"),
+history_complements = Model("history_complements", {
+	"price" : fields.Fixed(decimals=2, min=0,
+		description="Complements' total price"
+	),
+	"data" : fields.String(description="Name and ammount of complement")
+})
+
+history_items = Model("history_items", {
+	"price" : fields.Fixed(decimals=2, min=0,
+		description="Item's total price"
+	),
+	"ammount" : fields.Integer,
+	"meal" : fields.Integer(description="Meal's id inside the restaurant"),
+	"complements" : fields.List(fields.Nested(history_complements))
+})
+
+history_order = Model("history_order",{
+	"rest" : fields.Integer,
+	"rest_order_id" : fields.String,
+	"price" : fields.Fixed(decimals=2, min=0,
+		description="Order's total price"
+	),
+	"items" : fields.List(fields.Nested(history_items))
+})
+
+payment_status = ('cancelled', 'awaiting_availability', 'available', 'paid')
+history_response = Model("history_response", {
+	"payment_method" : fields.String(enum=payment_methods),
 	"qfila_fee" : fields.Fixed(decimals=2, min=0,
 		description="Raw value for the fee, if applicable"
 	),
-	"order_total" : fields.Fixed(decimals=2),
-	"payment_method" : fields.String(enum=payment_methods),
+	"payment_status" : fields.String(enum=payment_status),
+	"price" : fields.Fixed(decimals=2, min=0,
+		description="Cart's total price"
+	),
+	"time" : fields.DateTime(required=True, description="Time of purchase"),
+	"order" : fields.List(fields.Nested(history_order)),
 })
 
 user_update = Model("user.update", {
