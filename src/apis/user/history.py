@@ -15,7 +15,7 @@ except ValueError:
 	from utilities import authentication, headers
 	from utilities.models.user import *
 
-for model in (recent_model, meal_info, rest, payment_model, order_contents, history_response, resend_order_model):
+for model in (recent_model, meal_info, rest, payment_model, order_contents, history_complements, history_items, history_order, history_response, resend_order_model):
 	api.add_model(model.name, model)
 
 @ns.route("/recents")
@@ -74,9 +74,16 @@ class HistoryHandler(Resource):
 	def get(self, user):
 		"""Returns the user history"""
 
+		#pagination arguments
+		offset = int(request.args['pagesize'])*(int(request.args['page']) -1) or 0
+		limit = min(
+			int(request.args['pagesize'] or current_app.config['CATALOG_PAGE_SIZE_DEFAULT']),
+			current_app.config['DATABASE_PAGE_SIZE_LIMIT']
+		)
+
 		data = {'user' : user['id'],
-				'offset' : int(request.args['pagesize'])*(int(request.args['page']) -1),
-				'limit' : int(request.args['pagesize']),
+				'offset' : offset,
+				'limit' : limit,
 		}
 
 		try:
