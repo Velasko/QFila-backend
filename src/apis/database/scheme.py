@@ -210,6 +210,7 @@ class Order(Base, Serializable):
 	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True)
 
 	price = Column(Money, nullable=False)
+	state = Column(Enum(ItemState), nullable=False)
 	comment = Column(String(255))
 	rest_order_id = Column(String(16))
 
@@ -238,7 +239,6 @@ class OrderItem(Base, Serializable):
 	id = Column(SmallInteger, primary_key=True)
 
 	ammount = Column(SmallInteger, nullable=False, default=1)
-	state = Column(Enum(ItemState), nullable=False)
 
 	price = Column(Money, nullable=False)
 	comments = Column(String(255))

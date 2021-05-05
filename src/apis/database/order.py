@@ -63,7 +63,7 @@ class CartHandler(Resource):
 					complements = item_data['complements']
 					del item_data['complements']
 
-				item = OrderItem(user=user.id, time=time, state='awaiting_payment', price=item_price, id=item_id, **item_data)
+				item = OrderItem(user=user.id, time=time, price=item_price, id=item_id, **item_data)
 				items.append(item)
 
 				for compl in complements:
@@ -136,7 +136,7 @@ class CartHandler(Resource):
 
 			for data in api.payload['order']:
 				order = Order(user=user.id, time=time, rest=data['rest'],
-					price=prices_per_rest[data['rest']], comment=data['comment']
+					price=prices_per_rest[data['rest']], state='awaiting_payment', comment=data['comment']
 				)
 				session.add(order)
 			session.flush()
