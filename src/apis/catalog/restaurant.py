@@ -1,6 +1,6 @@
 from requests import get, exceptions
 
-from flask import current_app
+from flask import request, current_app
 from flask_restx import Resource
 
 from .app import api, ns
@@ -17,20 +17,25 @@ except ValueError:
 for model in (meal, restaurant, foodcourt, catalog_response, catalog_restaurant_qtype):
 	api.add_model(model.name, model)
 
+parser = ns.parser()
+parser.add_argument("page", type=int, default=1)
+parser.add_argument("pagesize", type=int, default=-1)
+
 @ns.route("/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")
 class RestaurantMenu(Resource):
 
 	@ns.doc(params={
-		'page' : "Page to be fetched",
-		'pagesize' : "The ammount of items to be fetched",
 		'rest_id' : "Restaurant's id to get data from.",
 		'qtype' : "Type of search (name|foodtype|section)",
-		'keyword' : "Keyword to search by"
+		'keyword' : "Keyword to search by",
+		'page' : "Page to be fetched",
+		'pagesize' : "The ammount of items to be fetched"
 	})
+	@ns.expect(parser)
 	@ns.response(200, 'Success. Returning meals', model=catalog_response)
-	@ns.response(400, 'invalid qtype')
+	@ns.response(400, 'invalid parsed')
 	@ns.response(503, 'Database unavailable')
-	def get(self, rest_id, qtype, keyword, page=1, pagesize=5):
+	def get(self, rest_id, qtype, keyword):
 		"""
 		Queryies the internal restaurant's menu.
 
@@ -40,12 +45,22 @@ class RestaurantMenu(Resource):
 			- restaurant's category (section)
 		"""
 
+		try:
+			pagesize = int(request.args['pagesize'])
+			if pagesize <= 0:
+				pagesize = current_app.config['CATALOG_PAGE_SIZE_DEFAULT']
+
+			limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], pagesize)
+			offset = (int(request.args['page']) - 1) * pagesize
+		except TypeError:
+			return {'message' : 'invalid limit or pagesize'}, 400
+
 		keyword = keyword.lower()
 
 		try:
-			resp = get("{}/database/catalog/restaurant/{}/{}/{}".format(
+			resp = get("{}/database/catalog/restaurant/{}/{}/{}?limit={}&offset={}".format(
 					current_app.config['DATABASE_URL'],
-					rest_id, qtype, keyword, page, pagesize
+					rest_id, qtype, keyword, limit, offset
 				),
 				headers=headers.system_authentication
 			)

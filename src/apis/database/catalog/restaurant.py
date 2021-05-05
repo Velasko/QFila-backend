@@ -1,6 +1,6 @@
 from flask_restx import Resource
 
-from flask import current_app
+from flask import request, current_app
 
 from ..app import ns, session, api
 from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
@@ -16,19 +16,24 @@ except ValueError:
 for model in (compl_item, complement, meal, restaurant, foodcourt, catalog_response, catalog_restaurant_qtype):
 	api.add_model(model.name, model)
 
+parser = ns.parser()
+parser.add_argument("offset", type=int)
+parser.add_argument("limite", type=int)
+
 @ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")
 class RestaurantMenu(Resource):
 
 	@ns.doc(params={
-		'page' : "Page to be fetched",
-		'pagesize' : "The ammount of items to be fetched",
 		'rest_id' : "Restaurant's id to get data from.",
 		'qtype' : "Type of search (name|foodtype|section)",
-		'keyword' : "Keyword to search by"
+		'keyword' : "Keyword to search by",
+		'page' : "Page to be fetched",
+		'pagesize' : "The ammount of items to be fetched"
 	})
+	@ns.expect(parser)
 	@ns.response(200, 'Success. Returning meals', model=catalog_response)
 	@ns.response(400, 'invalid qtype')
-	def get(self, rest_id, qtype, keyword, page=1, pagesize=None):
+	def get(self, rest_id, qtype, keyword):
 		"""
 		Queryies the internal restaurant's menu.
 
@@ -37,11 +42,6 @@ class RestaurantMenu(Resource):
 			- meal type (foodtype)
 			- restaurant's category (section)
 		"""
-
-		if pagesize is None:
-			pagesize = current_app.config['CATALOG_PAGE_SIZE_DEFAULT']
-		else:
-			pagesize = int(pagesize)
 
 		if qtype in ('name', 'foodtype'):
 			query = session.query(
@@ -67,8 +67,8 @@ class RestaurantMenu(Resource):
 			return {'message' : 'invalid qtype'}, 400
 
 
-		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], pagesize)
-		offset = (int(page) - 1) * pagesize
+		limit = request.args['limit']
+		offset = request.args['offset']
 		query = query.offset(offset).limit(limit)
 
 		response = { 'meal' : [safe_serialize(item) for item in query.all()]}
