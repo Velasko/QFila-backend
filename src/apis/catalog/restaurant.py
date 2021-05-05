@@ -52,6 +52,9 @@ class RestaurantMenu(Resource):
 
 			limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], pagesize)
 			offset = (int(request.args['page']) - 1) * pagesize
+
+			if offset < 0:
+				raise TypeError
 		except TypeError:
 			return {'message' : 'invalid limit or pagesize'}, 400
 

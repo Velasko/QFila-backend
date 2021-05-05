@@ -1,6 +1,7 @@
 from flask_restx import Resource
-
 from flask import request, current_app
+
+from sqlalchemy.sql.expression import and_
 
 from ..app import ns, session, api
 from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
@@ -56,22 +57,21 @@ class RestaurantMenu(Resource):
 					Meal
 				).join(
 					MenuSection,
-					MenuSection.meal == Meal.id and \
-					MenuSection.rest == Meal.rest
+					and_(MenuSection.meal == Meal.id,
+					MenuSection.rest == Meal.rest)
 				).filter(
 					Meal.rest == rest_id,
-					MenuSection.name == keyword
+					MenuSection.name.ilike(keyword)
 				)
 
 		else:
 			return {'message' : 'invalid qtype'}, 400
 
-
 		limit = request.args['limit']
 		offset = request.args['offset']
 		query = query.offset(offset).limit(limit)
 
-		response = { 'meal' : [safe_serialize(item) for item in query.all()]}
+		response = { 'meal' : [safe_serialize(item) for item in query]}
 
 		common.fetch_meal_complements(response)
 
