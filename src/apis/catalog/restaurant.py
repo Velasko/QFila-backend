@@ -19,7 +19,7 @@ for model in (meal, restaurant, foodcourt, catalog_response, catalog_restaurant_
 
 parser = ns.parser()
 parser.add_argument("page", type=int, default=1)
-parser.add_argument("pagesize", type=int, default=-1)
+parser.add_argument("pagesize", type=int, default=0)
 
 @ns.route("/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")
 class RestaurantMenu(Resource):
