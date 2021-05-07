@@ -313,8 +313,8 @@ class OrderItemComplement(Base, Serializable):
 class Complement(Base, Serializable):
 	__tablename__= 'Complements'
 
+	id = Column(Integer, primary_key=True)
 	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='CASCADE'), primary_key=True)
-	compl = Column(Integer, primary_key=True)
 	head = Column(String(31), nullable=False) #the 'question'
 	description = Column(String(255))
 	name = Column(String(15), nullable=False)
@@ -327,7 +327,7 @@ class ComplementItem(Base, Serializable):
 	__table_args__ = (
 		ForeignKeyConstraint(
 			['rest', 'compl'],
-			['Complements.rest', 'Complements.compl'],
+			['Complements.rest', 'Complements.id'],
 			ondelete='CASCADE',
 			onupdate='CASCADE'
 		),
@@ -354,7 +354,7 @@ class MealComplRel(Base, Serializable):
 	__table_args__ = (
 		ForeignKeyConstraint(
 			['rest', 'compl'],
-			['Complements.rest', 'Complements.compl'],
+			['Complements.rest', 'Complements.id'],
 			ondelete='RESTRICT',
 			onupdate='CASCADE'
 		),
@@ -378,7 +378,7 @@ class ComplTag(Base, Serializable):
 	__table_args__ = (
 		ForeignKeyConstraint(
 			['rest', 'compl'],
-			['Complements.rest', 'Complements.compl'],
+			['Complements.rest', 'Complements.id'],
 			ondelete='RESTRICT',
 			onupdate='CASCADE'
 		),

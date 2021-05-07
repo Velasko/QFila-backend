@@ -16,8 +16,8 @@ def fetch_meal_complements(response):
 		).join(
 			MealComplRel,
 			and_(
-				Complement.rest == MealComplRel.rest,
-				Complement.compl == MealComplRel.compl
+				Complement.id == MealComplRel.compl,
+				Complement.rest == MealComplRel.rest
 			)
 		).filter(
 			MealComplRel.meal == meal['id'],
@@ -26,7 +26,7 @@ def fetch_meal_complements(response):
 
 		for compl in compl_query:
 			compl_data = serialize(compl[0])
-			rest, compl_id = compl_data['rest'], compl_data['compl']
+			rest, compl_id = compl_data['rest'], compl_data['id']
 
 			item_query = session.query(
 				ComplementItem
@@ -38,11 +38,11 @@ def fetch_meal_complements(response):
 
 			compl_data['items'] = [{
 				key: value for key, value in item.serialize().items()
-					if key not in ('rest', 'compl', 'available')
+					if key not in ('rest', 'id', 'available')
 			} for item in item_query]
 
 			compl_data['max'] *= compl[1] #the ammount
 			compl_data['min'] *= compl[1]
 			complements.append(compl_data)
 
-			del compl_data['rest'], compl_data['compl']
+			del compl_data['rest'], compl_data['id']

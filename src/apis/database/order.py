@@ -55,36 +55,44 @@ class CartHandler(Resource):
 			compl_list = []
 			for item_id, item_data in enumerate(order, start=1):
 				meal = session.query(Meal).filter(Meal.id == item_data['meal'], Meal.rest==item_data['rest']).first()
+
+				if meal.available == 0:
+					# session.rollback()
+					return {'message': 'One of the ordered meals is unavailable'}, 400
+
 				price = meal.price
 				item_price = price * item_data.get('ammount', 1)
 
 				prices_per_rest[item_data['rest']] += item_price
 
-				complements = []
-				if 'complements' in item_data:
-					complements = item_data['complements']
-					del item_data['complements']
 
-				item = OrderItem(user=user.id, time=time, price=item_price, id=item_id, **item_data)
-				items.append(item)
+				#handling complements:
 
-				for compl in complements:
-					query = session.query(
+				#getting all meal complements
+				complements = session.query(
 						Complement, MealComplRel.ammount
 					).join(
 						MealComplRel,
 						and_(
-							Complement.rest == MealComplRel.rest,
-							Complement.compl == MealComplRel.compl
+							Complement.id == MealComplRel.compl,
+							Complement.rest == MealComplRel.rest
 						)
 					).filter(
 						MealComplRel.meal  == item_data['meal'],
 						MealComplRel.rest  == item_data['rest'],
-						MealComplRel.compl == compl['id']
-					).first()
+					)
 
-					if query is None:
-						return {'message': 'Invalid complement id'}, 400
+				# checking all the complements parsed in the order
+				# are valid for their respective meal
+				print(complements.all())
+				ids = [compl[0].id for compl in complements]
+				if not all([compl['id'] in ids for compl in item_data['complements']]):
+					print('not all')
+					return {'message' : 'invalid complement for one of the meals'}, 400
+
+				return {'message' : 'completed'}, 201
+				for compl in complements:
+
 
 					compl_data, multiplier = query
 
@@ -130,6 +138,13 @@ class CartHandler(Resource):
 						# restaurant bill += ammount of times of complement * complement price * ammount of times of the meal
 						prices_per_rest[item.rest] += (ammnt * float(compl_item.price)) * item_data.get('ammount', 1)
 
+				#required to create the item object in database
+				if 'complements' in item_data:
+					del item_data['complements']
+
+				item = OrderItem(user=user.id, time=time, price=item_price, id=item_id, **item_data)
+				items.append(item)
+
 			total_price = sum([value for rest, value in prices_per_rest.items()])
 			fee = getattr(api.payload, 'fee', payment.service_fee(total_price))
 
@@ -156,14 +171,16 @@ class CartHandler(Resource):
 
 			return {}, 201
 		except exc.IntegrityError as e:
-			session.rollback()
+			# session.rollback()
 			return {'message' : 'This order was already made'}, 409
 		except exc.DataError as e:
-			session.rollback()
+			# session.rollback()
 			if "Data truncated for column \'payment_method\' at row 1" in e.args[0]:
 				return {'message' : "Invalid payment method"}, 400
 			raise(e)
 		except Exception as e:
-			session.rollback()
+			# session.rollback()
 			raise e
 			api.abort(500)
+		finally:
+			session.rollback()
