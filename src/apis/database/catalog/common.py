@@ -1,3 +1,5 @@
+from sqlalchemy.sql.expression import and_
+
 from ..app import session
 from ..scheme import *
 
@@ -13,8 +15,10 @@ def fetch_meal_complements(response):
 			Complement, MealComplRel.ammount
 		).join(
 			MealComplRel,
-			Complement.rest == MealComplRel.rest and \
-			Complement.compl == MealComplRel.compl
+			and_(
+				Complement.rest == MealComplRel.rest,
+				Complement.compl == MealComplRel.compl
+			)
 		).filter(
 			MealComplRel.meal == meal['id'],
 			MealComplRel.rest == meal['rest']
