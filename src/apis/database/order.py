@@ -65,7 +65,6 @@ class CartHandler(Resource):
 
 				prices_per_rest[item_data['rest']] += item_price
 
-
 				#handling complements:
 
 				#getting all meal complements
@@ -84,24 +83,28 @@ class CartHandler(Resource):
 
 				# checking all the complements parsed in the order
 				# are valid for their respective meal
-				print(complements.all())
 				ids = [compl[0].id for compl in complements]
 				if not all([compl['id'] in ids for compl in item_data['complements']]):
-					print('not all')
 					return {'message' : 'invalid complement for one of the meals'}, 400
 
-				return {'message' : 'completed'}, 201
-				for compl in complements:
+				#required to create the item object in database
+				order_complements = {}
+				if 'complements' in item_data:
+					order_complements = {compl['id'] : compl for compl in item_data['complements']}
+					del item_data['complements']
 
+				item = OrderItem(user=user.id, time=time, price=item_price, id=item_id, **item_data)
+				items.append(item)
 
-					compl_data, multiplier = query
+				for compl, ammount in complements:
+					o_compl = order_complements[compl.id]
 
 					#Verifying if complement items are within parameters
-					if len(compl['items']) > compl_data.max * multiplier:
+					if len(o_compl['items']) > compl.max * ammount:
 						return {'message' : 'too many complements'}, 400
-					elif len(compl['items']) < compl_data.min * multiplier:
+					elif len(o_compl['items']) < compl.min * ammount:
 						return {'message' : 'lacking complements'}, 400
-					elif any([ compl['items'].count(i) > compl_data.stackable * multiplier for i in compl['items'] ]):
+					elif any([ o_compl['items'].count(i) > compl.stackable * ammount for i in o_compl['items'] ]):
 						return {'message' : 'item overly selected'}, 400
 
 					#Fetching items which are related to that meal
@@ -109,19 +112,18 @@ class CartHandler(Resource):
 						ComplementItem
 					).filter(
 						ComplementItem.rest  == item_data['rest'],
-						ComplementItem.compl == compl['id'],
-						ComplementItem.name.in_(compl['items']),
+						ComplementItem.compl == compl.id,
+						ComplementItem.name.in_(o_compl['items']),
 						ComplementItem.available == 1
 					).all()
 
 					#verification for invalid requested items
-					for compl_item in compl['items']:
+					for compl_item in o_compl['items']:
 						if not compl_item in items_query:
 							return {'message' : f'Invalid "{compl_item}" item'}, 400
-					# if any([i in items_query for i in compl['items'] ]):
 
 					for compl_item in items_query:
-						ammnt = compl['items'].count(compl_item.name)
+						ammnt = o_compl['items'].count(compl_item.name)
 						new_compl = OrderItemComplement(
 							user=user.id,
 							time=time,
@@ -137,13 +139,6 @@ class CartHandler(Resource):
 
 						# restaurant bill += ammount of times of complement * complement price * ammount of times of the meal
 						prices_per_rest[item.rest] += (ammnt * float(compl_item.price)) * item_data.get('ammount', 1)
-
-				#required to create the item object in database
-				if 'complements' in item_data:
-					del item_data['complements']
-
-				item = OrderItem(user=user.id, time=time, price=item_price, id=item_id, **item_data)
-				items.append(item)
 
 			total_price = sum([value for rest, value in prices_per_rest.items()])
 			fee = getattr(api.payload, 'fee', payment.service_fee(total_price))
