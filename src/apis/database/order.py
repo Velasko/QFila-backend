@@ -123,7 +123,8 @@ class CartHandler(Resource):
 
 						compl_list.append(new_compl)
 
-						prices_per_rest[item.rest] += ammnt * compl_item.price
+						# restaurant bill += ammount of times of complement * complement price * ammount of times of the meal
+						prices_per_rest[item.rest] += (ammnt * float(compl_item.price)) * item_data.get('ammount', 1)
 
 			total_price = sum([value for rest, value in prices_per_rest.items()])
 			fee = getattr(api.payload, 'fee', payment.service_fee(total_price))
