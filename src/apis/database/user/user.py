@@ -19,10 +19,6 @@ except ValueError:
 api.add_model(id.name, id)
 api.add_model(user.name, user)
 
-api.add_model(meal.name, meal)
-api.add_model(restaurant.name, restaurant)
-api.add_model(history.name, history)
-
 def get_data(email, phone) -> (str, str):
 	"""Gets email and phone.
 	Returns a tuple with the first item being the data and the second

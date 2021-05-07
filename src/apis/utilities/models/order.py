@@ -12,7 +12,7 @@ meal_states = ('cancelled', 'served', 'preparing', 'awaiting_payment')
 meal_info = Model("order.meal", {
 	"meal" : fields.Integer(required=True, description="Meal id"),
 	"ammount" : fields.Integer(default=1, description="Ammount of this meal ordered", min=1),
-	"comments" : fields.String(default="", description="Observations to the desired meal", max_length=255),
+	"comment" : fields.String(default="", description="Observations to the desired meal", max_length=255),
 	"complements" : fields.List(fields.Nested(complement_model)),
 	"name" : fields.String(readonly=True),
 	"state" : fields.String(enum=meal_states, readonly=True),
