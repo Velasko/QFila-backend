@@ -250,6 +250,7 @@ class CatalogHandler(Resource):
 
 		response = { query_params['type'] : [safe_serialize(Orderitem) for Orderitem in query.all()] }
 
-		common.fetch_meal_complements(response)
+		if query_params['type'] == 'meal' and query_params["category"] == 'id':
+			common.fetch_meal_complements(response)
 
 		return json.dumps(response), 200

@@ -6,8 +6,6 @@ from sqlalchemy.sql.expression import and_
 from ..app import ns, session, api
 from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
 
-from . import common
-
 try:
 	from ...utilities.models.catalog import *
 except ValueError:
@@ -72,8 +70,6 @@ class RestaurantMenu(Resource):
 		query = query.offset(offset).limit(limit)
 
 		response = { 'meal' : [safe_serialize(item) for item in query]}
-
-		common.fetch_meal_complements(response)
 
 		return response
 
