@@ -145,7 +145,29 @@ class Meal(Base, Serializable):
 	price = Column(Float, nullable=False)
 	description = Column(String(511))
 	image = Column(String(200))
-	available = Column(SmallInteger, default=1)
+	available = Column(SmallInteger, default=0)
+
+	@staticmethod
+	def increment(mapper, connection, meal):
+		if not meal.id is None:
+			return
+
+		from .app import session
+		previous = session.query(
+			Meal.id
+		).filter(
+			Meal.rest == meal.rest,
+		).order_by(
+			Meal.id.desc()
+		).first()
+
+		if previous is None:
+			meal.id = 1
+			return
+
+		meal.id = 1 if not previous[0] else previous[0] + 1
+
+listen(Meal, "before_insert", Meal.increment)
 
 class MenuSection(Base, Serializable):
 	__tablename__ = 'MenuSections'
@@ -241,7 +263,7 @@ class OrderItem(Base, Serializable):
 	ammount = Column(SmallInteger, nullable=False, default=1)
 
 	price = Column(Money, nullable=False)
-	comments = Column(String(255))
+	comment = Column(String(255))
 
 	# @staticmethod
 	# def increment(mapper, connection, orderitem):
@@ -316,7 +338,7 @@ class ComplementItem(Base, Serializable):
 	name = Column(String(15), primary_key=True)
 	price = Column(Money, nullable=False)
 
-	available = Column(SmallInteger, default=1)
+	available = Column(SmallInteger, default=0)
 
 	def __repr__(self):
 		return f"ComplementItem: {self.name}"
