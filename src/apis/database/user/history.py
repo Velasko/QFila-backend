@@ -130,7 +130,7 @@ class HistoryHandler(Resource):
 							del compl[column]
 						item['complements'].append(compl)
 
-					for column in ['user', 'time', 'rest', 'id', 'comments']:
+					for column in ['user', 'time', 'rest', 'id', 'comment']:
 						del item[column]
 					order['items'].append(item)
 
