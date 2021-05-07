@@ -47,6 +47,10 @@ def serialize(data):
 		elif isinstance(value, decimal.Decimal):
 			data[key] = float(value)
 
+	for key in ('available',):
+		if key in data:
+			del data[key]
+
 	return data
 
 class Serializable():
