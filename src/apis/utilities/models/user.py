@@ -9,11 +9,6 @@ id = Model('Identifyiers', {
 	'phone' : fields.String(description='User phone number')
 })
 
-history = Model("History", {
-	'meals' : fields.List(fields.Nested(meal)),
-	'restaurants' : fields.List(fields.Nested(restaurant))
-})
-
 login_model = id.inherit("user.login", {
 	'passwd' : fields.String(required=True, description="User's password")
 })
@@ -84,10 +79,14 @@ user_update = Model("user.update", {
 	"user" : fields.Nested(user)
 })
 
-recent_model = Model("recent.return", {
+recent_restaurant = Model("recent.rest", {
 	"id": fields.Integer(required=True, description="Restaurant's id"),
 	"name": fields.String(description="Restaurant's name"),
 	"image": fields.Url(description="Restaurant's logo link"),
 	"foodcourt_name" : fields.String(max_length=255),
  	"shopping" : fields.String(max_length=63),
+})
+
+recent_model = Model("recent.return", {
+	"restaurants" : fields.List(fields.Nested(recent_restaurant))
 })

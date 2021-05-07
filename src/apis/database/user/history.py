@@ -4,6 +4,7 @@ from datetime import date, datetime
 from flask_restx import Resource, fields
 
 from sqlalchemy import exc
+from sqlalchemy.sql.expression import and_
 
 from ..app import ns, session, api
 from ..scheme import *
@@ -18,59 +19,49 @@ except ValueError:
 
 
 #meal_info, rest, payment_model, order_contents, order -> history_response)
-for model in (meal, restaurant, history, history_query, meal_info, rest, payment_model, order_contents, order, history_response):
+for model in (recent_restaurant, recent_model, history_query, meal_info, rest, payment_model, order_contents, order, history_response):
 	api.add_model(model.name, model)
 
-@ns.route('/user/recents/<string:query_mode>/phone/<string:phone>')
-@ns.route('/user/recents/<string:query_mode>/email/<string:email>')
+@ns.route('/user/recents/<int:user_id>')
 class UserRecentsHandler(Resource):
 
-	@ns.doc("Get user's recent meals or restaurants", params={'query_mode' : "Query mode must be 'meals' or 'restaurants'"})
-	@ns.response(200, "Method executed successfully.", model=history)
+	@ns.response(200, "Method executed successfully.", model=recent_model)
 	@ns.response(400, "Invalid payload")
 	@ns.response(404, "Query type isn't neiter 'meals' nor 'restaurants'/invalid url")
-	def get(self, query_mode, email=None, phone=None):
+	def get(self, user_id):
 		"""Returns user recent meals/restaurants
 		"""
-		invalid_payload = {'message' : 'Invalid payload.'}
-		try:
-			data, field = get_data(email, phone)
-		except KeyError:
-			return invalid_payload, 400
-		else:
-			if session.query(User).filter(field == data).count() == 0:
-				return invalid_payload, 400
 
-		if query_mode == 'meals':
-			initial_query = session.query(
-					Meal
-				).join(
-					OrderItem,
-					OrderItem.rest == Meal.rest and \
-					OrderItem.meal == Meal.id
+		query = session.query(
+				Restaurant
+			).join(
+				Order,
+				and_(
+					Order.rest == Restaurant.id,
+					Order.user == user_id
 				)
-		elif query_mode == 'restaurants':
-			initial_query = session.query(
-					Restaurant
-				).join(
-					OrderItem,
-					OrderItem.rest == Restaurant.id
-				)
-		else:
-			api.abort(404)
+			).order_by(
+				Order.time.desc()
+			).join(
+				FoodCourt,
+				Restaurant.location == FoodCourt.id
+			).distinct(
+			).limit(5)
 
-		query = initial_query.join(
-			User,
-			User.id == OrderItem.user
-		).filter(
-			field == data
-		).order_by(
-			OrderItem.time.desc()
-		# ).distinct(
-		# 	# Restaurant
-		).limit(3)
+		data = []
+		for rest in query:
+			fc = session.query(FoodCourt.name, FoodCourt.shopping).filter(FoodCourt.id == rest.location).first()
+			r = {
+				'id' : rest.id,
+				'name' : rest.name,
+				'image' : rest.image,
+				'foodcourt_name' : fc[0],
+				'shopping' : fc[1]
+			}
 
-		return {query_mode : [safe_serialize(rest) for rest in query.all()]}, 200
+			data.append(r)
+
+		return {'restaurants' : data}, 200
 
 
 q_order_colmns = ['rest', 'price', 'rest_order_id']
@@ -96,7 +87,7 @@ class HistoryHandler(Resource):
 			base_query = session.query(Cart).filter(Cart.user == user_id)
 
 		data = []
-		for cart in base_query.order_by(Cart.time).offset(offset).limit(limit):
+		for cart in base_query.order_by(Cart.time.desc()).offset(offset).limit(limit):
 			cart = cart.serialize()
 			del cart['user']
 

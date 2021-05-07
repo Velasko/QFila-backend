@@ -15,7 +15,7 @@ except ValueError:
 	from utilities import authentication, headers
 	from utilities.models.user import *
 
-for model in (recent_model, meal_info, rest, payment_model, order_contents, history_complements, history_items, history_order, history_response, resend_order_model):
+for model in (recent_restaurant, recent_model, meal_info, rest, payment_model, order_contents, history_complements, history_items, history_order, history_response, resend_order_model):
 	api.add_model(model.name, model)
 
 @ns.route("/recents")
@@ -27,27 +27,11 @@ class Recent(Resource):
 	def get(self, user, mode=None):
 		"""Get user's recent restaurants"""
 
-		data = {'user' : user['name']}
-
-		if not mode in ('restaurants', 'meals'):
-			return {'message' : 'invalid mode'}, 400
-
-		if user['email'] is None:
-			#Users MUST have mails or phone, never none
-			id_ = user['phone']
-			id_name = 'phone'
-		else:
-			id_ = user['email']
-			id_name = 'email'
-
 		try:
-			resp = get('{}/database/user/recents/{}/{}/{}'.format(
+			resp = get('{}/database/user/recents/{}'.format(
 					current_app.config['DATABASE_URL'], 
-					mode,
-					id_name,
-					id_
+					user['id']
 				),
-				data=json.dumps(data),
 				headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
@@ -128,8 +112,8 @@ class HistoryHandler(Resource):
 
 		for n, rest in enumerate(mail_model['order']):
 			for m, meal in enumerate(rest['meals']):
-				if meal['comments'] is None:
-					del mail_model['order'][n]['meals'][m]['comments']
+				if meal['comment'] is None:
+					del mail_model['order'][n]['meals'][m]['comment']
 
 		try:
 			resp = post(
