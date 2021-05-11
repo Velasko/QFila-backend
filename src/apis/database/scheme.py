@@ -5,7 +5,7 @@ import re
 import enum, decimal
 from datetime import date
 
-from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Column, ForeignKey, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy import Float, Integer, SmallInteger, Numeric
 from sqlalchemy import String
 from sqlalchemy import Date, DateTime
@@ -173,8 +173,97 @@ class Meal(Base, Serializable):
 
 listen(Meal, "before_insert", Meal.increment)
 
+class Complement(Base, Serializable):
+	__tablename__= 'Complements'
+
+	id = Column(Integer, primary_key=True)
+	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='CASCADE'), primary_key=True)
+	head = Column(String(31), nullable=False) #the 'question'
+	description = Column(String(255))
+	name = Column(String(15), nullable=False)
+	min = Column(SmallInteger, nullable=False, default=0)
+	max = Column(SmallInteger, nullable=False, default=1)
+	stackable = Column(SmallInteger, default=1) #if the same item can be seleceted multiple times
+
+class ComplementItem(Base, Serializable):
+	__tablename__ = 'ComplementItems'
+	__table_args__ = (
+		ForeignKeyConstraint(
+			['rest', 'compl'],
+			['Complements.rest', 'Complements.id'],
+			ondelete='CASCADE',
+			onupdate='CASCADE'
+		),
+	)
+
+	rest = Column(Integer, primary_key=True)
+	compl = Column(Integer, primary_key=True)
+	name = Column(String(15), primary_key=True)
+	price = Column(Money, nullable=False)
+
+	available = Column(SmallInteger, default=0)
+
+	def __repr__(self):
+		return f"ComplementItem: {self.name}"
+
+	def __eq__(self, other):
+		if isinstance(other, str):
+			return other.lower() == self.name.lower()
+		else:
+			return super().__eq__(other)
+
+class MealComplRel(Base, Serializable):
+	__tablename__ = 'MealComplementRelationship'
+	__table_args__ = (
+		ForeignKeyConstraint(
+			['rest', 'compl'],
+			['Complements.rest', 'Complements.id'],
+			ondelete='RESTRICT',
+			onupdate='CASCADE'
+		),
+		ForeignKeyConstraint(
+			['rest', 'meal'],
+			['Meals.rest', 'Meals.id'],
+			ondelete='RESTRICT',
+			onupdate='CASCADE'
+		),
+	)
+
+	rest = Column(Integer, primary_key=True)
+	meal = Column(Integer, primary_key=True)
+	compl = Column(Integer, primary_key=True)
+
+	ammount = Column(SmallInteger, nullable=False, default=1)
+
+
+class ComplTag(Base, Serializable):
+	__tablename__ = "ComplementTags"
+	__table_args__ = (
+		ForeignKeyConstraint(
+			['rest', 'compl'],
+			['Complements.rest', 'Complements.id'],
+			ondelete='RESTRICT',
+			onupdate='CASCADE'
+		),
+	)
+
+	rest = Column(Integer, primary_key=True)
+	compl = Column(Integer, primary_key=True)
+	id = Column(String(16), primary_key=True)
+
 class MenuSection(Base, Serializable):
 	__tablename__ = 'MenuSections'
+	__table_args__ = (
+		UniqueConstraint('rest', 'position'),
+	)
+
+	name = Column(String(50), primary_key=True)
+	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='CASCADE'), primary_key=True)
+	position = Column(Integer, nullable=False)
+
+
+class MenuSectionRelation(Base, Serializable):
+	__tablename__ = 'MenuSectionsRelationship'
 	__table_args__ = (
 		ForeignKeyConstraint(
 			['rest', 'meal'],
@@ -182,12 +271,21 @@ class MenuSection(Base, Serializable):
 			ondelete='CASCADE',
 			onupdate='CASCADE'
 		),
+
+		ForeignKeyConstraint(
+			['rest', 'name'],
+			['MenuSections.rest', 'MenuSections.name'],
+			ondelete='CASCADE',
+			onupdate='CASCADE'
+		),
+
+		UniqueConstraint('rest', 'name', 'position')
 	)
 
-	name = Column(String(50), primary_key=True)
-	rest = Column(Integer, primary_key=True)
 	meal = Column(Integer, primary_key=True)
-
+	rest = Column(Integer, primary_key=True)
+	name = Column(String(50), primary_key=True)
+	position = Column(Integer, autoincrement=True, nullable=False)
 
 class PaymentMethods(enum.Enum):
 	credit = 0
@@ -312,85 +410,6 @@ class OrderItemComplement(Base, Serializable):
 
 	data = Column(String(255), primary_key=True)
 	price = Column(Money)
-
-
-class Complement(Base, Serializable):
-	__tablename__= 'Complements'
-
-	id = Column(Integer, primary_key=True)
-	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='CASCADE'), primary_key=True)
-	head = Column(String(31), nullable=False) #the 'question'
-	description = Column(String(255))
-	name = Column(String(15), nullable=False)
-	min = Column(SmallInteger, nullable=False, default=0)
-	max = Column(SmallInteger, nullable=False, default=1)
-	stackable = Column(SmallInteger, default=1) #if the same item can be seleceted multiple times
-
-class ComplementItem(Base, Serializable):
-	__tablename__ = 'ComplementItems'
-	__table_args__ = (
-		ForeignKeyConstraint(
-			['rest', 'compl'],
-			['Complements.rest', 'Complements.id'],
-			ondelete='CASCADE',
-			onupdate='CASCADE'
-		),
-	)
-
-	rest = Column(Integer, primary_key=True)
-	compl = Column(Integer, primary_key=True)
-	name = Column(String(15), primary_key=True)
-	price = Column(Money, nullable=False)
-
-	available = Column(SmallInteger, default=0)
-
-	def __repr__(self):
-		return f"ComplementItem: {self.name}"
-
-	def __eq__(self, other):
-		if isinstance(other, str):
-			return other.lower() == self.name.lower()
-		else:
-			return super().__eq__(other)
-
-class MealComplRel(Base, Serializable):
-	__tablename__ = 'MealComplementRelationship'
-	__table_args__ = (
-		ForeignKeyConstraint(
-			['rest', 'compl'],
-			['Complements.rest', 'Complements.id'],
-			ondelete='RESTRICT',
-			onupdate='CASCADE'
-		),
-		ForeignKeyConstraint(
-			['rest', 'meal'],
-			['Meals.rest', 'Meals.id'],
-			ondelete='RESTRICT',
-			onupdate='CASCADE'
-		),
-	)
-
-	rest = Column(Integer, primary_key=True)
-	meal = Column(Integer, primary_key=True)
-	compl = Column(Integer, primary_key=True)
-
-	ammount = Column(SmallInteger, nullable=False, default=1)
-
-
-class ComplTag(Base, Serializable):
-	__tablename__ = "ComplementTags"
-	__table_args__ = (
-		ForeignKeyConstraint(
-			['rest', 'compl'],
-			['Complements.rest', 'Complements.id'],
-			ondelete='RESTRICT',
-			onupdate='CASCADE'
-		),
-	)
-
-	rest = Column(Integer, primary_key=True)
-	compl = Column(Integer, primary_key=True)
-	id = Column(String(16), primary_key=True)
 
 class Shortner(Base, Serializable):
 	__tablename__ = 'ShortenMap'

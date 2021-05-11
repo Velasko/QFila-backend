@@ -4,7 +4,7 @@ from flask import request, current_app
 from sqlalchemy.sql.expression import and_
 
 from ..app import ns, session, api
-from ..scheme import Base, User, FoodCourt, Restaurant, MenuSection, Meal, FoodType, Cart, OrderItem, safe_serialize
+from ..scheme import *
 
 try:
 	from ...utilities.models.catalog import *
@@ -54,12 +54,14 @@ class RestaurantMenu(Resource):
 				query = session.query(
 					Meal
 				).join(
-					MenuSection,
-					and_(MenuSection.meal == Meal.id,
-					MenuSection.rest == Meal.rest)
+					MenuSectionRelation,
+					and_(MenuSectionRelation.meal == Meal.id,
+					MenuSectionRelation.rest == Meal.rest)
 				).filter(
 					Meal.rest == rest_id,
-					MenuSection.name.ilike(keyword)
+					MenuSectionRelation.name.ilike(keyword)
+				).order_by(
+					MenuSectionRelation.position
 				)
 
 		else:
@@ -98,6 +100,8 @@ class RestaurantSections(Resource):
 		elif qtype == 'section':
 			query = session.query(MenuSection.name).filter(
 				MenuSection.rest == rest_id
+			).order_by(
+				MenuSection.position
 			)
 
 		else:
