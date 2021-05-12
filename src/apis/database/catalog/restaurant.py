@@ -47,7 +47,10 @@ class RestaurantMenu(Resource):
 					Meal
 				).filter(
 					Meal.rest == rest_id,
-					getattr(Meal, qtype).ilike(f"%{keyword}%")
+					getattr(Meal, qtype).ilike(f"%{keyword}%"),
+					Meal.available == 1
+				).order_by(
+					Meal.name
 				)
 
 		elif qtype == 'section':
@@ -59,7 +62,8 @@ class RestaurantMenu(Resource):
 					MenuSectionRelation.rest == Meal.rest)
 				).filter(
 					Meal.rest == rest_id,
-					MenuSectionRelation.name.ilike(keyword)
+					MenuSectionRelation.name.ilike(keyword),
+					Meal.available == 1
 				).order_by(
 					MenuSectionRelation.position
 				)
