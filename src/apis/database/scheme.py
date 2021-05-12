@@ -185,6 +185,32 @@ class Complement(Base, Serializable):
 	max = Column(SmallInteger, nullable=False, default=1)
 	stackable = Column(SmallInteger, default=1) #if the same item can be seleceted multiple times
 
+	@staticmethod
+	def before_insert(mapper, connection, complement):
+		if (complement.min or 0) > (complement.max or 1):
+			raise ValueError("Complement min greater than it's max")
+
+
+		if not complement.id is None:
+			return
+
+		from .app import session
+		previous = session.query(
+			Complement.id
+		).filter(
+			Complement.rest == complement.rest
+		).order_by(
+			Complement.id.desc()
+		).first()
+
+		if previous is None:
+			complement.id = 1
+			return
+
+		complement.id = 1 if not previous[0] else previous[0] + 1
+
+listen(Complement, "before_insert", Complement.before_insert)
+
 class ComplementItem(Base, Serializable):
 	__tablename__ = 'ComplementItems'
 	__table_args__ = (
