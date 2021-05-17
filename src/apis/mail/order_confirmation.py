@@ -100,8 +100,5 @@ class OrderReview(Resource):
 			'html' : msg
 		}
 
-		with open('mail.html', 'w') as file:
-			file.write(msg)
-
 		mail_scheduler.append(mail)
 		return {'message' : 'email added to queue'}, 201
