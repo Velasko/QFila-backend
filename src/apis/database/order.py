@@ -81,15 +81,16 @@ class CartHandler(Resource):
 						MealComplRel.rest  == item_data['rest'],
 					)
 
-				# checking all the complements parsed in the order
-				# are valid for their respective meal
-				ids = [compl[0].id for compl in complements]
-				if not all([compl['id'] in ids for compl in item_data['complements']]):
-					return {'message' : 'invalid complement for one of the meals'}, 400
 
 				#required to create the item object in database
 				order_complements = {}
 				if 'complements' in item_data:
+					# checking all the complements parsed in the order
+					# are valid for their respective meal
+					ids = [compl[0].id for compl in complements]
+					if not all([compl['id'] in ids for compl in item_data['complements']]):
+						return {'message' : 'invalid complement for one of the meals'}, 400
+
 					order_complements = {compl['id'] : compl for compl in item_data['complements']}
 					del item_data['complements']
 
@@ -97,14 +98,20 @@ class CartHandler(Resource):
 				items.append(item)
 
 				for compl, ammount in complements:
-					o_compl = order_complements[compl.id]
+					try:
+						o_compl = order_complements[compl.id]
+					except KeyError:
+						if compl.min > 0:
+							return {'message' : 'lacking complements'}, 400
+						else:
+							continue
 
 					#Verifying if complement items are within parameters
-					if len(o_compl['items']) > compl.max * ammount:
+					if len(o_compl['items']) > compl.max:
 						return {'message' : 'too many complements'}, 400
-					elif len(o_compl['items']) < compl.min * ammount:
+					elif len(o_compl['items']) < compl.min:
 						return {'message' : 'lacking complements'}, 400
-					elif any([ o_compl['items'].count(i) > compl.stackable * ammount for i in o_compl['items'] ]):
+					elif any([ o_compl['items'].count(i) > compl.stackable for i in o_compl['items'] ]):
 						return {'message' : 'item overly selected'}, 400
 
 					#Fetching items which are related to that meal
