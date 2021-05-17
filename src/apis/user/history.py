@@ -15,7 +15,7 @@ except ValueError:
 	from utilities import authentication, headers
 	from utilities.models.user import *
 
-for model in (recent_restaurant, recent_model, meal_info, rest, payment_model, order_contents, history_complements, history_items, history_order, history_response, resend_order_model):
+for model in (recent_restaurant, recent_model, history_complements, history_items, history_order, history_response, resend_order_model):
 	api.add_model(model.name, model)
 
 @ns.route("/recents")
@@ -107,13 +107,16 @@ class HistoryHandler(Resource):
 
 		mail_model = {
 			'recipients' : {"name" : user['name'], "email" : user['email']},
-			'order' : db_resp.json()[0]['order']
+			'order' : db_resp.json()[0]['orders']
 		}
 
 		for n, rest in enumerate(mail_model['order']):
-			for m, meal in enumerate(rest['meals']):
-				if meal['comment'] is None:
-					del mail_model['order'][n]['meals'][m]['comment']
+			for m, meal in enumerate(rest['items']):
+				if 'comment' in meal and meal['comment'] is None:
+					del mail_model['order'][n]['items'][m]['comment']
+
+			if rest['rest_order_id'] is None:
+				del rest['rest_order_id']
 
 		try:
 			resp = post(

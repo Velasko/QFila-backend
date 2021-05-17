@@ -1,8 +1,6 @@
 from flask_restx import fields
 from flask_restx.model import Model
 
-from .mail import recipient_model
-
 complement_model = Model("order.complement", {
 	'id' : fields.Integer(required=True, description='Complement id'),
 	'items' : fields.List(fields.String, required=True, description="List of items id's")
@@ -52,8 +50,4 @@ order = order_contents.inherit("order", {
 db_order = order.inherit("order_db", {
 	"user" : fields.String(required=True, description="User's email"),
 	"time" : fields.DateTime(required=True, description="Time of purchase")
-})
-
-mail_order = order_contents.inherit("order_mail", {
-	"recipients" : fields.Nested(recipient_model, required=True)
 })

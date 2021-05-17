@@ -11,13 +11,13 @@ from . import template
 
 try:
 	from ..utilities import headers, payment
-	from ..utilities.models import order
+	from ..utilities.models import user, mail
 except ValueError:
 	#If running from inside apis folder
 	from utilities import headers, payment
-	from utilities.models import order
+	from ..utilities.models import user, mail
 
-for model in (order.meal_info, order.rest, order.order_contents, order.mail_order):
+for model in (user.history_complements, user.history_items, user.history_order, mail.history):
 	api.add_model(model.name, model)
 
 @ns.route('/orderreview')
@@ -26,7 +26,7 @@ class OrderReview(Resource):
 		data = json.loads(resp.json())[data_type]
 		return { d['id'] : d for d in data}
 
-	@ns.expect(order.mail_order)
+	@ns.expect(mail.history)
 	@ns.response(201, "Email added to the queue")
 	@ns.response(500, "Catalog could not find items")
 	#If the item could not be found when __confirming__ it, there sure is an error.
@@ -57,7 +57,7 @@ class OrderReview(Resource):
 		msg = template.head
 		for rest_order in order:
 			rest_id = rest_order['rest']
-			meal_keys = ",".join([str(meal['meal']) for meal in rest_order['meals']])
+			meal_keys = ",".join([str(meal['meal']) for meal in rest_order['items']])
 
 			try:
 				resp = get("{}/catalog/id/meal?restaurant=({})&meal=({})".format(
@@ -77,7 +77,7 @@ class OrderReview(Resource):
 
 			rest_price = 0
 			msg += template.restaurant_body(rest[rest_id]['image'], rest[rest_id]['name'])
-			for meal_data in rest_order['meals']:
+			for meal_data in rest_order['items']:
 				meal_id = meal_data['meal']
 				ammount = meal_data['ammount']
 				name = meal[meal_id]['name']
@@ -99,6 +99,9 @@ class OrderReview(Resource):
 			'recipients' : recipients,
 			'html' : msg
 		}
+
+		with open('mail.html', 'w') as file:
+			file.write(msg)
 
 		mail_scheduler.append(mail)
 		return {'message' : 'email added to queue'}, 201

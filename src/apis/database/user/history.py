@@ -17,9 +17,7 @@ except ValueError:
 	from utilities import checkers, authentication
 	from utilities.models.user import *
 
-
-#meal_info, rest, payment_model, order_contents, order -> history_response)
-for model in (recent_restaurant, recent_model, history_query, meal_info, rest, payment_model, order_contents, order, history_response):
+for model in (recent_restaurant, recent_model, history_complements, history_items, history_order, history_response, history_query):
 	api.add_model(model.name, model)
 
 @ns.route('/user/recents/<int:user_id>')

@@ -2,7 +2,7 @@ from flask_restx import fields
 from flask_restx.model import Model
 
 from .database import user, meal, restaurant
-from .order import *
+from .order import payment_methods
 
 id = Model('Identifyiers', {
 	'email' : fields.String(description='User email'),
@@ -71,7 +71,7 @@ history_response = Model("history_response", {
 		description="Cart's total price"
 	),
 	"time" : fields.DateTime(required=True, description="Time of purchase"),
-	"order" : fields.List(fields.Nested(history_order)),
+	"orders" : fields.List(fields.Nested(history_order)),
 })
 
 user_update = Model("user.update", {
