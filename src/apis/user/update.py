@@ -37,6 +37,9 @@ class UserSettingsUpdate(Resource):
 		if 'passwd' in data['user']:
 			data['user']['passwd'] = authentication.hash_password(data['user']['passwd'])
 
+		if 'phone' in data['user'] and (not re.fullmatch("+?([0-9]{9,14})", data['user']['phone']) is None):
+					return {'message' : "Invalid phone number"}, 400
+
 		resp = put('{}/database/user/{}/{}'.format(
 				current_app.config['DATABASE_URL'],
 				user['id_key'],
