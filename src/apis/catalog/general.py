@@ -124,10 +124,7 @@ class Catalog(Resource):
 			for mrf in ('meal', 'restaurant', 'foodcourt'):
 				if mrf in raw_args:
 					if isinstance(raw_args[mrf], str):
-						try:
-							args['id'][mrf]  = [ int(item) for item in  raw_args[mrf].strip("()[]").split(",")]
-						except ValueError:
-							return {'message' : f'{mrf} field is invalid'}
+						args['id'][mrf]  = [ int(item) for item in  raw_args[mrf].strip("()[]").split(",")]
 					elif isinstance(raw_args[mrf], int):
 						args['id'][mrf] = [raw_args[mrf]]
 					else:
@@ -160,6 +157,7 @@ class Catalog(Resource):
 	@ns.doc(params={'category' : category_doc, 'qtype' : type_doc})
 	@ns.expect(parser)
 	@ns.response(200, "Method executed successfully", model=catalog_response)
+	@ns.response(400, "Invalid parsed argument")
 	@ns.response(404, "Couldn't find anything")
 	@ns.response(503, "Could not stablish connection to database")
 	def get(self, category, qtype):
@@ -191,6 +189,9 @@ class Catalog(Resource):
 			api.abort(404)
 		except KeyError as e:
 			api.abort(417, "missing argument: " + str(e.args[0]))
+		except ValueError:
+			return {'message' : 'An argument is invalid'}, 400
+
 
 		if qtype == 'all':
 			raise NotImplemented("Yet to assemble the junction of queries")
