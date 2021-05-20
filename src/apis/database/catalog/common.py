@@ -1,9 +1,10 @@
 from sqlalchemy.sql.expression import and_
 
-from ..app import session
+from ..app import DBsession
 from ..scheme import *
 
-def fetch_meal_complements(response):
+@DBsession.wrapper
+def fetch_meal_complements(session, response):
 	if not 'meal' in response:
 		return 
 

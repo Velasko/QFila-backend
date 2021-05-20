@@ -3,7 +3,7 @@ from flask import request, current_app
 
 from sqlalchemy.sql.expression import and_
 
-from ..app import ns, session, api
+from ..app import DBsession, ns, api
 from ..scheme import *
 
 try:
@@ -32,6 +32,7 @@ class RestaurantMenu(Resource):
 	@ns.expect(parser)
 	@ns.response(200, 'Success. Returning meals', model=catalog_response)
 	@ns.response(400, 'invalid qtype')
+	@DBsession.wrapper
 	def get(self, rest_id, qtype, keyword):
 		"""
 		Queryies the internal restaurant's menu.
@@ -88,14 +89,16 @@ class RestaurantSections(Resource):
 	})
 	@ns.response(200, 'Success', model=catalog_restaurant_qtype)
 	@ns.response(400, 'invalid qtype')
-	def get(self, rest_id, qtype):
+	@DBsession.wrapper
+	def get(self, session, rest_id, qtype):
 		"""
 		Fetches the restaurant's foodtypes or sections.
 
 		possible qtypes:
 			- meal type (foodtype)
 			- restaurant's category (section)
-		"""		
+		"""
+
 		if qtype == 'foodtype':
 			query = session.query(Meal.foodtype).filter(
 				Meal.rest == rest_id

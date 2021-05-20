@@ -9,7 +9,7 @@ from flask import current_app
 from flask_restx import Resource
 from sqlalchemy import exc
 
-from .app import ns, session, api
+from .app import DBsession, ns, api
 from .scheme import Shortner
 
 try: 
@@ -33,13 +33,14 @@ class ShortnerHandler(Resource):
 	def get(self):
 		"""Method to return the full url based on the short one that was passed in the payload"""
 		path = api.payload['short_url']
-		try:
-			query = session.query(Shortner).filter(Shortner.short == path)
-			long_url = query.first().serialize()
+		with DBsession as session:
+			try:
+				query = session.query(Shortner).filter(Shortner.short == path)
+				long_url = query.first().serialize()
 
-			return {'long_url' : long_url['long']}, 200
-		except AttributeError:
-			return {'message' : 'no corresponding url found'}, 404
+				return {'long_url' : long_url['long']}, 200
+			except AttributeError:
+				return {'message' : 'no corresponding url found'}, 404
 
 	@ns.expect(short_request_database)
 	@ns.response(200, "Url successfully shortned", model=short_response)
@@ -58,22 +59,22 @@ class ShortnerHandler(Resource):
 		if path_size <= 0:
 			return {'message' : "initial_section too long or max_size too small"}, 400
 
-		for _ in range(15):
-			try:
-				short_path = data['initial_section'] + ''.join(random.choice(characters) for _ in range(path_size))
-				short = Shortner(
-					short=short_path,
-					long=data['long_url'],
-					delete_time=data['ttl']
-				)
+		with DBsession as session:
+			for _ in range(15):
+				try:
+					short_path = data['initial_section'] + ''.join(random.choice(characters) for _ in range(path_size))
+					short = Shortner(
+						short=short_path,
+						long=data['long_url'],
+						delete_time=data['ttl']
+					)
 
-				session.add(short)
-				session.commit()
+					session.add(short)
+					session.commit()
 
-				return {'short_url' : short_path}, 200
-			except exc.IntegrityError:
-				#short url (primary key) already in
-				session.rollback()
-				print("tried:", short_path)
+					return {'short_url' : short_path}, 200
+				except exc.IntegrityError:
+					#short url (primary key) already in
+					print("tried:", short_path)
 
 		return {'message' : 'could not generate an url'}, 500

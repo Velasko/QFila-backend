@@ -156,14 +156,15 @@ class Meal(Base, Serializable):
 		if not meal.id is None:
 			return
 
-		from .app import session
-		previous = session.query(
-			Meal.id
-		).filter(
-			Meal.rest == meal.rest,
-		).order_by(
-			Meal.id.desc()
-		).first()
+		from .app import DBsession
+		with DBsession as session:
+			previous = session.query(
+				Meal.id
+			).filter(
+				Meal.rest == meal.rest,
+			).order_by(
+				Meal.id.desc()
+			).first()
 
 		if previous is None:
 			meal.id = 1
@@ -194,14 +195,15 @@ class Complement(Base, Serializable):
 		if not complement.id is None:
 			return
 
-		from .app import session
-		previous = session.query(
-			Complement.id
-		).filter(
-			Complement.rest == complement.rest
-		).order_by(
-			Complement.id.desc()
-		).first()
+		from .app import DBsession
+		with DBsession as session:
+			previous = session.query(
+				Complement.id
+			).filter(
+				Complement.rest == complement.rest
+			).order_by(
+				Complement.id.desc()
+			).first()
 
 		if previous is None:
 			complement.id = 1

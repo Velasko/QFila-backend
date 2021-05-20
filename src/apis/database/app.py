@@ -3,9 +3,9 @@ import os
 from flask import Blueprint
 from flask_restx import Api, Namespace, Resource, fields
 
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
+from .session import SessionManager
 from .scheme import Base
 
 blueprint = Blueprint("Qfila database api", __name__)
@@ -19,9 +19,7 @@ api.add_namespace(ns)
 engine = create_engine(os.getenv('DATABASE_URI'))
 Base.metadata.bind = engine
 
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
-
+DBsession = SessionManager(engine)
 
 from . import user
 from . import catalog

@@ -5,7 +5,7 @@ from flask_restx import Resource
 
 from sqlalchemy.sql.expression import case
 
-from ..app import ns, session, api
+from ..app import DBsession, ns, api
 from ..scheme import *
 
 from . import common
@@ -22,15 +22,15 @@ for model in (compl_item, complement, meal, restaurant, foodcourt, pagination_mo
 @ns.route('/catalog')
 class CatalogHandler(Resource):
 
-	def get_order(self, qtype, location, limit=None):
+	def get_order(self, session, qtype, location, limit=None):
 		#Uses the user's location to calculate the food court's distances
 		if qtype == 'location':
-			order = self.get_foodcourt_order(**location, limit=limit)
+			order = self.get_foodcourt_order(session, **location, limit=limit)
 		else:
-			order = self.get_restaurant_order(**location, limit=limit)
+			order = self.get_restaurant_order(session, **location, limit=limit)
 		return order
 
-	def get_foodcourt_order(self, city, state, longitude, latitude, limit=None):
+	def get_foodcourt_order(self, session, city, state, longitude, latitude, limit=None):
 		query = session.query(
 			FoodCourt.id.label('id'),
 			((FoodCourt.longitude - longitude)*(FoodCourt.longitude - longitude) + \
@@ -47,7 +47,7 @@ class CatalogHandler(Resource):
 
 		return query.subquery()
 
-	def get_restaurant_order(self, city, state, longitude, latitude, limit=None):
+	def get_restaurant_order(self, session, city, state, longitude, latitude, limit=None):
 		"""Returns a list of tuples of the type (Restaurant.id as id, distance), based on
 		the distance of longitude and latitude.
 
@@ -74,7 +74,7 @@ class CatalogHandler(Resource):
 
 #----------- ID Queries -----------#
 
-	def meal_id_query(self, **ids):
+	def meal_id_query(self, session, **ids):
 		"""A function to return meals based on it's ids.
 
 		rest : int = the restaurant's id.
@@ -85,7 +85,7 @@ class CatalogHandler(Resource):
 			return session.query(Meal).filter(Meal.rest.in_(ids['restaurant']))
 		return session.query(Meal).filter(Meal.id.in_(ids['meal']), Meal.rest.in_(ids['restaurant']))
 
-	def restaurant_id_query(self, **ids):
+	def restaurant_id_query(self, session, **ids):
 		"""A function to return restaurants based on it's ids.
 
 		rest : int = the restaurant's id to be returned.
@@ -112,7 +112,7 @@ class CatalogHandler(Resource):
 			return query
 		return session.query(Restaurant).filter(Restaurant.id.in_(ids['restaurant']))
 
-	def location_id_query(self, **ids):
+	def location_id_query(self, session, **ids):
 		"""A function to return food courts based on it's ids.
 
 		foodcourt : int = the foodcourt's id to be returned.
@@ -122,7 +122,7 @@ class CatalogHandler(Resource):
 
 #----------- Name Queries -----------#
 
-	def base_name_query(self, db_class, rest_id, keyword, order):
+	def base_name_query(self, session, db_class, rest_id, keyword, order):
 
 		query = session.query(
 			db_class
@@ -138,13 +138,13 @@ class CatalogHandler(Resource):
 
 		return query
 
-	def meal_name_query(self, keyword, order):
+	def meal_name_query(self, session, keyword, order):
 		return self.base_name_query(db_class=Meal, rest_id=Meal.rest, keyword=keyword, order=order).filter(Meal.available == 1)
 
-	def restaurant_name_query(self, keyword, order):
+	def restaurant_name_query(self, session, keyword, order):
 		return self.base_name_query(db_class=Restaurant, rest_id=Restaurant.id, keyword=keyword, order=order)
 
-	def location_name_query(self, keyword, order):
+	def location_name_query(self, session, keyword, order):
 		query = session.query(
 			FoodCourt
 		).filter(
@@ -159,12 +159,12 @@ class CatalogHandler(Resource):
 		return query
 
 #----------- Type Queries -----------#
-	def get_types(self, keyword):
+	def get_types(self, session, keyword):
 		return session.query(FoodType.name).filter(FoodType.name.ilike(keyword)).all()
 
-	def meal_type_query(self, keyword, order):
+	def meal_type_query(self, session, keyword, order):
 
-		types = self.get_types(keyword)	
+		types = self.get_types(session, keyword)
 
 		query = session.query(
 			Meal
@@ -181,8 +181,8 @@ class CatalogHandler(Resource):
 
 		return query
 
-	def restaurant_type_query(self, keyword, order):
-		types = self.get_types(keyword)
+	def restaurant_type_query(self, session, keyword, order):
+		types = self.get_types(session, keyword)
 
 		query = session.query(
 			Restaurant
@@ -204,19 +204,21 @@ class CatalogHandler(Resource):
 	@ns.expect(catalog_query)
 	@ns.response(200, "Method executed successfully", model=catalog_response)
 	@ns.response(404, "Couldn't find anything")
-	def post(self):
+	@DBsession.wrapper
+	def post(self, session):
 		query_params = api.payload
 
 		qtype = query_params['type']
 
 		if query_params['category'] == 'id':
-			kwargs = query_params['id']
+			kwargs = {'session' : session, **query_params['id']}
 		else:
 			foodcourt_ammout = query_params['courts']
 			location = query_params['location']
 			kwargs = {
+				'session' : session,
 				'keyword': "%{}%".format(query_params['keyword']),
-				'order' : self.get_order(qtype, location, limit=foodcourt_ammout)
+				'order' : self.get_order(session, qtype, location, limit=foodcourt_ammout)
 			}
 		
 		try:
@@ -230,10 +232,6 @@ class CatalogHandler(Resource):
 		except AttributeError as e:
 			api.abort(404)
 
-		except Exception as e:
-			session.rollback()
-			raise e
-
 		response = {
 			'meal' : [],
 			'restaurant' : [],
@@ -244,9 +242,8 @@ class CatalogHandler(Resource):
 		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
 		query = query.offset(offset).limit(limit)
 
-
 		if query.count() == 0:
-			return {'message' : 'Nothing found'}, 404
+			return {'message' : 'Nothing found'}, 304
 
 		response = { query_params['type'] : [safe_serialize(Orderitem) for Orderitem in query.all()] }
 
