@@ -6,7 +6,7 @@ from .app import DBsession
 async def url_cleanup():
 	while True:
 		with DBsession as session:
-			try:
+			# try:
 				now = datetime.datetime.utcnow()
 				query = session.query(Shortner).filter(
 					Shortner.delete_time < now

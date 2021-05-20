@@ -33,7 +33,7 @@ class RestaurantMenu(Resource):
 	@ns.response(200, 'Success. Returning meals', model=catalog_response)
 	@ns.response(400, 'invalid qtype')
 	@DBsession.wrapper
-	def get(self, rest_id, qtype, keyword):
+	def get(self, session, rest_id, qtype, keyword):
 		"""
 		Queryies the internal restaurant's menu.
 
