@@ -17,7 +17,7 @@ except ValueError:
 	from utilities import payment
 	from utilities.models.order import *
 
-for model in (meal_info, rest, payment_model, order_contents, order, db_order):
+for model in (complement_model, meal_info, rest, payment_model, order_contents, order, db_order):
 	api.add_model(model.name, model)
 
 @ns.route('/user/order')
