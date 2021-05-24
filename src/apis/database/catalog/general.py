@@ -5,7 +5,8 @@ from flask_restx import Resource
 
 from sqlalchemy.sql.expression import case
 
-from ..app import DBsession, ns, api
+from . import ns
+from ..app import DBsession, api
 from ..scheme import *
 
 from . import common
@@ -19,7 +20,7 @@ except ValueError:
 for model in (compl_item, complement, meal, restaurant, foodcourt, pagination_model, catalog_id_model, catalog_location, catalog_query, catalog_response):
 	api.add_model(model.name, model)
 
-@ns.route('/catalog')
+@ns.route('/')
 class CatalogHandler(Resource):
 
 	def get_order(self, session, qtype, location, limit=None):
