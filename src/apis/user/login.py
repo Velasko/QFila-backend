@@ -57,7 +57,6 @@ class Authenticator(Resource):
 		# 	return {'message': 'could not stablish connection to database'}, 503
 
 
-
 @ns.route("/register")
 class Register(Resource):
 
@@ -92,8 +91,8 @@ class Register(Resource):
 				if key == 'email' and not checkers.valid_email(value):
 					return {"missing" : "Invalid email."}, 400
 
-				if key == 'phone' and (not re.fullmatch("\+?([0-9]{9,14})", value) is None):
-					return {'message' : "Invalid phone number"}
+				elif key == 'phone' and (re.fullmatch("\+?([0-9]{9,14})", value) is None):
+					return {'message' : "Invalid phone number"}, 400
 
 		try:
 			resp = post(

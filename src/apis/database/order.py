@@ -57,7 +57,7 @@ class CartHandler(Resource):
 				for item_id, item_data in enumerate(order, start=1):
 					meal = session.query(Meal).filter(Meal.id == item_data['meal'], Meal.rest==item_data['rest']).first()
 
-					if meal.available == 0:
+					if meal is None or meal.available == 0:
 						return {'message': 'One of the ordered meals is unavailable'}, 400
 
 					price = meal.price
@@ -157,8 +157,9 @@ class CartHandler(Resource):
 				session.flush()
 
 				for data in api.payload['order']:
+					comment = None if not 'comment' in data else data['comment']
 					order = Order(user=user.id, time=time, rest=data['rest'],
-						price=prices_per_rest[data['rest']], state='awaiting_payment', comment=data['comment']
+						price=prices_per_rest[data['rest']], state='awaiting_payment', comment=comment
 					)
 					session.add(order)
 				session.flush()
