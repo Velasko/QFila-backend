@@ -120,9 +120,9 @@ class Restaurant(Base, Serializable):
 	name = Column(String(255), nullable=False)
 	description = Column(String(511))
 	bank_info = Column(String(255), nullable=False)
-	login = Column(String(255), unique=True, nullable=False)
-	passwd = Column(String(255), nullable=False)
+	email = Column(String(255), unique=True, nullable=False)
 	phone = Column(String(16), unique=True)
+	passwd = Column(String(255), nullable=False)
 	location = Column(Integer, ForeignKey('FoodCourts.id', ondelete='RESTRICT', onupdate='CASCADE'), nullable=False)
 	image = Column(String(200))
 

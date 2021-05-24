@@ -32,29 +32,9 @@ class Authenticator(Resource):
 		"""Method to be authenticated"""
 
 		auth = api.payload
+		path = "/database/user/{}/{}"
 
-		if 'email' in auth:
-			path = f'/database/user/email/{auth["email"]}'
-		elif 'phone' in auth:
-			path = f'/database/user/phone/{auth["phone"]}'
-		else:
-			return {'message' : "Id not parsed"}, 417 #change to proper code
-
-		try:
-			resp = get(
-				'{0}{1}'.format(current_app.config['DATABASE_URL'], path),
-				headers=headers.system_authentication
-			)
-
-			user = resp.json()
-
-			if ( token := authentication.passwd_check(user, auth, current_app.config)):
-				return {'token' : token}, 200
-		except KeyError:
-			return {'message' : "Not authorized"}, 401
-
-		# except exceptions.ConnectionError:
-		# 	return {'message': 'could not stablish connection to database'}, 503
+		return authentication.http_login(path, auth)
 
 
 @ns.route("/register")

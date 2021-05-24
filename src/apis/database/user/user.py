@@ -2,11 +2,15 @@ import json
 import re
 
 from datetime import date
-from flask_restx import Resource, fields
+
+from flask import request
+from flask_restx import Resource
+
 from sqlalchemy import exc
 
 from ..app import DBsession, ns, api
-from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, safe_serialize
+from .. import common
+from ..scheme import *
 
 try:
 	from ...utilities import checkers
@@ -80,26 +84,19 @@ class UserHandler(Resource):
 
 			return {}, 201
 
-@ns.route('/user/phone/<string:phone>')
-@ns.route('/user/email/<string:email>')
+@ns.route('/user/phone/<string:login>')
+@ns.route('/user/email/<string:login>')
 class UserHandler_UrlParse(Resource):
 
 	@ns.doc("Find and return user based on phone or email")
 	@ns.response(200, "Method executed successfully.", model=user)
 	@ns.response(404, "User not found.")
-	def get(self, email=None, phone=None):
+	def get(self, login):
 		"""Method to get user information based on e-mail or phone.
 		A single user shall be returned from this query."""
 
-		with DBsession as session:
-			try:
-				data, field = get_data(email, phone)
-				query = session.query(User).filter(field == data)
-				user = query.first().serialize()
-
-				return user, 200
-			except AttributeError:
-				return {'message' : 'User not found.'}, 404
+		path = request.full_path.split("/")
+		return common.user.fetch_user(User, path[-2], login)
 
 	@ns.doc("Modify user")
 	@ns.expect(user)
