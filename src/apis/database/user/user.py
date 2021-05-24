@@ -5,7 +5,7 @@ from datetime import date
 from flask_restx import Resource, fields
 from sqlalchemy import exc
 
-from ..app import ns, session, api
+from ..app import DBsession, ns, api
 from ..scheme import Base, User, FoodCourt, Restaurant, Meal, FoodType, Cart, safe_serialize
 
 try:
@@ -18,10 +18,6 @@ except ValueError:
 
 api.add_model(id.name, id)
 api.add_model(user.name, user)
-
-api.add_model(meal.name, meal)
-api.add_model(restaurant.name, restaurant)
-api.add_model(history.name, history)
 
 def get_data(email, phone) -> (str, str):
 	"""Gets email and phone.
@@ -50,39 +46,39 @@ class UserHandler(Resource):
 	def post(self):
 		"""Method to create the user.
 		"""
-		data = api.payload
-		try:
-			#checking obligatory fields and modifying as required.
+
+		with DBsession as session:
+			data = api.payload
 			try:
-				data['birthday'] = date.fromisoformat(data['birthday'])
-				if not checkers.age_check(data['birthday']):
-					return {'message' : "User below 12 years old"}, 403
-			except ValueError:
-				return {'message': "Invalid data format."}, 400
+				#checking obligatory fields and modifying as required.
+				try:
+					data['birthday'] = date.fromisoformat(data['birthday'])
+					if not checkers.age_check(data['birthday']):
+						return {'message' : "User below 12 years old"}, 403
+				except ValueError:
+					return {'message': "Invalid data format."}, 400
 
-			data['name'] = data['name'].lower()
-			data['email'] = data['email'].lower()
+				data['name'] = data['name'].lower()
+				data['email'] = data['email'].lower()
 
-			if not checkers.valid_email(data['email']):
-				return {'message': "Invalid email."}, 400
+				if not checkers.valid_email(data['email']):
+					return {'message': "Invalid email."}, 400
 
-			data['passwd']
+				data['passwd']
 
-			user = User(**data)
-			session.add(user)
+				user = User(**data)
+				session.add(user)
 
-			session.commit()
-		except exc.IntegrityError as e:
-			session.rollback()
-			message = e._message()
-			key, value = re.findall('Key \((.+)\)=\((.+)\) already exists.', message)[0]
-			api.abort(409, key + " already exists.")
-		except KeyError as e:
-			"Required value is missing"
-			session.rollback()
-			return {'missing' : e.args[0]}, 400
+				session.commit()
+			except exc.IntegrityError as e:
+				message = e._message()
+				key, value = re.findall('Key \((.+)\)=\((.+)\) already exists.', message)[0]
+				api.abort(409, key + " already exists.")
+			except KeyError as e:
+				"Required value is missing"
+				return {'missing' : e.args[0]}, 400
 
-		return {}, 201
+			return {}, 201
 
 @ns.route('/user/phone/<string:phone>')
 @ns.route('/user/email/<string:email>')
@@ -95,14 +91,15 @@ class UserHandler_UrlParse(Resource):
 		"""Method to get user information based on e-mail or phone.
 		A single user shall be returned from this query."""
 
-		try:
-			data, field = get_data(email, phone)
-			query = session.query(User).filter(field == data)
-			user = query.first().serialize()
+		with DBsession as session:
+			try:
+				data, field = get_data(email, phone)
+				query = session.query(User).filter(field == data)
+				user = query.first().serialize()
 
-			return user, 200
-		except AttributeError:
-			return {'message' : 'User not found.'}, 404
+				return user, 200
+			except AttributeError:
+				return {'message' : 'User not found.'}, 404
 
 	@ns.doc("Modify user")
 	@ns.expect(user)
@@ -117,37 +114,36 @@ class UserHandler_UrlParse(Resource):
 		The user identification must be parsed by the url, using either phone or email.
 		The fields to be updated must be parsed on the payload.
 		"""
-		try:
-			data, field = get_data(email, phone)
-			update = api.payload
 
-			if 'birthday' in update:
-				try:
-					update['birthday'] = date.fromisoformat(update['birthday'])
-					if not checkers.age_check(update['birthday']):
-						return {'message' : "User below 12 years old"}, 403
-				except ValueError:
-					return {'message': "Invalid data format."}, 400
+		with DBsession as session:
+			try:
+				data, field = get_data(email, phone)
+				update = api.payload
 
-			if 'email' in update:
-				if not checkers.valid_email(update['email']):
-					return {'message' : "Invalid email."}, 400
+				if 'birthday' in update:
+					try:
+						update['birthday'] = date.fromisoformat(update['birthday'])
+						if not checkers.age_check(update['birthday']):
+							return {'message' : "User below 12 years old"}, 403
+					except ValueError:
+						return {'message': "Invalid data format."}, 400
 
-			query = session.query(User).filter(field == data)
-			if query.count() == 0:
-				return {'message' : 'No user with such id'}, 404
-			query.update(update)
-			session.commit()
-			return {'message' : 'update sucessfull'}, 200
-		except KeyError as e:
-			session.rollback()
-			return {'message' : e.args[0]}, 400
-		except exc.IntegrityError as e:
-			session.rollback()
-			return {'message' : e._message().split(".")[-1][:-3] + " already in use."}, 409
-		except Exception:
-			session.rollback()
-			api.abort(500)
+				if 'email' in update:
+					if not checkers.valid_email(update['email']):
+						return {'message' : "Invalid email."}, 400
+
+				query = session.query(User).filter(field == data)
+				if query.count() == 0:
+					return {'message' : 'No user with such id'}, 404
+				query.update(update)
+				session.commit()
+				return {'message' : 'update sucessfull'}, 200
+			except KeyError as e:
+				return {'message' : e.args[0]}, 400
+			except exc.IntegrityError as e:
+				return {'message' : e._message().split(".")[-1][:-3] + " already in use."}, 409
+			except Exception:
+				api.abort(500)
 
 	@ns.doc("Delete user")
 	@ns.response(200, "Method executed successfully.")
@@ -161,15 +157,15 @@ class UserHandler_UrlParse(Resource):
 		So far, the user is indeed deleted, if there is no history attached to it.
 		"""
 
-		try:
-			data, field = get_data(email, phone)
+		with DBsession as session:
+			try:
+				data, field = get_data(email, phone)
 
-			query = session.query(User).filter(field == data)
-			if query.count() == 0:
-				return {'message' : 'No user with such id'}, 404
-			query.delete()
-			session.commit()
-			return {}, 200
-		except Exception as e:
-			session.rollback()
-			return {'message' : e.args[0]}, 500
+				query = session.query(User).filter(field == data)
+				if query.count() == 0:
+					return {'message' : 'No user with such id'}, 404
+				query.delete()
+				session.commit()
+				return {}, 200
+			except Exception as e:
+				return {'message' : e.args[0]}, 500

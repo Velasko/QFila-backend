@@ -3,8 +3,12 @@ import json
 from flask import current_app
 from flask_restx import Resource
 
-from ..app import ns, session, api
+from sqlalchemy.sql.expression import case
+
+from ..app import DBsession, ns, api
 from ..scheme import *
+
+from . import common
 
 try:
 	from ...utilities.models.catalog import *
@@ -18,15 +22,15 @@ for model in (compl_item, complement, meal, restaurant, foodcourt, pagination_mo
 @ns.route('/catalog')
 class CatalogHandler(Resource):
 
-	def get_order(self, qtype, location, limit=None):
+	def get_order(self, session, qtype, location, limit=None):
 		#Uses the user's location to calculate the food court's distances
 		if qtype == 'location':
-			order = self.get_foodcourt_order(**location, limit=limit)
+			order = self.get_foodcourt_order(session, **location, limit=limit)
 		else:
-			order = self.get_restaurant_order(**location, limit=limit)
+			order = self.get_restaurant_order(session, **location, limit=limit)
 		return order
 
-	def get_foodcourt_order(self, city, state, longitude, latitude, limit=None):
+	def get_foodcourt_order(self, session, city, state, longitude, latitude, limit=None):
 		query = session.query(
 			FoodCourt.id.label('id'),
 			((FoodCourt.longitude - longitude)*(FoodCourt.longitude - longitude) + \
@@ -43,7 +47,7 @@ class CatalogHandler(Resource):
 
 		return query.subquery()
 
-	def get_restaurant_order(self, city, state, longitude, latitude, limit=None):
+	def get_restaurant_order(self, session, city, state, longitude, latitude, limit=None):
 		"""Returns a list of tuples of the type (Restaurant.id as id, distance), based on
 		the distance of longitude and latitude.
 
@@ -70,7 +74,7 @@ class CatalogHandler(Resource):
 
 #----------- ID Queries -----------#
 
-	def meal_id_query(self, **ids):
+	def meal_id_query(self, session, **ids):
 		"""A function to return meals based on it's ids.
 
 		rest : int = the restaurant's id.
@@ -81,7 +85,7 @@ class CatalogHandler(Resource):
 			return session.query(Meal).filter(Meal.rest.in_(ids['restaurant']))
 		return session.query(Meal).filter(Meal.id.in_(ids['meal']), Meal.rest.in_(ids['restaurant']))
 
-	def restaurant_id_query(self, **ids):
+	def restaurant_id_query(self, session, **ids):
 		"""A function to return restaurants based on it's ids.
 
 		rest : int = the restaurant's id to be returned.
@@ -89,11 +93,26 @@ class CatalogHandler(Resource):
 			if this argument is parsed, it will return every restaurant in it.
 		"""
 
-		if ids['restaurant'] is None:
-			return session.query(Restaurant).filter(Restaurant.location.in_(ids['foodcourt']))
+		if ids['restaurant'] is None or ids['restaurant'] == []:
+			#sorting solution from https://stackoverflow.com/questions/21157513/sqlalchemy-custom-integer-sort-order
+			# The order of restaurants must be based on the order of
+			# the parsed food courts
+			_whens = {key: n for n, key in enumerate(ids['foodcourt'])}
+
+			query = session.query(
+				Restaurant
+			).filter(
+				Restaurant.location.in_(
+					ids['foodcourt']
+				)
+			).order_by(
+				case(value=Restaurant.location, whens=_whens)
+			)
+
+			return query
 		return session.query(Restaurant).filter(Restaurant.id.in_(ids['restaurant']))
 
-	def location_id_query(self, **ids):
+	def location_id_query(self, session, **ids):
 		"""A function to return food courts based on it's ids.
 
 		foodcourt : int = the foodcourt's id to be returned.
@@ -103,7 +122,7 @@ class CatalogHandler(Resource):
 
 #----------- Name Queries -----------#
 
-	def base_name_query(self, db_class, rest_id, keyword, order):
+	def base_name_query(self, session, db_class, rest_id, keyword, order):
 
 		query = session.query(
 			db_class
@@ -119,13 +138,13 @@ class CatalogHandler(Resource):
 
 		return query
 
-	def meal_name_query(self, keyword, order):
-		return self.base_name_query(db_class=Meal, rest_id=Meal.rest, keyword=keyword, order=order)
+	def meal_name_query(self, session, keyword, order):
+		return self.base_name_query(db_class=Meal, rest_id=Meal.rest, keyword=keyword, order=order).filter(Meal.available == 1)
 
-	def restaurant_name_query(self, keyword, order):
+	def restaurant_name_query(self, session, keyword, order):
 		return self.base_name_query(db_class=Restaurant, rest_id=Restaurant.id, keyword=keyword, order=order)
 
-	def location_name_query(self, keyword, order):
+	def location_name_query(self, session, keyword, order):
 		query = session.query(
 			FoodCourt
 		).filter(
@@ -140,12 +159,12 @@ class CatalogHandler(Resource):
 		return query
 
 #----------- Type Queries -----------#
-	def get_types(self, keyword):
+	def get_types(self, session, keyword):
 		return session.query(FoodType.name).filter(FoodType.name.ilike(keyword)).all()
 
-	def meal_type_query(self, keyword, order):
+	def meal_type_query(self, session, keyword, order):
 
-		types = self.get_types(keyword)	
+		types = self.get_types(session, keyword)
 
 		query = session.query(
 			Meal
@@ -153,7 +172,8 @@ class CatalogHandler(Resource):
 			order,
 			Meal.rest == order.c.id
 		).filter(
-			Meal.foodtype.in_([row[0] for row in types])
+			Meal.foodtype.in_([row[0] for row in types]),
+			Meal.available == 1
 		).order_by(
 			order.c.sort,
 			Meal.name
@@ -161,8 +181,8 @@ class CatalogHandler(Resource):
 
 		return query
 
-	def restaurant_type_query(self, keyword, order):
-		types = self.get_types(keyword)		
+	def restaurant_type_query(self, session, keyword, order):
+		types = self.get_types(session, keyword)
 
 		query = session.query(
 			Restaurant
@@ -181,63 +201,24 @@ class CatalogHandler(Resource):
 
 		return query
 
-	def fetch_meal_complements(self, response):
-		if not 'meal' in response:
-			return 
-
-		for meal in response['meal']:
-			complements = []
-			meal['complements'] = complements
-
-			compl_query = session.query(
-				Complement, MealComplRel.ammount
-			).join(
-				MealComplRel,
-				Complement.rest == MealComplRel.rest and \
-				Complement.compl == MealComplRel.compl
-			).filter(
-				MealComplRel.meal == meal['id'],
-				MealComplRel.rest == meal['rest']
-			)
-
-			for compl in compl_query:
-				compl_data = serialize(compl[0])
-				rest, compl_id = compl_data['rest'], compl_data['compl']
-
-				item_query = session.query(
-					ComplementItem
-				).filter(
-					ComplementItem.rest == rest,
-					ComplementItem.compl == compl_id
-				)
-
-				compl_data['items'] = [{
-					key: value for key, value in item.serialize().items()
-						if key not in ('rest', 'compl')
-				} for item in item_query]
-
-				compl_data['max'] *= compl[1] #the ammount
-				compl_data['min'] *= compl[1]
-				complements.append(compl_data)
-
-				del compl_data['rest'], compl_data['compl']
-
 	@ns.expect(catalog_query)
 	@ns.response(200, "Method executed successfully", model=catalog_response)
 	@ns.response(404, "Couldn't find anything")
-	def post(self):
+	@DBsession.wrapper
+	def post(self, session):
 		query_params = api.payload
 
 		qtype = query_params['type']
 
 		if query_params['category'] == 'id':
-			kwargs = query_params['id']
+			kwargs = {'session' : session, **query_params['id']}
 		else:
 			foodcourt_ammout = query_params['courts']
 			location = query_params['location']
 			kwargs = {
+				'session' : session,
 				'keyword': "%{}%".format(query_params['keyword']),
-				'order' : self.get_order(qtype, location, limit=foodcourt_ammout)
+				'order' : self.get_order(session, qtype, location, limit=foodcourt_ammout)
 			}
 		
 		try:
@@ -251,10 +232,6 @@ class CatalogHandler(Resource):
 		except AttributeError as e:
 			api.abort(404)
 
-		except Exception as e:
-			session.rollback()
-			raise e
-
 		response = {
 			'meal' : [],
 			'restaurant' : [],
@@ -265,12 +242,12 @@ class CatalogHandler(Resource):
 		limit = min(current_app.config['DATABASE_PAGE_SIZE_LIMIT'], query_params['pagination']['limit'])
 		query = query.offset(offset).limit(limit)
 
-
 		if query.count() == 0:
-			return {'message' : 'Nothing found'}, 404
+			return {'message' : 'Nothing found'}, 304
 
 		response = { query_params['type'] : [safe_serialize(Orderitem) for Orderitem in query.all()] }
 
-		self.fetch_meal_complements(response)
+		if query_params['type'] == 'meal' and query_params["category"] == 'id':
+			common.fetch_meal_complements(response)
 
 		return json.dumps(response), 200

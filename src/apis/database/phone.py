@@ -3,7 +3,7 @@ import datetime
 from flask_restx import Resource, fields
 from sqlalchemy import exc
 
-from ..app import ns, session, api
+from ..app import DBsession, ns, api
 from ..scheme import Base, SentSMS
 
 try:
@@ -36,10 +36,10 @@ class PhoneHandler(Resource):
 		except KeyError as e:
 			return {'message' : 'Missing required field: {}'.format(e.args[0])}, 400
 
-		try:
-			session.add(sms)
-			session.commit()
-			return {'message' : "Data successfully saved"}, 200
-		except exc.IntegrityError as e:
-			session.rollback()
-			return {'message' : 'Message id already in database.'}, 409
+		with DBsession as session:
+			try:
+				session.add(sms)
+				session.commit()
+				return {'message' : "Data successfully saved"}, 200
+			except exc.IntegrityError as e:
+				return {'message' : 'Message id already in database.'}, 409

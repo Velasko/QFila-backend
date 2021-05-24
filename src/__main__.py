@@ -12,6 +12,7 @@ if __name__ == '__main__':
 	parser.add_argument('-d', '--debug', action='store_true', help="runs with debug")
 	parser.add_argument('--host', default='127.0.0.1', help="defines the host")
 	parser.add_argument('-p', '--port', default=5000, help="which port to run the application on")
+	parser.add_argument('--no-reload', action='store_false', help="disable flask's reloader")
 
 	group = parser.add_argument_group("Execution mode").add_mutually_exclusive_group()
 	group.add_argument('-r', '--run', action='store_true', help="runs the full REST application")
@@ -80,7 +81,7 @@ if __name__ == '__main__':
 		raise e
 
 	if args.run:
-		app.run(host=args.host, debug=args.debug, port=args.port, **ssl_kwargs)
+		app.run(host=args.host, debug=args.debug, port=args.port, use_reloader=args.no_reload, **ssl_kwargs)
 	elif args.test:
 		raise NotImplementedError()
 	else:

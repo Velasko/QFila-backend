@@ -1,4 +1,5 @@
 import json
+import re
 
 from requests import post, get, exceptions
 
@@ -56,7 +57,6 @@ class Authenticator(Resource):
 		# 	return {'message': 'could not stablish connection to database'}, 503
 
 
-
 @ns.route("/register")
 class Register(Resource):
 
@@ -84,10 +84,15 @@ class Register(Resource):
 				date = date.fromisoformat(value)
 				if not checkers.age_check(date):
 					return {'message' : "User below 12 years old"}, 403
+
 			elif isinstance(value, str):
 				data[key] = value.lower()
+
 				if key == 'email' and not checkers.valid_email(value):
 					return {"missing" : "Invalid email."}, 400
+
+				elif key == 'phone' and (re.fullmatch("\+?([0-9]{9,14})", value) is None):
+					return {'message' : "Invalid phone number"}, 400
 
 		try:
 			resp = post(

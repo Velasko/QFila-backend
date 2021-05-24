@@ -1,14 +1,17 @@
 from flask_restx import fields
 from flask_restx.model import Model
 
-from .mail import recipient_model
+complement_model = Model("order.complement", {
+	'id' : fields.Integer(required=True, description='Complement id'),
+	'items' : fields.List(fields.String, required=True, description="List of items id's")
+})
 
 meal_states = ('cancelled', 'served', 'preparing', 'awaiting_payment')
 meal_info = Model("order.meal", {
 	"meal" : fields.Integer(required=True, description="Meal id"),
 	"ammount" : fields.Integer(default=1, description="Ammount of this meal ordered", min=1),
-	"comments" : fields.String(default="", description="Observations to the desired meal", max_length=255),
-
+	"comment" : fields.String(default="", description="Observations to the desired meal", max_length=255),
+	"complements" : fields.List(fields.Nested(complement_model)),
 	"name" : fields.String(readonly=True),
 	"state" : fields.String(enum=meal_states, readonly=True),
 	"total_price" : fields.Fixed(decimals=2, readonly=True),
@@ -22,8 +25,8 @@ rest = Model("order.restaurant", {
 
 	"name" : fields.String(readonly=True),
 	"image" : fields.String(readonly=True),
+	"comment" : fields.String
 })
-
 
 payment_methods = ('credit', 'debit', 'google_pay', 'apple_pay', 'samsung_pay', 'pix')
 payment_model = Model("order.payment", {
@@ -47,8 +50,4 @@ order = order_contents.inherit("order", {
 db_order = order.inherit("order_db", {
 	"user" : fields.String(required=True, description="User's email"),
 	"time" : fields.DateTime(required=True, description="Time of purchase")
-})
-
-mail_order = order_contents.inherit("order_mail", {
-	"recipients" : fields.Nested(recipient_model, required=True)
 })

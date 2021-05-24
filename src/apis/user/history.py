@@ -15,40 +15,23 @@ except ValueError:
 	from utilities import authentication, headers
 	from utilities.models.user import *
 
-for model in (meal_info, rest, payment_model, order_contents, history_response, resend_order_model):
+for model in (recent_restaurant, recent_model, history_complements, history_items, history_order, history_response, resend_order_model):
 	api.add_model(model.name, model)
 
-@ns.route("/recent/<string:mode>")
+@ns.route("/recents")
 class Recent(Resource):
 
 	@authentication.token_required(namespace=ns)
-	@ns.response(400, "Invalid request mode")
+	@ns.response(200, "Success", model=recent_model)
 	@ns.response(503, "Could not stablish connection to database")
-	@ns.doc(params={"mode" : "Defines which mode is desired to see the history 'restaurants' or 'meals'"})
 	def get(self, user, mode=None):
-		"""Get user's recent restaurants or meals"""
-
-		data = {'user' : user['name']}
-
-		if not mode in ('restaurants', 'meals'):
-			return {'message' : 'invalid mode'}, 400
-
-		if user['email'] is None:
-			#Users MUST have mails or phone, never none
-			id_ = user['phone']
-			id_name = 'phone'
-		else:
-			id_ = user['email']
-			id_name = 'email'
+		"""Get user's recent restaurants"""
 
 		try:
-			resp = get('{}/database/user/recents/{}/{}/{}'.format(
+			resp = get('{}/database/user/recents/{}'.format(
 					current_app.config['DATABASE_URL'], 
-					mode,
-					id_name,
-					id_
+					user['id']
 				),
-				data=json.dumps(data),
 				headers={**headers.json, **headers.system_authentication}
 			)
 		except exceptions.ConnectionError:
@@ -60,7 +43,7 @@ class Recent(Resource):
 			# both of which is impossible (mode was verified here and url patternt was followed)
 			return {'message' : 'unexpected error'}, 500
 
-		return resp.json()
+		return resp.json(), 200
 				
 parser = ns.parser()
 parser.add_argument("page", type=int, default=1)
@@ -75,9 +58,16 @@ class HistoryHandler(Resource):
 	def get(self, user):
 		"""Returns the user history"""
 
+		#pagination arguments
+		offset = int(request.args['pagesize'])*(int(request.args['page']) -1) or 0
+		limit = min(
+			int(request.args['pagesize'] or current_app.config['CATALOG_PAGE_SIZE_DEFAULT']),
+			current_app.config['DATABASE_PAGE_SIZE_LIMIT']
+		)
+
 		data = {'user' : user['id'],
-				'offset' : int(request.args['pagesize'])*(int(request.args['page']) -1),
-				'limit' : int(request.args['pagesize']),
+				'offset' : offset,
+				'limit' : limit,
 		}
 
 		try:
@@ -117,13 +107,16 @@ class HistoryHandler(Resource):
 
 		mail_model = {
 			'recipients' : {"name" : user['name'], "email" : user['email']},
-			'order' : db_resp.json()[0]['order']
+			'order' : db_resp.json()[0]['orders']
 		}
 
 		for n, rest in enumerate(mail_model['order']):
-			for m, meal in enumerate(rest['meals']):
-				if meal['comments'] is None:
-					del mail_model['order'][n]['meals'][m]['comments']
+			for m, meal in enumerate(rest['items']):
+				if 'comment' in meal and meal['comment'] is None:
+					del mail_model['order'][n]['items'][m]['comment']
+
+			if rest['rest_order_id'] is None:
+				del rest['rest_order_id']
 
 		try:
 			resp = post(
