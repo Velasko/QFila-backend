@@ -1,5 +1,5 @@
 from flask import Blueprint
-from flask_restx import Api, Namespace, Resource, fields
+from flask_restx import Api, Namespace
 
 blueprint = Blueprint("Qfila user api", __name__)
 api = Api(blueprint, version='0.1', title='Qfila user api', default='user',
