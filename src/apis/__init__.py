@@ -33,7 +33,10 @@ def config_api(app, libs):
 				models[name] = model
 
 			app.register_blueprint(service.blueprint, url_prefix=f"/{service_name}")
-			api.add_namespace(service.ns)
+
+			# api.add_namespace(service.ns)
+			for ns in service.api.namespaces[1:]:
+				api.add_namespace(ns)
 
 			config = importlib.import_module('.config', f"{__package__}.{service_name}")
 			configs.append(config.Config)
