@@ -8,7 +8,7 @@ from flask_restx import Resource
 
 from sqlalchemy import exc
 
-from ..app import DBsession, ns, api
+from . import DBsession, ns, api
 from .. import common
 from ..scheme import *
 
@@ -38,7 +38,7 @@ def get_data(email, phone) -> (str, str):
 		raise KeyError("No argument parsed")
 	return data, field
 
-@ns.route('/user')
+@ns.route('/')
 class UserHandler(Resource):
 
 	@ns.doc("Create user")
@@ -84,8 +84,8 @@ class UserHandler(Resource):
 
 			return {}, 201
 
-@ns.route('/user/phone/<string:login>')
-@ns.route('/user/email/<string:login>')
+@ns.route('/phone/<string:login>')
+@ns.route('/email/<string:login>')
 class UserHandler_UrlParse(Resource):
 
 	@ns.doc("Find and return user based on phone or email")

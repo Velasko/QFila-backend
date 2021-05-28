@@ -6,9 +6,8 @@ from flask_restx import Resource, fields
 from sqlalchemy import exc
 from sqlalchemy.sql.expression import and_
 
-from . import ns
-from ..app import DBsession, api
-from ..scheme import *
+from . import DBsession, ns, api
+from .scheme import *
 
 try:
 	from ..utilities import payment
@@ -21,7 +20,7 @@ except ValueError:
 for model in (complement_model, meal_info, rest, payment_model, order_contents, order, db_order):
 	api.add_model(model.name, model)
 
-@ns.route('/client/order')
+@ns.route('/order')
 class CartHandler(Resource):
 
 	@ns.doc("Register order")

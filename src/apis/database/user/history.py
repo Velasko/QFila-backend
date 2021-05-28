@@ -6,7 +6,7 @@ from flask_restx import Resource, fields
 from sqlalchemy import exc
 from sqlalchemy.sql.expression import and_
 
-from ..app import DBsession, ns, api
+from . import DBsession, api, ns
 from ..scheme import *
 
 try:
@@ -20,7 +20,7 @@ except ValueError:
 for model in (recent_restaurant, recent_model, history_complements, history_items, history_order, history_response, history_query):
 	api.add_model(model.name, model)
 
-@ns.route('/user/recents/<int:user_id>')
+@ns.route('/recents/<int:user_id>')
 class UserRecentsHandler(Resource):
 
 	@ns.response(200, "Method executed successfully.", model=recent_model)
@@ -65,7 +65,7 @@ class UserRecentsHandler(Resource):
 q_order_colmns = ['rest', 'price', 'rest_order_id']
 q_compl_colmns = ['data', 'price']
 
-@ns.route('/user/history')
+@ns.route('/history')
 class HistoryHandler(Resource):
 
 	@ns.expect(history_query)
