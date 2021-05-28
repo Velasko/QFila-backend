@@ -6,7 +6,7 @@ api = Api(blueprint, version='0.1', title='Qfila user api', default='user',
 	description='Client side interface', validate=True
 )
 
-ns = Namespace('user', description='client operations')
+ns = Namespace('Client', path='/user', description='client operations')
 api.add_namespace(ns)
 
 from . import login

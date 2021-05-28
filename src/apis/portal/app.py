@@ -6,7 +6,7 @@ api = Api(blueprint, version='0.1', title='Qfila restaurant api', default='rest'
 	description='Restaurant side interface', validate=True
 )
 
-ns = Namespace('portal', description='restaurant portal operations')
+ns = Namespace('Portal', path='/portal', description='restaurant portal operations')
 api.add_namespace(ns)
 
 from . import login
