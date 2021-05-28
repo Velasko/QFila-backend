@@ -24,7 +24,7 @@ for model in (compl_item, complement, meal, restaurant, foodcourt, pagination_mo
 class CatalogHandler(Resource):
 
 	def get_order(self, session, qtype, location, limit=None):
-		#Uses the user's location to calculate the food court's distances
+		#Uses the client's location to calculate the food court's distances
 		if qtype == 'location':
 			order = self.get_foodcourt_order(session, **location, limit=limit)
 		else:

@@ -21,7 +21,7 @@ Base.metadata.bind = engine
 
 DBsession = SessionManager(engine)
 
-from . import user
+from . import client
 from . import portal
 from . import catalog
 from . import order

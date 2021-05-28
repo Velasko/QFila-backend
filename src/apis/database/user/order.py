@@ -48,7 +48,7 @@ class CartHandler(Resource):
 
 		with DBsession as session:
 			try:
-				user = session.query(User).filter(User.email == api.payload['user']).first()
+				client = session.query(Client).filter(Client.email == api.payload['client']).first()
 				time = datetime.datetime.fromisoformat(api.payload['time'])
 				payment_method = api.payload['payment']['method']
 
@@ -94,7 +94,7 @@ class CartHandler(Resource):
 						order_complements = {compl['id'] : compl for compl in item_data['complements']}
 						del item_data['complements']
 
-					item = OrderItem(user=user.id, time=time, price=item_price, id=item_id, **item_data)
+					item = OrderItem(client=client.id, time=time, price=item_price, id=item_id, **item_data)
 					items.append(item)
 
 					for compl, ammount in complements:
@@ -132,7 +132,7 @@ class CartHandler(Resource):
 						for compl_item in items_query:
 							ammnt = o_compl['items'].count(compl_item.name)
 							new_compl = OrderItemComplement(
-								user=user.id,
+								client=client.id,
 								time=time,
 								rest=item.rest,
 								meal=item.meal,
@@ -150,7 +150,7 @@ class CartHandler(Resource):
 				total_price = sum([value for rest, value in prices_per_rest.items()])
 				fee = getattr(api.payload, 'fee', payment.service_fee(total_price))
 
-				cart = Cart(time=time, user=user.id, price=total_price,
+				cart = Cart(time=time, client=client.id, price=total_price,
 					payment_method=payment_method, qfila_fee=fee
 				)
 				session.add(cart)
@@ -158,7 +158,7 @@ class CartHandler(Resource):
 
 				for data in api.payload['order']:
 					comment = None if not 'comment' in data else data['comment']
-					order = Order(user=user.id, time=time, rest=data['rest'],
+					order = Order(client=client.id, time=time, rest=data['rest'],
 						price=prices_per_rest[data['rest']], state='awaiting_payment', comment=comment
 					)
 					session.add(order)

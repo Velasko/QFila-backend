@@ -66,14 +66,14 @@ class Money(Numeric):
 		kwargs['scale'] = 2
 		super().__init__(*args, **kwargs)
 
-class UserConfirmation(enum.Enum):
+class ClientConfirmation(enum.Enum):
 	none = 0
 	email = 1
 	phone = 2
 	both = 3
 
-class User(Base, Serializable):
-	__tablename__ = 'Users'
+class Client(Base, Serializable):
+	__tablename__ = 'Clients'
 
 	id = Column(Integer, primary_key=True)
 	name = Column(String(255))
@@ -81,17 +81,17 @@ class User(Base, Serializable):
 	email = Column(String(255), unique=True)
 	passwd = Column(String(255))
 	phone = Column(String(16), unique=True)
-	confirmed = Column(Enum(UserConfirmation), nullable=False, default=UserConfirmation(0))
+	confirmed = Column(Enum(ClientConfirmation), nullable=False, default=ClientConfirmation(0))
 
 	def __repr__(self):
-		return f"User: {self.name}"
+		return f"Client: {self.name}"
 
 
 class SentSMS(Base, Serializable):
 	__tablename__ = 'SentSMS'
 
 	aws_id = Column(String(255), primary_key=True)
-	user_id = Column(Integer, ForeignKey('Users.id', ondelete='RESTRICT'), nullable=False)
+	client_id = Column(Integer, ForeignKey('Clients.id', ondelete='RESTRICT'), nullable=False)
 	time = Column(DateTime, nullable=False)
 	operation = Column(String(255))
 
@@ -333,7 +333,7 @@ class Cart(Base, Serializable):
 	__tablename__ = 'Carts'
 
 	time = Column(DateTime, primary_key=True)
-	user = Column(Integer, ForeignKey('Users.id', ondelete='RESTRICT'), primary_key=True)
+	client = Column(Integer, ForeignKey('Clients.id', ondelete='RESTRICT'), primary_key=True)
 	price = Column(Money, nullable=False)
 	qfila_fee = Column(Money, nullable=False)
 	payment_method = Column(Enum(PaymentMethods), nullable=False)
@@ -350,14 +350,14 @@ class Order(Base, Serializable):
 	__tablename__ = 'Orders'
 	__table_args__ = (
 		ForeignKeyConstraint(
-			['user', 'time'],
-			['Carts.user', 'Carts.time'],
+			['client', 'time'],
+			['Carts.client', 'Carts.time'],
 			ondelete='CASCADE',
 			onupdate='RESTRICT'
 		),
 	)
 
-	user = Column(Integer, primary_key=True)
+	client = Column(Integer, primary_key=True)
 	time = Column(DateTime, primary_key=True)
 	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True)
 
@@ -371,8 +371,8 @@ class OrderItem(Base, Serializable):
 	__tablename__ = 'OrderItems'
 	__table_args__ = (
 		ForeignKeyConstraint(
-			['user', 'time', 'rest'],
-			['Orders.user', 'Orders.time', 'Orders.rest'],
+			['client', 'time', 'rest'],
+			['Orders.client', 'Orders.time', 'Orders.rest'],
 			ondelete='RESTRICT',
 			onupdate='CASCADE'
 		),
@@ -384,7 +384,7 @@ class OrderItem(Base, Serializable):
 		),
 	)
 
-	user = Column(Integer, primary_key=True)
+	client = Column(Integer, primary_key=True)
 	time = Column(DateTime, primary_key=True)
 	rest = Column(Integer, primary_key=True)
 	meal = Column(Integer, primary_key=True)
@@ -406,7 +406,7 @@ class OrderItem(Base, Serializable):
 	# 	previous = session.query(
 	# 		OrderItem
 	# 	).filter(
-	# 		OrderItem.user == orderitem.user,
+	# 		OrderItem.client == orderitem.client,
 	# 		OrderItem.time == orderitem.time,
 	# 		OrderItem.rest == orderitem.rest,
 	# 		OrderItem.meal == orderitem.meal
@@ -423,14 +423,14 @@ class OrderItemComplement(Base, Serializable):
 	__tablename__ = 'OrderItemComplement'
 	__table_args__ = (
 		ForeignKeyConstraint(
-			['user', 'time', 'rest', 'meal', 'id'],
-			['OrderItems.user', 'OrderItems.time', 'OrderItems.rest', 'OrderItems.meal', 'OrderItems.id'],
+			['client', 'time', 'rest', 'meal', 'id'],
+			['OrderItems.client', 'OrderItems.time', 'OrderItems.rest', 'OrderItems.meal', 'OrderItems.id'],
 			ondelete='CASCADE',
 			onupdate='CASCADE'
 		),
 	)
 
-	user = Column(Integer, primary_key=True)
+	client = Column(Integer, primary_key=True)
 	time = Column(DateTime, primary_key=True)
 	rest = Column(Integer, primary_key=True)
 	meal = Column(Integer, primary_key=True)

@@ -9,7 +9,7 @@ class Config(BaseConfig):
 		self.app.config['CATALOG_PAGE_SIZE_DEFAULT'] = 5
 		self.app.config['CATALOG_PAGE_SIZE_LIMIT'] = 10
 
-	def verify_user(self):
+	def verify_catalog(self):
 		required_config = ['DATABASE_URL']
 		
 		return self._verify(required_config)
