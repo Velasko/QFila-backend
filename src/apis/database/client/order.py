@@ -6,12 +6,13 @@ from flask_restx import Resource, fields
 from sqlalchemy import exc
 from sqlalchemy.sql.expression import and_
 
-from . import DBsession, ns, api
-from .scheme import *
+from . import ns
+from ..app import DBsession, api
+from ..scheme import *
 
 try:
-	from ..utilities import payment
-	from ..utilities.models.order import *
+	from ...utilities import payment
+	from ...utilities.models.order import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import payment

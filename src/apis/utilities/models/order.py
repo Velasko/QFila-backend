@@ -48,6 +48,6 @@ order = order_contents.inherit("order", {
 })
 
 db_order = order.inherit("order_db", {
-	"user" : fields.String(required=True, description="User's email"),
+	"client" : fields.String(required=True, description="Client's email"),
 	"time" : fields.DateTime(required=True, description="Time of purchase")
 })

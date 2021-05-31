@@ -1,12 +1,12 @@
 from flask_restx import fields
 from flask_restx.model import Model
 
-from .database import user, meal, restaurant
+from .database import client, meal, restaurant
 from .order import payment_methods
 from .login import *
 
 history_query = Model("history_query", {
-	'user' : fields.Integer(required=True, description="User's id"),
+	'client' : fields.Integer(required=True, description="Client's id"),
 	'offset' : fields.Integer(),
 	'limit' : fields.Integer(description="total responses"),
 	'detailed' : fields.Boolean(default=True, description="if wants object's names and images"),
@@ -58,9 +58,9 @@ history_response = Model("history_response", {
 	"orders" : fields.List(fields.Nested(history_order)),
 })
 
-user_update = Model("user.update", {
+client_update = Model("client.update", {
 	"old_password" : fields.String(require=True),
-	"user" : fields.Nested(user)
+	"client" : fields.Nested(client)
 })
 
 recent_restaurant = Model("recent.rest", {

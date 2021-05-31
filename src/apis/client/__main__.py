@@ -10,11 +10,11 @@ from .config import Config
 if __name__ == '__main__':
 	import argparse
 
-	app = Flask("Qfila user")
+	app = Flask("Qfila client")
 	CORS(app)
 	config = Config(app)
 
-	parser = argparse.ArgumentParser(description='User interface section of the back-end')
+	parser = argparse.ArgumentParser(description='Client interface section of the back-end')
 
 	group = parser.add_mutually_exclusive_group()
 	group.add_argument('-r', '--run', action='store_true', help="Runs the REST application")
@@ -37,6 +37,6 @@ if __name__ == '__main__':
 		config.configure()
 		app.run(host=args.host, debug=args.debug, port=args.port)
 	elif args.test:
-		raise NotImplementedError("Tests for User interface not implemented")
+		raise NotImplementedError("Tests for Client interface not implemented")
 	else:
 		parser.print_help()

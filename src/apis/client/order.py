@@ -27,7 +27,7 @@ class PlaceOrder(Resource):
 	@ns.response(409, "This order was already processed")
 	@ns.response(503, "Could not stablish connection to database")
 	@authentication.token_required(namespace=ns, expect_args=[order])
-	def post(self, user):
+	def post(self, client):
 		"""Method to make the order
 
 		Data will be sent to the database, send an email"""
@@ -39,9 +39,9 @@ class PlaceOrder(Resource):
 			fee = order['fee']
 
 		try:
-			resp = post('{}/database/user/order'.format(current_app.config['DATABASE_URL']),
+			resp = post('{}/database/client/order'.format(current_app.config['DATABASE_URL']),
 				json={
-					'user': user['email'],
+					'client': client['email'],
 					'time' : datetime.datetime.now().isoformat(),
 					**api.payload
 				},
@@ -56,12 +56,12 @@ class PlaceOrder(Resource):
 			return resp.json(), resp.status_code
 		else:
 			# print(resp.status_code, resp.json())
-			return {'message': "ERROR: user/order.py, line 51. Handle database errors"}, 500
-			raise NotImplemented("user/order.py, line 51. Handle database errors")
+			return {'message': "ERROR: client/order.py, line 51. Handle database errors"}, 500
+			raise NotImplemented("client/order.py, line 51. Handle database errors")
 			
 		# resp = post('{}/mail/orderreview'.format(current_app.config['MAIL_URL']),
 		# 	json={
-		# 		'recipients' : {"name" : user['name'], "email" : user['email']},
+		# 		'recipients' : {"name" : client['name'], "email" : client['email']},
 		# 		'order' : order
 		# 	},
 		# 	headers=headers.json

@@ -14,14 +14,14 @@ from ..scheme import *
 
 try:
 	from ...utilities import checkers
-	from ...utilities.models.user import *
+	from ...utilities.models.client import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import checkers
-	from utilities.models.user import *
+	from utilities.models.client import *
 
 api.add_model(id.name, id)
-api.add_model(user.name, user)
+api.add_model(client.name, client)
 
 def get_data(email, phone) -> (str, str):
 	"""Gets email and phone.
@@ -29,26 +29,26 @@ def get_data(email, phone) -> (str, str):
 	the field name.
 	"""
 	if not email is None:
-		field = User.email 
+		field = Client.email 
 		data = email
 	elif not phone is None:
 		data = phone
-		field = User.phone
+		field = Client.phone
 	else:
 		raise KeyError("No argument parsed")
 	return data, field
 
-@ns.route('/')
-class UserHandler(Resource):
+@ns.route('/register')
+class ClientHandler(Resource):
 
-	@ns.doc("Create user")
-	@ns.expect(user)
+	@ns.doc("Create client")
+	@ns.expect(client)
 	@ns.response(201, "Method executed successfully.")
 	@ns.response(400, "Invalid payload; missing the required argument in 'missing' field of return")
 	@ns.response(403, "Birthday is less than 12 years ago.")
 	@ns.response(409, "Email or phone already used.")
 	def post(self):
-		"""Method to create the user.
+		"""Method to create the client.
 		"""
 
 		with DBsession as session:
@@ -58,7 +58,7 @@ class UserHandler(Resource):
 				try:
 					data['birthday'] = date.fromisoformat(data['birthday'])
 					if not checkers.age_check(data['birthday']):
-						return {'message' : "User below 12 years old"}, 403
+						return {'message' : "Client below 12 years old"}, 403
 				except ValueError:
 					return {'message': "Invalid data format."}, 400
 
@@ -70,8 +70,8 @@ class UserHandler(Resource):
 
 				data['passwd']
 
-				user = User(**data)
-				session.add(user)
+				client = Client(**data)
+				session.add(client)
 
 				session.commit()
 			except exc.IntegrityError as e:
@@ -86,29 +86,29 @@ class UserHandler(Resource):
 
 @ns.route('/phone/<string:login>')
 @ns.route('/email/<string:login>')
-class UserHandler_UrlParse(Resource):
+class ClientHandler_UrlParse(Resource):
 
-	@ns.doc("Find and return user based on phone or email")
-	@ns.response(200, "Method executed successfully.", model=user)
-	@ns.response(404, "User not found.")
+	@ns.doc("Find and return client based on phone or email")
+	@ns.response(200, "Method executed successfully.", model=client)
+	@ns.response(404, "Client not found.")
 	def get(self, login):
-		"""Method to get user information based on e-mail or phone.
-		A single user shall be returned from this query."""
+		"""Method to get client information based on e-mail or phone.
+		A single client shall be returned from this query."""
 
 		path = request.full_path.split("/")
-		return common.user.fetch_user(User, path[-2], login)
+		return common.user.fetch_user(Client, path[-2], login)
 
-	@ns.doc("Modify user")
-	@ns.expect(user)
+	@ns.doc("Modify client")
+	@ns.expect(client)
 	@ns.response(200, "Method executed successfully.")
 	@ns.response(400, "Query invalid.")
 	@ns.response(403, "Birthday is less than 12 years ago.")
-	@ns.response(404, "User not found.")
+	@ns.response(404, "Client not found.")
 	@ns.response(409, "Email or phone already used.")
 	def put(self, email=None, phone=None):
-		"""Method to modify an user.
+		"""Method to modify an client.
 
-		The user identification must be parsed by the url, using either phone or email.
+		The client identification must be parsed by the url, using either phone or email.
 		The fields to be updated must be parsed on the payload.
 		"""
 
@@ -121,7 +121,7 @@ class UserHandler_UrlParse(Resource):
 					try:
 						update['birthday'] = date.fromisoformat(update['birthday'])
 						if not checkers.age_check(update['birthday']):
-							return {'message' : "User below 12 years old"}, 403
+							return {'message' : "Client below 12 years old"}, 403
 					except ValueError:
 						return {'message': "Invalid data format."}, 400
 
@@ -129,9 +129,9 @@ class UserHandler_UrlParse(Resource):
 					if not checkers.valid_email(update['email']):
 						return {'message' : "Invalid email."}, 400
 
-				query = session.query(User).filter(field == data)
+				query = session.query(Client).filter(field == data)
 				if query.count() == 0:
-					return {'message' : 'No user with such id'}, 404
+					return {'message' : 'No client with such id'}, 404
 				query.update(update)
 				session.commit()
 				return {'message' : 'update sucessfull'}, 200
@@ -142,25 +142,25 @@ class UserHandler_UrlParse(Resource):
 			except Exception:
 				api.abort(500)
 
-	@ns.doc("Delete user")
+	@ns.doc("Delete client")
 	@ns.response(200, "Method executed successfully.")
-	@ns.response(404, "User not found.")
+	@ns.response(404, "Client not found.")
 	def delete(self, email=None, phone=None):
-		"""Method called to delete the user.
+		"""Method called to delete the client.
 
 		In this scenario, it was prefered to clear out the fields and turn it into
-		a ghost user instead. (maybe -> Must verify with protection of data law)
+		a ghost client instead. (maybe -> Must verify with protection of data law)
 
-		So far, the user is indeed deleted, if there is no history attached to it.
+		So far, the client is indeed deleted, if there is no history attached to it.
 		"""
 
 		with DBsession as session:
 			try:
 				data, field = get_data(email, phone)
 
-				query = session.query(User).filter(field == data)
+				query = session.query(Client).filter(field == data)
 				if query.count() == 0:
-					return {'message' : 'No user with such id'}, 404
+					return {'message' : 'No client with such id'}, 404
 				query.delete()
 				session.commit()
 				return {}, 200

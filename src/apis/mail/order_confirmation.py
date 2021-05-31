@@ -11,13 +11,13 @@ from . import template
 
 try:
 	from ..utilities import headers, payment
-	from ..utilities.models import user, mail
+	from ..utilities.models import client, mail
 except ValueError:
 	#If running from inside apis folder
 	from utilities import headers, payment
-	from ..utilities.models import user, mail
+	from ..utilities.models import client, mail
 
-for model in (user.history_complements, user.history_items, user.history_order, mail.history):
+for model in (client.history_complements, client.history_items, client.history_order, mail.history):
 	api.add_model(model.name, model)
 
 @ns.route('/orderreview')

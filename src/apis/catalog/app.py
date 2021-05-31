@@ -6,7 +6,7 @@ api = Api(blueprint, default="catalog", title="Qfila catalog API",
 	version="0.1", description="Catalog REST service", validate=True
 )
 
-ns = Namespace('catalog', description='Catalog queries')
+ns = Namespace('Catalog', path='/catalog', description='Catalog queries')
 api.add_namespace(ns)
 
 from . import general

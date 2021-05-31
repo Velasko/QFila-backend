@@ -17,7 +17,6 @@ def config_api(app, libs):
 	folder_exceptions = ('__pycache__', 'utilities')
 
 	if libs is None:
-		# libs = ('database', 'user', 'catalog', 'mail', 'phone')
 		path = Path("src/apis")
 		libs = [dir.name for dir in path.iterdir() if dir.is_dir() and not dir.name in folder_exceptions]
 

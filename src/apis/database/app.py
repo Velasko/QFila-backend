@@ -24,5 +24,4 @@ DBsession = SessionManager(engine)
 from . import client
 from . import portal
 from . import catalog
-from . import order
 from . import shortner

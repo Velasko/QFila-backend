@@ -49,7 +49,7 @@ class token_required():
 
 			try:
 				resp = get(
-					'{}/database/user/{}/{}'.format(
+					'{}/database/client/{}/{}'.format(
 						current_app.config['DATABASE_URL'],
 						id_key,
 						data[id_key]

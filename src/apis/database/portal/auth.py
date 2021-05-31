@@ -8,11 +8,11 @@ from ..scheme import *
 
 try:
 	from ...utilities import checkers
-	from ...utilities.models.user import *
+	from ...utilities.models.database import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import checkers
-	from utilities.models.user import *
+	from utilities.models.database import *
 
 for model in (restaurant,):
 	api.add_model(model.name, model)

@@ -21,12 +21,12 @@ class PasswordRecovery(Resource):
 	@ns.response(424, "Error with AWS")
 	def post(self):
 		link = api.payload['link']
-		user_id = api.payload['user']
+		client_id = api.payload['client']
 		msg = f"Link para mudança de senha do Qfila: {link}"
 
 		phone = api.payload['phone']
 
-		return sms_service.send_message(message=msg, phone=phone, user=user_id, operation="/passwordrecovery")
+		return sms_service.send_message(message=msg, phone=phone, client=client_id, operation="/passwordrecovery")
 
 
 @ns.route("/passwordrecovery/notify")
@@ -39,7 +39,7 @@ class NotifyPasswordRecovery(Resource):
 	@ns.response(424, "Error with AWS")
 	def post(self):
 		phone = api.payload['phone']
-		user_id = api.payload['user']
+		client_id = api.payload['client']
 		msg = "Sua senha Qfila foi alterada com sucesso!"
 
-		return sms_service.send_message(message=msg, phone=phone, user=user_id, operation='/passwordrecovery/notify')
+		return sms_service.send_message(message=msg, phone=phone, client=client_id, operation='/passwordrecovery/notify')

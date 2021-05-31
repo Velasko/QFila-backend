@@ -11,23 +11,23 @@ from ..scheme import *
 
 try:
 	from ...utilities import checkers, authentication
-	from ...utilities.models.user import *
+	from ...utilities.models.client import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import checkers, authentication
-	from utilities.models.user import *
+	from utilities.models.client import *
 
 for model in (recent_restaurant, recent_model, history_complements, history_items, history_order, history_response, history_query):
 	api.add_model(model.name, model)
 
-@ns.route('/recents/<int:user_id>')
-class UserRecentsHandler(Resource):
+@ns.route('/recents/<int:client_id>')
+class ClientRecentsHandler(Resource):
 
 	@ns.response(200, "Method executed successfully.", model=recent_model)
 	@ns.response(400, "Invalid payload")
 	@ns.response(404, "Query type isn't neiter 'meals' nor 'restaurants'/invalid url")
-	def get(self, user_id):
-		"""Returns user recent meals/restaurants
+	def get(self, client_id):
+		"""Returns client recent meals/restaurants
 		"""
 		with DBsession as session:
 			query = session.query(
@@ -36,7 +36,7 @@ class UserRecentsHandler(Resource):
 				Order,
 				and_(
 					Order.rest == Restaurant.id,
-					Order.user == user_id
+					Order.client == client_id
 				)
 			).order_by(
 				Order.time.desc()
@@ -72,7 +72,7 @@ class HistoryHandler(Resource):
 	@ns.response(200, "Query executed successfully", model=history_response)	
 	def post(self):
 
-		user_id = api.payload['user']
+		client_id = api.payload['client']
 		offset = api.payload.get('offset', 0)
 		limit = api.payload.get('limit', 1)
 		detailed = api.payload.get('detailed', True)
@@ -81,14 +81,14 @@ class HistoryHandler(Resource):
 		with DBsession as session:
 			if time:
 				time = datetime.fromisoformat(time)
-				base_query = session.query(Cart).filter(Cart.user == user_id, Cart.time == time)
+				base_query = session.query(Cart).filter(Cart.client == client_id, Cart.time == time)
 			else:
-				base_query = session.query(Cart).filter(Cart.user == user_id)
+				base_query = session.query(Cart).filter(Cart.client == client_id)
 
 			data = []
 			for cart in base_query.order_by(Cart.time.desc()).offset(offset).limit(limit):
 				cart = cart.serialize()
-				del cart['user']
+				del cart['client']
 
 				cart['orders'] = []			
 
@@ -96,7 +96,7 @@ class HistoryHandler(Resource):
 				for order in session.query(
 					Order
 				).filter(
-					Order.user == user_id,
+					Order.client == client_id,
 					Order.time == cart['time']
 				):
 
@@ -107,7 +107,7 @@ class HistoryHandler(Resource):
 					for item in session.query(
 						OrderItem
 					).filter(
-						OrderItem.user == user_id,
+						OrderItem.client == client_id,
 						OrderItem.time == cart['time'],
 						OrderItem.rest == order['rest']
 					):
@@ -118,22 +118,22 @@ class HistoryHandler(Resource):
 						for compl in session.query(
 							OrderItemComplement
 						).filter(
-							OrderItemComplement.user == user_id,
+							OrderItemComplement.client == client_id,
 							OrderItemComplement.time == cart['time'],
 							OrderItemComplement.rest == order['rest'],
 							OrderItemComplement.meal == item['meal'],
 							OrderItemComplement.id == item['id']
 						):
 							compl = compl.serialize()
-							for column in ['user', 'time', 'rest', 'meal', 'id']:
+							for column in ['client', 'time', 'rest', 'meal', 'id']:
 								del compl[column]
 							item['complements'].append(compl)
 
-						for column in ['user', 'time', 'rest', 'id', 'comment']:
+						for column in ['client', 'time', 'rest', 'id', 'comment']:
 							del item[column]
 						order['items'].append(item)
 
-					for column in ['user', 'time', 'comment']:
+					for column in ['client', 'time', 'comment']:
 						del order[column]
 					cart['orders'].append(order)
 

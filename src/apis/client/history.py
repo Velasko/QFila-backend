@@ -9,11 +9,11 @@ from .app import ns, api
 
 try:
 	from ..utilities import authentication, headers
-	from ..utilities.models.user import *
+	from ..utilities.models.client import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import authentication, headers
-	from utilities.models.user import *
+	from utilities.models.client import *
 
 for model in (recent_restaurant, recent_model, history_complements, history_items, history_order, history_response, resend_order_model):
 	api.add_model(model.name, model)
@@ -24,13 +24,13 @@ class Recent(Resource):
 	@authentication.token_required(namespace=ns)
 	@ns.response(200, "Success", model=recent_model)
 	@ns.response(503, "Could not stablish connection to database")
-	def get(self, user, mode=None):
-		"""Get user's recent restaurants"""
+	def get(self, client, mode=None):
+		"""Get client's recent restaurants"""
 
 		try:
-			resp = get('{}/database/user/recents/{}'.format(
+			resp = get('{}/database/client/recents/{}'.format(
 					current_app.config['DATABASE_URL'], 
-					user['id']
+					client['id']
 				),
 				headers={**headers.json, **headers.system_authentication}
 			)
@@ -55,8 +55,8 @@ class HistoryHandler(Resource):
 	@ns.response(200, "Method executed successfully", model=history_response)
 	@ns.response(503, "Could not stablish connection to database")
 	@authentication.token_required(namespace=ns, expect_args=[parser])
-	def get(self, user):
-		"""Returns the user history"""
+	def get(self, client):
+		"""Returns the client history"""
 
 		#pagination arguments
 		offset = int(request.args['pagesize'])*(int(request.args['page']) -1) or 0
@@ -65,14 +65,14 @@ class HistoryHandler(Resource):
 			current_app.config['DATABASE_PAGE_SIZE_LIMIT']
 		)
 
-		data = {'user' : user['id'],
+		data = {'client' : client['id'],
 				'offset' : offset,
 				'limit' : limit,
 		}
 
 		try:
 			resp = post(
-				'{}/database/user/history'.format(
+				'{}/database/client/history'.format(
 					current_app.config['DATABASE_URL']
 				),
 				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
@@ -87,17 +87,17 @@ class HistoryHandler(Resource):
 	@ns.response(200, "Method executed successfully")
 	@ns.response(503, "Could not stablish connection to database or mail service")
 	@authentication.token_required(namespace=ns, expect_args=[resend_order_model])
-	def post(self, user):
+	def post(self, client):
 		"""Resends email of the requested order"""
 
 		data = {
-			'user' : user['id'],
+			'client' : client['id'],
 			'time' : api.payload['time']
 		}
 
 		try:
 			db_resp = post(
-				'{}/database/user/history'.format(
+				'{}/database/client/history'.format(
 					current_app.config['DATABASE_URL']
 				),
 				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
@@ -106,7 +106,7 @@ class HistoryHandler(Resource):
 			return {'message': 'could not stablish connection to database'}, 503
 
 		mail_model = {
-			'recipients' : {"name" : user['name'], "email" : user['email']},
+			'recipients' : {"name" : client['name'], "email" : client['email']},
 			'order' : db_resp.json()[0]['orders']
 		}
 
