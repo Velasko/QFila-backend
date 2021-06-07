@@ -43,8 +43,9 @@ class BaseConfig(threading.Thread):
 
 	def configure(self, auto_verify=True):
 		"""Makes any execution required to configure the app"""
+		self.config_base()
 		for method in self.__dir__():
-			if method.startswith("config_"):
+			if method.startswith("config_") and method != 'config_base':
 				getattr(self, method)()
 
 		if auto_verify:
