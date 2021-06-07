@@ -198,7 +198,7 @@ class Catalog(Resource):
 
 		try:
 			resp = post(
-				'{}/database/catalog'.format(current_app.config['DATABASE_URL']),
+				'{}/database/catalog/general'.format(current_app.config['DATABASE_URL']),
 				data=json.dumps(args),
 				headers={**headers.json, **headers.system_authentication}
 			)
