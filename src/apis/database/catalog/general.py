@@ -5,7 +5,8 @@ from flask_restx import Resource
 
 from sqlalchemy.sql.expression import case
 
-from ..app import DBsession, ns, api
+from . import ns
+from ..app import DBsession, api
 from ..scheme import *
 
 from . import common
@@ -19,11 +20,11 @@ except ValueError:
 for model in (compl_item, complement, meal, restaurant, foodcourt, pagination_model, catalog_id_model, catalog_location, catalog_query, catalog_response):
 	api.add_model(model.name, model)
 
-@ns.route('/catalog')
+@ns.route('/general')
 class CatalogHandler(Resource):
 
 	def get_order(self, session, qtype, location, limit=None):
-		#Uses the user's location to calculate the food court's distances
+		#Uses the client's location to calculate the food court's distances
 		if qtype == 'location':
 			order = self.get_foodcourt_order(session, **location, limit=limit)
 		else:
@@ -250,4 +251,4 @@ class CatalogHandler(Resource):
 		if query_params['type'] == 'meal' and query_params["category"] == 'id':
 			common.fetch_meal_complements(response)
 
-		return json.dumps(response), 200
+		return response, 200

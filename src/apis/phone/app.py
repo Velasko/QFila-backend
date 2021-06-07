@@ -12,7 +12,7 @@ api = Api(blueprint, default='phone', title="Qfila phone api",
 	version='0.1', description='Phone REST service', validate=True
 )
 
-ns = Namespace('phone', description="phone operations")
+ns = Namespace('Phone', path='/phone', description="phone operations")
 api.add_namespace(ns)
 
 sns = boto3.client('sns',

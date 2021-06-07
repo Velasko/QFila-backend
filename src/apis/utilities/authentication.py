@@ -49,7 +49,7 @@ class token_required():
 
 			try:
 				resp = get(
-					'{}/database/user/{}/{}'.format(
+					'{}/database/client/{}/{}'.format(
 						current_app.config['DATABASE_URL'],
 						id_key,
 						data[id_key]
@@ -141,3 +141,30 @@ def generate_token(data, config, duration=None):
 
 def hash_password(passwd):
 	return HASHER.hash(passwd)
+
+def http_login(path, auth):
+		if 'email' in auth:
+			path = path.format('email', auth["email"])
+		elif 'phone' in auth:
+			path = path.format('phone', auth["phone"])
+		else:
+			return {'message' : "Id not parsed"}, 417 #change to proper code
+
+		try:
+			resp = get(
+				'{0}{1}'.format(current_app.config['DATABASE_URL'], path),
+				headers=headers.system_authentication
+			)
+
+			if resp.status_code in (404,):
+				raise KeyError
+
+			user = resp.json()
+
+			if ( token := passwd_check(user, auth, current_app.config)):
+				return {'token' : token}, 200
+		except KeyError:
+			return {'message' : "Not authorized"}, 401
+
+		# except req_exc.ConnectionError:
+		# 	return {'message': 'could not stablish connection to database'}, 503

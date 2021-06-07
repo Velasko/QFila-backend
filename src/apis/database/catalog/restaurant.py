@@ -3,7 +3,8 @@ from flask import request, current_app
 
 from sqlalchemy.sql.expression import and_
 
-from ..app import DBsession, ns, api
+from . import ns
+from ..app import DBsession, api
 from ..scheme import *
 
 try:
@@ -19,7 +20,7 @@ parser = ns.parser()
 parser.add_argument("offset", type=int)
 parser.add_argument("limite", type=int)
 
-@ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")
+@ns.route("/restaurant/<int:rest_id>/<string:qtype>/<string:keyword>")
 class RestaurantMenu(Resource):
 
 	@ns.doc(params={
@@ -80,7 +81,7 @@ class RestaurantMenu(Resource):
 
 		return response
 
-@ns.route("/catalog/restaurant/<int:rest_id>/<string:qtype>")
+@ns.route("/restaurant/<int:rest_id>/<string:qtype>")
 class RestaurantSections(Resource):
 
 	@ns.doc(params={

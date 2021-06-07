@@ -10,5 +10,5 @@ api.init_app(app)
 
 CORS(app, resources={
 	r"/catalog/*" : {"origins": "*"},
-	r"/user/*" : {"origins": "*"}
+	r"/client/*" : {"origins": "*"}
 })

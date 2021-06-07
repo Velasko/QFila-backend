@@ -17,7 +17,6 @@ def config_api(app, libs):
 	folder_exceptions = ('__pycache__', 'utilities')
 
 	if libs is None:
-		# libs = ('database', 'user', 'catalog', 'mail', 'phone')
 		path = Path("src/apis")
 		libs = [dir.name for dir in path.iterdir() if dir.is_dir() and not dir.name in folder_exceptions]
 
@@ -33,7 +32,10 @@ def config_api(app, libs):
 				models[name] = model
 
 			app.register_blueprint(service.blueprint, url_prefix=f"/{service_name}")
-			api.add_namespace(service.ns)
+
+			# api.add_namespace(service.ns)
+			for ns in service.api.namespaces[1:]:
+				api.add_namespace(ns)
 
 			config = importlib.import_module('.config', f"{__package__}.{service_name}")
 			configs.append(config.Config)

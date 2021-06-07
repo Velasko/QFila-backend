@@ -1,12 +1,12 @@
 from flask_restx import fields
 from flask_restx.model import Model
 
-user = Model("User", {
-	'name' : fields.String(description='User name'),
-	'email' : fields.String(description='User email'),
-	'passwd' : fields.String(description='User password'),
-	'birthday' : fields.Date(description='User birthday', dt_format="iso8601"),
-	'phone' : fields.String(description='User phone number')
+client = Model("Client", {
+	'name' : fields.String(description='Client name'),
+	'email' : fields.String(description='Client email'),
+	'passwd' : fields.String(description='Client password'),
+	'birthday' : fields.Date(description='Client birthday', dt_format="iso8601"),
+	'phone' : fields.String(description='Client phone number')
 })
 
 compl_item = Model("Complement.Item", {
@@ -17,7 +17,7 @@ compl_item = Model("Complement.Item", {
 
 complement = Model("Complement", {
 	"head" : fields.String(description="The 'question' of the complement"),
-	"description" : fields.String(description="A way to give more information to the user"),
+	"description" : fields.String(description="A way to give more information to the client"),
 	"name" : fields.String(description="A simple name for the restaurant to identify"),
 	"min" : fields.Integer(description="Minimal ammount of items to be selected", default=0, min=0),
 	"max" : fields.Integer(description="Maximum ammount of items to be selected", default=1, min=1),

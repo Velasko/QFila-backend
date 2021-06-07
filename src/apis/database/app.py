@@ -1,7 +1,7 @@
 import os
 
 from flask import Blueprint
-from flask_restx import Api, Namespace, Resource, fields
+from flask_restx import Api, Namespace
 
 from sqlalchemy import create_engine
 
@@ -13,7 +13,7 @@ api = Api(blueprint, default='database', title="Qfila database api",
 	version='0.1', description='Database REST service', validate=True
 )
 
-ns = Namespace('database', description="database operations")
+ns = Namespace('Database', path='/database', description="database operations")
 api.add_namespace(ns)
 
 engine = create_engine(os.getenv('DATABASE_URI'))
@@ -21,7 +21,7 @@ Base.metadata.bind = engine
 
 DBsession = SessionManager(engine)
 
-from . import user
+from . import client
+from . import portal
 from . import catalog
-from . import order
 from . import shortner

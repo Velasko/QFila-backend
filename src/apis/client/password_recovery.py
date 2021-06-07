@@ -18,11 +18,11 @@ from .app import ns, api
 
 try:
 	from ..utilities import authentication, checkers, headers
-	from ..utilities.models.user import id, passwd
+	from ..utilities.models.client import id, passwd
 except ValueError:
 	#If running from inside apis folder
 	from utilities import authentication, checkers, headers
-	from utilities.models.user import id, passwd
+	from utilities.models.client import id, passwd
 
 for model in (id, passwd):
 	api.add_model(model.name, model)
@@ -32,7 +32,7 @@ class PasswordRecovery(Resource):
 
 	@ns.expect(id)
 	@ns.response(201, "Message to be sent")
-	@ns.response(404, "User not found")
+	@ns.response(404, "Client not found")
 	@ns.response(503, "Email, phone or database unavailable.")
 	def post(self):
 
@@ -44,31 +44,31 @@ class PasswordRecovery(Resource):
 		value = api.payload[key]
 
 		try:
-			user = get(
-				'{}/database/user/{}/{}'.format(current_app.config['DATABASE_URL'], key, value),
+			client = get(
+				'{}/database/client/{}/{}'.format(current_app.config['DATABASE_URL'], key, value),
 				headers=headers.system_authentication
 			)
 		except exceptions.ConnectionError:
 			return {'message' : "database service unavailable"}, 503
 
-		if user.status_code == 404:
-			api.abort(404, "Could not find user.")
+		if client.status_code == 404:
+			api.abort(404, "Could not find client.")
 
-		user = user.json()
+		client = client.json()
 
 		token = authentication.generate_token(
-			{key : value, 'passwd' : user['passwd']},
+			{key : value, 'passwd' : client['passwd']},
 			current_app.config,
 			duration=50 #minutes
 		)
 
-		link = current_app.config['APPLICATION_HOSTNAME'] + "/user/passwordrecovery/" + escape(token)
+		link = current_app.config['APPLICATION_HOSTNAME'] + "/client/passwordrecovery/" + escape(token)
 
 		if key == 'email':
 			try:
 				email = post(
 					'{}/mail/passwordrecovery'.format(current_app.config['MAIL_URL']),
-					data=json.dumps({'link' : link, 'recipients' : [{'email' : value, 'name': user['name']}]}),
+					data=json.dumps({'link' : link, 'recipients' : [{'email' : value, 'name': client['name']}]}),
 					headers={**headers.json, **headers.system_authentication}
 				)
 				if email.status_code == 404:
@@ -83,7 +83,7 @@ class PasswordRecovery(Resource):
 			try:
 				phone = post(
 					'{}/phone/passwordrecovery'.format(current_app.config['PHONE_URL']),
-					data=json.dumps({'link' : link, 'user': user['id'], 'phone' : value}),
+					data=json.dumps({'link' : link, 'client': client['id'], 'phone' : value}),
 					headers={**headers.json, **headers.system_authentication}
 				)
 
@@ -100,8 +100,8 @@ class ChangePassword(Resource):
 	@ns.response(200, "Password modified successfully.")
 	@ns.response(503, "Database/email/phone service unavailable.")
 	@authentication.token_required(namespace=ns, expect_args=[passwd])
-	def put(self, user):
-		"""Official method to modify the user's password"""
+	def put(self, client):
+		"""Official method to modify the client's password"""
 		#Generating password hash
 		passwd = api.payload['passwd']
 		passwd_hash = authentication.hash_password(passwd)
@@ -117,17 +117,17 @@ class ChangePassword(Resource):
 			'passwd' : passwd_hash
 		}
 
-		if not user['email'] is None:
+		if not client['email'] is None:
 			key = 'email'
 		else:
 			key = 'phone'
 
 		#Updating password in database
 		try:
-			resp = put('{}/database/user/{}/{}'.format(
+			resp = put('{}/database/client/{}/{}'.format(
 					current_app.config['DATABASE_URL'],
 					key,
-					user[key]
+					client[key]
 				),
 				data=json.dumps(data), headers={**headers.json, **headers.system_authentication}
 			)
@@ -137,13 +137,13 @@ class ChangePassword(Resource):
 		if resp.status_code != 200:
 			return {'message' : 'Unexpected answer from database'}, 500
 		
-		#Notifying user of password change
+		#Notifying client of password change
 		if key == 'email':
 			try:
 				resp = post('{}/mail/passwordrecovery/notify'.format(current_app.config['MAIL_URL']),
 					data=json.dumps({'recipients' : [{
-						"name": user['name'],
-						"email": user['email']
+						"name": client['name'],
+						"email": client['email']
 					}]}),
 					headers={**headers.json, **headers.system_authentication}
 				)
@@ -197,15 +197,15 @@ class ForgottenPassword(Resource):
 		value = data[key]
 
 		try:
-			user = get(
-				'{}/database/user/{}/{}'.format(current_app.config['DATABASE_URL'], key, value),
+			client = get(
+				'{}/database/client/{}/{}'.format(current_app.config['DATABASE_URL'], key, value),
 				headers={**headers.json, **headers.system_authentication}
 			).json()
 		except exceptions.ConnectionError:
 			return {'message': 'Could not stablish connection to database'}, 503
 
 		try:
-			if data['passwd'] != user['passwd']:
+			if data['passwd'] != client['passwd']:
 				api.abort(404)
 		except Exception:
 			api.abort(404)
@@ -252,7 +252,7 @@ class ForgottenPassword(Resource):
 
 		try:
 			resp = put(
-				'{}/user/changepassword'.format(current_app.config['APPLICATION_HOSTNAME']),
+				'{}/client/changepassword'.format(current_app.config['APPLICATION_HOSTNAME']),
 				data=json.dumps({'passwd': passwd}), headers=header
 			)
 		except exceptions.ConnectionError:

@@ -16,7 +16,7 @@ class SMSservice():
 	def __init__(self, sns, *args, **kwargs):
 		self.server = sns
 
-	def send_message(self, message, phone, user, operation=""):
+	def send_message(self, message, phone, client, operation=""):
 		if len(message) > 1000:
 			raise ValueError("Message too long")
 
@@ -30,7 +30,7 @@ class SMSservice():
 				'{}/database/'.format(current_app.config['DATABASE_URL']),
 				data={
 					'aws_id' : message_id,
-					'user_id' : user,
+					'client_id' : client,
 					'time' : datetime.datetime.utcnow().isoformat(),
 					'operation' : operation
 				},

@@ -1,7 +1,7 @@
 from flask_restx import fields
 from flask_restx.model import Model
 
-from .user import history_order
+from .client import history_order
 
 recipient_model = Model("mail.recipient", {
 	"name" : fields.String(description="Name to be displayed in the mail"),
