@@ -20,7 +20,7 @@ except ValueError:
 for model in (compl_item, complement, meal, restaurant, foodcourt, pagination_model, catalog_id_model, catalog_location, catalog_query, catalog_response):
 	api.add_model(model.name, model)
 
-@ns.route('/')
+@ns.route('/general')
 class CatalogHandler(Resource):
 
 	def get_order(self, session, qtype, location, limit=None):
@@ -251,4 +251,4 @@ class CatalogHandler(Resource):
 		if query_params['type'] == 'meal' and query_params["category"] == 'id':
 			common.fetch_meal_complements(response)
 
-		return json.dumps(response), 200
+		return response, 200
