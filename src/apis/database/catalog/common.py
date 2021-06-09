@@ -39,11 +39,11 @@ def fetch_meal_complements(session, response):
 
 			compl_data['items'] = [{
 				key: value for key, value in item.serialize().items()
-					if key not in ('rest', 'id', 'available')
+					if key not in ('rest', 'compl', 'available')
 			} for item in item_query]
 
 			compl_data['max'] *= compl[1] #the ammount
 			compl_data['min'] *= compl[1]
 			complements.append(compl_data)
 
-			del compl_data['rest'], compl_data['id']
+			del compl_data['rest']
