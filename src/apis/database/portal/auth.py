@@ -29,3 +29,20 @@ class RestHandler(Resource):
 
 		path = request.full_path.split("/")
 		return common.user.fetch_user(Restaurant, path[-2], login)
+
+
+	@ns.doc("Modify restaurant")
+	@ns.expect(restaurant)
+	@ns.response(200, "Method executed successfully.")
+	@ns.response(400, "Query invalid.")
+	@ns.response(404, "Restaurant not found.")
+	@ns.response(409, "Email or phone already used.")
+	def put(self, login):
+		"""Method to modify an client.
+
+		The client identification must be parsed by the url, using either phone or email.
+		The fields to be updated must be parsed on the payload.
+		"""
+
+		path = request.full_path.split("/")
+		return common.user.update_user(Restaurant, path[-2], login, api.payload)
