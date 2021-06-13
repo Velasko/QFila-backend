@@ -8,13 +8,13 @@ from ..scheme import *
 
 try:
 	from ...utilities import checkers
-	from ...utilities.models.database import *
+	from ...utilities.models import database, portal
 except ValueError:
 	#If running from inside apis folder
 	from utilities import checkers
-	from utilities.models.database import *
+	from utilities.model import database, portal
 
-for model in (restaurant,):
+for model in (database.restaurant, portal.restaurant):
 	api.add_model(model.name, model)
 
 @ns.route('/user/phone/<string:login>')
@@ -22,7 +22,7 @@ for model in (restaurant,):
 class RestHandler(Resource):
 
 	@ns.doc("Returns a restaurant based on it's login")
-	@ns.response(200, "Method executed successfully", model=restaurant)
+	@ns.response(200, "Method executed successfully", model=database.restaurant)
 	@ns.response(404, "Restaurant not found")
 	def get(self, login):
 		"""Method to get Restaurant data based on it's login data"""
@@ -32,7 +32,7 @@ class RestHandler(Resource):
 
 
 	@ns.doc("Modify restaurant")
-	@ns.expect(restaurant)
+	@ns.expect(portal.restaurant)
 	@ns.response(200, "Method executed successfully.")
 	@ns.response(400, "Query invalid.")
 	@ns.response(404, "Restaurant not found.")

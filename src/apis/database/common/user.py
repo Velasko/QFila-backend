@@ -33,7 +33,7 @@ def update_user(user_type, key, value, update_data):
 			query.update(update_data)
 			session.commit()
 			return {'message' : 'update sucessfull'}, 200
-		except KeyError as e:
-			return {'message' : e.args[0]}, 400
+		except (KeyError, exc.InvalidRequestError) as e:
+			return {'message' : 'invalid payload'}, 400
 		except exc.IntegrityError as e:
 			return {'message' : e._message().split(".")[-1][:-3] + " already in use."}, 409
