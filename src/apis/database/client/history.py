@@ -94,24 +94,39 @@ class HistoryHandler(Resource):
 
 				#for order in cart:
 				for order in session.query(
-					Order
+					Order, Restaurant.name, Restaurant.image, FoodCourt.name
 				).filter(
 					Order.client == client_id,
 					Order.time == cart['time']
+				).join(
+					Restaurant,
+					Restaurant.id == Order.rest
+				).join(
+					FoodCourt,
+					FoodCourt.id == Restaurant.location
 				):
 
-					order = order.serialize()
+					order = { **order[0].serialize(),
+						"name" : order[1],
+						"image" : order[2],
+						"FoodCourt" : order[3]
+					}
 					order['items'] = []
 
 					#for item in order:
 					for item in session.query(
-						OrderItem
+						OrderItem, Meal.name
 					).filter(
 						OrderItem.client == client_id,
 						OrderItem.time == cart['time'],
 						OrderItem.rest == order['rest']
+					).join(
+						Meal,
+						Meal.id == OrderItem.meal
 					):
-						item = item.serialize()
+						item = {**item[0].serialize(),
+							"name": item[1]
+						}
 
 						#item['complements'] = complements of that item
 						item['complements'] = []
