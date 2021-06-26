@@ -289,6 +289,27 @@ class MenuSection(Base, Serializable):
 	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='CASCADE'), primary_key=True)
 	position = Column(Integer, nullable=False)
 
+	@staticmethod
+	def before_insert(mapper, connection, section):
+		if section.position is None:
+			from .app import DBsession
+			with DBsession as session:
+				previous = session.query(
+					MenuSection.position
+				).filter(
+					MenuSection.rest == section.rest
+				).order_by(
+					MenuSection.position.desc()
+				).first()
+
+			if previous is None:
+				section.position = 1
+				return
+
+			section.position = 1 if not previous[0] else previous[0] + 1
+
+listen(MenuSection, "before_insert", MenuSection.before_insert)
+
 
 class MenuSectionRelation(Base, Serializable):
 	__tablename__ = 'MenuSectionsRelationship'

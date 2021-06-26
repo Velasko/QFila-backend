@@ -30,12 +30,16 @@ history_items = Model("history_items", {
 	),
 	"ammount" : fields.Integer,
 	"meal" : fields.Integer(description="Meal's id inside the restaurant"),
+	"name" : fields.String(description="Meal's name"),
 	"complements" : fields.List(fields.Nested(history_complements))
 })
 
 possible_states = ('cancelled', 'awaiting_payment', 'preparing', 'served')
 history_order = Model("history_order",{
 	"rest" : fields.Integer,
+	"name" : fields.String(description="Restaurant name"),
+	"image" : fields.String(description="Restaurant's image URL"),
+	"FoodCourt" : fields.String(description="FoodCourt's name"),
 	"rest_order_id" : fields.String,
 	"price" : fields.Fixed(decimals=2, min=0,
 		description="Order's total price"

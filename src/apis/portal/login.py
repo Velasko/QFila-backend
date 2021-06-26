@@ -28,10 +28,3 @@ class Authenticator(Resource):
 		path = "/database/portal/user/{}/{}"
 
 		return authentication.http_login(path, auth)
-
-@ns.route('/test')
-class PageTest(Resource):
-
-	@authentication.token_required(namespace=ns)
-	def get(self, user):
-		return {}, 200

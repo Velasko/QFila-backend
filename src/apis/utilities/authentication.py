@@ -84,7 +84,7 @@ class token_required():
 			decorator = self.ns.expect(parser, *self.expect_args, **self.expected_kwargs)(decorator)
 			decorator = self.ns.response(498, "Token expired or invalid")(decorator)
 			decorator = self.ns.response(499, "Authentication required")(decorator)
-			decorator = self.ns.response(503, "Servica unavailable. (Likely could not connect to database)")(decorator)
+			decorator = self.ns.response(503, "Service unavailable. (Likely could not connect to database)")(decorator)
 
 		return decorator
 

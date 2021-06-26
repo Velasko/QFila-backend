@@ -1,3 +1,4 @@
+import re
 from requests import put, exceptions
 
 from flask import current_app
