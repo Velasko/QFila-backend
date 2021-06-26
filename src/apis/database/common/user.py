@@ -2,6 +2,11 @@ from ..app import DBsession
 
 from sqlalchemy import exc
 
+try:
+	from ...utilities import checkers
+except ValueError:
+	#If running from inside apis folder
+	from utilities import checkers
 
 def fetch_user(user_type, key, value):
 	with DBsession as session:
