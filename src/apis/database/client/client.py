@@ -105,42 +105,25 @@ class ClientHandler_UrlParse(Resource):
 	@ns.response(403, "Birthday is less than 12 years ago.")
 	@ns.response(404, "Client not found.")
 	@ns.response(409, "Email or phone already used.")
-	def put(self, email=None, phone=None):
+	def put(self, login):
 		"""Method to modify an client.
 
 		The client identification must be parsed by the url, using either phone or email.
 		The fields to be updated must be parsed on the payload.
 		"""
+		update_data = api.payload
 
-		with DBsession as session:
+		if 'birthday' in update_data:
 			try:
-				data, field = get_data(email, phone)
-				update = api.payload
+				update_data['birthday'] = date.fromisoformat(update_data['birthday'])
+				if not checkers.age_check(update_data['birthday']):
+					return {'message' : "Client below 12 years old"}, 403
 
-				if 'birthday' in update:
-					try:
-						update['birthday'] = date.fromisoformat(update['birthday'])
-						if not checkers.age_check(update['birthday']):
-							return {'message' : "Client below 12 years old"}, 403
-					except ValueError:
-						return {'message': "Invalid data format."}, 400
+			except ValueError:
+				return {'message': "Invalid data format."}, 400
 
-				if 'email' in update:
-					if not checkers.valid_email(update['email']):
-						return {'message' : "Invalid email."}, 400
-
-				query = session.query(Client).filter(field == data)
-				if query.count() == 0:
-					return {'message' : 'No client with such id'}, 404
-				query.update(update)
-				session.commit()
-				return {'message' : 'update sucessfull'}, 200
-			except KeyError as e:
-				return {'message' : e.args[0]}, 400
-			except exc.IntegrityError as e:
-				return {'message' : e._message().split(".")[-1][:-3] + " already in use."}, 409
-			except Exception:
-				api.abort(500)
+		path = request.full_path.split("/")
+		return common.user.update_user(Client, path[-2], login, update_data)
 
 	@ns.doc("Delete client")
 	@ns.response(200, "Method executed successfully.")

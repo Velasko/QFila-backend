@@ -4,32 +4,31 @@ from .app import ns, api
 
 try:
 	from ..utilities import authentication, user_methods, checkers, headers
-	from ..utilities.models.client import *
+	from ..utilities.models.portal import *
 except ValueError:
 	#If running from inside apis folder
 	from utilities import authentication, user_methods, checkers, headers
-	from utilities.models.client import *
+	from utilities.models.portal import *
 
-for model in (client, client_update):
+for model in (restaurant, rest_update):
 	api.add_model(model.name, model)
 
 @ns.route("/update")
-class ClientSettingsUpdate(Resource):
+class RestaurantSettingsUpdate(Resource):
 
-	@ns.doc("Client information update")
-	@authentication.token_required(namespace=ns, expect_args=[client_update])
+	@ns.doc("Restaurant information update")
+	@authentication.token_required(namespace=ns, expect_args=[rest_update])
 	@ns.response(200, "Method executed successfully.")
 	@ns.response(401, "Invalid password")
 	@ns.response(400, "Query invalid.")
-	@ns.response(403, "Birthday is less than 12 years ago.")
 	@ns.response(409, "Email or phone already used.")
-	def put(self, client):
+	def put(self, rest):
 		data = api.payload
 
-		user_data = data['client']
+		user_data = data['rest']
 		return user_methods.modify_user(
-			client,
-			'{}/database/client/{}/{}',
+			rest,
+			'{}/database/portal/user/{}/{}',
 			data['old_password'],
 			user_data
 		)
