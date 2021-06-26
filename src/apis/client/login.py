@@ -88,3 +88,18 @@ class Register(Resource):
 				return {'message' : 'unexpected database behaviour'}, 500
 		except exceptions.ConnectionError as e:
 			return {'message': 'could not stablish connection to database'}, 503
+
+@ns.route("/data")
+class InfoFetcher(Resource):
+
+	@ns.doc("Gets client data")
+	@authentication.token_required(namespace=ns)
+	@ns.response(200, "Successfully executed")
+	def get(self, user):
+		data = {
+			"name" : user['name'],
+			"birthday" : user['birthday'],
+			"email" : user['email']
+		}
+
+		return data, 200
