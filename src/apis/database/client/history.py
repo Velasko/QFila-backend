@@ -122,7 +122,10 @@ class HistoryHandler(Resource):
 						OrderItem.rest == order['rest']
 					).join(
 						Meal,
-						Meal.id == OrderItem.meal
+						and_(
+							Meal.id == OrderItem.meal,
+							Meal.rest == OrderItem.rest
+						)
 					):
 						item = {**item[0].serialize(),
 							"name": item[1]
