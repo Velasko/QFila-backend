@@ -23,7 +23,7 @@ class Tables(list):
 	def __init__(self):
 		from . import scheme
 		for line in open(__file__):
-			m = re.match("class (.+)\(Base, Serializable\):*", line)
+			m = re.match("class (.+)\((Base, Serializable|Login)\):*", line)
 			if not m is None:
 				self.insert(0, getattr(scheme, m.groups()[0]))
 
@@ -72,15 +72,32 @@ class ClientConfirmation(enum.Enum):
 	phone = 2
 	both = 3
 
-class Client(Base, Serializable):
+class Login(Base, Serializable):
+	__tablename__ = 'Logins'
+
+	email = Column(String(255), primary_key=True)
+	phone = Column(String(16), unique=True)
+
+	type = Column(String(50))
+
+	__mapper_args__ = {
+		'polymorphic_identity' : 'Logins',
+		'polymorphic_on' : type
+	}
+
+class Client(Login):
+	__mapper_args__ = {
+		'polymorphic_identity': 'Clients',
+		# 'concrete': True
+	}
 	__tablename__ = 'Clients'
 
 	id = Column(Integer, primary_key=True)
+	email = Column(String(255), ForeignKey('Logins.email', onupdate='CASCADE'), unique=True)
+	passwd = Column(String(255))
+	# phone = Column(String(16), unique=True)
 	name = Column(String(255))
 	birthday = Column(Date)
-	email = Column(String(255), unique=True)
-	passwd = Column(String(255))
-	phone = Column(String(16), unique=True)
 	confirmed = Column(Enum(ClientConfirmation), nullable=False, default=ClientConfirmation(0))
 
 	def __repr__(self):
@@ -113,15 +130,19 @@ class FoodCourt(Base, Serializable):
 		return f"Restaurant: {self.name}"
 
 
-class Restaurant(Base, Serializable):
+class Restaurant(Login):
+	__mapper_args__ = {
+		'polymorphic_identity': 'Restaurants',
+		# 'concrete': True
+	}
 	__tablename__ = 'Restaurants'
 
 	id = Column(Integer, primary_key=True)
 	name = Column(String(255), nullable=False)
 	description = Column(String(511))
 	bank_info = Column(String(255), nullable=False)
-	email = Column(String(255), unique=True, nullable=False)
-	phone = Column(String(16), unique=True)
+	email = Column(String(255), ForeignKey('Logins.email', onupdate='CASCADE'), unique=True, nullable=False)
+	# phone = Column(String(16), unique=True)
 	passwd = Column(String(255), nullable=False)
 	location = Column(Integer, ForeignKey('FoodCourts.id', ondelete='RESTRICT', onupdate='CASCADE'), nullable=False)
 	image = Column(String(200))
