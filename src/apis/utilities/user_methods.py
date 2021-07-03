@@ -17,7 +17,7 @@ def modify_user(user, db_url, old_passwd, user_data):
 	if 'passwd' in user_data:
 		user_data['passwd'] = authentication.hash_password(user_data['passwd'])
 
-	if 'phone' in user_data and (not re.fullmatch("+?([0-9]{9,14})", user_data['phone']) is None):
+	if 'phone' in user_data and (not re.fullmatch("\+?([0-9]{9,14})", user_data['phone']) is None):
 				return {'message' : "Invalid phone number"}, 400
 
 	resp = put(db_url.format(

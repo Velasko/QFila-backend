@@ -61,7 +61,7 @@ class token_required():
 					resp = get_user('{}/database/portal/user/{}/{}')
 
 					if resp.status_code == 404:
-						return {'message' : 'Token invalid'}, 498
+						return {'message' : 'Token invalid'}, 499
 
 				current_user = resp.json()
 				current_user['id_key'] = id_key
