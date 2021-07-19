@@ -9,6 +9,6 @@ class Config(BaseConfig):
 		pass
 
 	def verify_client(self):
-		required_config = ['DATABASE_URL', 'MAIL_URL']
+		required_config = ['DATABASE_URL', 'MAIL_URL', 'APPLICATION_HOSTNAME']
 		
 		return self._verify(required_config)
