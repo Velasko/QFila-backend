@@ -140,10 +140,10 @@ class CatalogHandler(Resource):
 		return query
 
 	def meal_name_query(self, session, keyword, order):
-		return self.base_name_query(db_class=Meal, rest_id=Meal.rest, keyword=keyword, order=order).filter(Meal.available == 1)
+		return self.base_name_query(db_class=Meal, session=session, rest_id=Meal.rest, keyword=keyword, order=order).filter(Meal.available == 1)
 
 	def restaurant_name_query(self, session, keyword, order):
-		return self.base_name_query(db_class=Restaurant, rest_id=Restaurant.id, keyword=keyword, order=order)
+		return self.base_name_query(db_class=Restaurant, session=session, rest_id=Restaurant.id, keyword=keyword, order=order)
 
 	def location_name_query(self, session, keyword, order):
 		query = session.query(

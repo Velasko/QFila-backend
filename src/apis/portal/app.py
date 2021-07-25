@@ -10,5 +10,6 @@ ns = Namespace('Portal', path='/portal', description='restaurant portal operatio
 api.add_namespace(ns)
 
 from . import login
+from . import meals
 from . import update
 from . import sections

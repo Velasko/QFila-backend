@@ -167,7 +167,7 @@ class Meal(Base, Serializable):
 	rest = Column(Integer, ForeignKey('Restaurants.id', ondelete='RESTRICT', onupdate='CASCADE'), primary_key=True)
 	name = Column(String(255), nullable=False)
 	foodtype = Column(String(255), ForeignKey('FoodTypes.name', ondelete='RESTRICT', onupdate='CASCADE'))
-	price = Column(Float, nullable=False)
+	price = Column(Money, nullable=False)
 	description = Column(String(511))
 	image = Column(String(200))
 	available = Column(SmallInteger, default=0)
