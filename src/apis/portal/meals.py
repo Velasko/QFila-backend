@@ -16,7 +16,7 @@ except ValueError:
 	from utilities.models.database import meal
 
 
-for model in (meal, meal_create, meal_edit, meal_list):
+for model in (meal, meal_create, meal_edit, meal_list, compl_repr):
 	api.add_model(model.name, model)
 
 @ns.route('/meal/fetch')
@@ -49,6 +49,7 @@ class MealManager(Resource):
 	@ns.response(200, "Successfully created meal")
 	@ns.response(409, "Section already exists")
 	def post(self, rest):
+		"""Method to create meal."""
 		resp = requests.post(
 			'{}/database/portal/meals/{}'.format(
 				current_app.config['DATABASE_URL'],
@@ -65,6 +66,7 @@ class MealManager(Resource):
 	@ns.response(200, "Successfully edited the section")
 	@ns.response(409, "Section already exists")
 	def put(self, rest):
+		"""Method to modify meal."""
 		resp = requests.put(
 			'{}/database/portal/meals/{}'.format(
 				current_app.config['DATABASE_URL'],

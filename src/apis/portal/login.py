@@ -10,7 +10,7 @@ except ValueError:
 	from utilities import authentication, checkers, headers
 	from utilities.models import database, login
 
-for model in (login.id, login.login_model):
+for model in (login.id, login.login_model, login.token):
 	api.add_model(model.name, model)
 
 @ns.route('/login')
@@ -18,6 +18,7 @@ class Authenticator(Resource):
 
 	@ns.doc("Portal authentication")
 	@ns.expect(login.login_model)
+	@ns.response(200, "Authentication successful", model=login.token)
 	@ns.response(401, "Authentication failed")
 	@ns.response(417, "Expected email or phone; got none.")
 	@ns.response(503, "Could not stablish connection to database")
