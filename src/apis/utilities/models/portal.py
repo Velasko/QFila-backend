@@ -37,7 +37,14 @@ section_items_edit = Model("restaurant.section_items_edit", {
 })
 
 meal_list = Model("restaurant.meal_list", {
-	"meals" : fields.List(fields.Integer())
+	"meals" : fields.List(fields.Integer()),
+	"page" : fields.Integer(default=1),
+	"pagesize" : fields.Integer(default=15)
+})
+
+compl_repr = Model("restaurant.complement_meal",{
+	"id" : fields.Integer(required=True),
+	"ammount" : fields.Integer(delfaut=1)
 })
 
 meal_create = Model("restaurant.meal_create", {
@@ -46,7 +53,8 @@ meal_create = Model("restaurant.meal_create", {
 	"price" : fields.Fixed(decimals=2),
 	"description" : fields.String(),
 	"image" : fields.String(),
-	"available" : fields.Integer(default=0)
+	"available" : fields.Integer(default=0),
+	"complements" : fields.List(fields.Nested(compl_repr))
 })
 
 meal_edit = Model("restaurant.meal_edit", {
