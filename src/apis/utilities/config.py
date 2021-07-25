@@ -21,7 +21,7 @@ class BaseConfig(threading.Thread):
 	def config_base(self):
 		self.app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 		self.app.config['APPLICATION_HOSTNAME'] = os.getenv('APPLICATION_HOSTNAME')
-		self.app.config['session_ttl'] = 30
+		self.app.config['session_ttl'] = 24*60
 
 		#url.com/test/ and url.com/test will be the same with this argument:
 		self.app.url_map.strict_slashes = False
