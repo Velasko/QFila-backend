@@ -14,14 +14,14 @@ except ValueError:
 	from utilities.models.portal import *
 	from utilities.models.database import meal
 
-for model in (meal, meal_create, meal_edit, meal_list, compl_repr):
+for model in (meal, meal_create, meal_edit, db_meal_list, compl_repr):
 	api.add_model(model.name, model)
 
 @ns.route('/meals/fetch/<int:rest>')
 class MealFetcher(Resource):
 
 	@ns.doc("Returns the restaurant's meals")
-	@ns.expect(meal_list)
+	@ns.expect(db_meal_list)
 	@ns.response(200, "Successfully fetched sections", model=None)
 	def post(self, rest):
 		with DBsession as session:
@@ -33,6 +33,8 @@ class MealFetcher(Resource):
 				query = query.filter(
 					Meal.id.in_(api.payload['meals'])
 				)
+
+			query = query.offset(api.payload['offset']).limit(api.payload['limit'])
 
 			response = { 'meal' : [item.serialize() for item in query.all()]}
 			fetch_meal_complements(response)

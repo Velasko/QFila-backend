@@ -1,9 +1,10 @@
 import requests
 
-from flask import current_app
+from flask import request, current_app
 from flask_restx import Resource
 
 from .app import ns, api
+from .common import pagination
 
 try:
 	from ..utilities import authentication, headers
@@ -15,14 +16,14 @@ except ValueError:
 	from utilities.models.portal import *
 	from utilities.models.database import meal
 
-
 for model in (meal, meal_create, meal_edit, meal_list, compl_repr):
 	api.add_model(model.name, model)
 
 @ns.route('/meal/fetch')
 class MealFetcher(Resource):
+
 	@ns.doc("Menu meal fetching")
-	@authentication.token_required(namespace=ns, expect_args=[meal_list])
+	@authentication.token_required(namespace=ns, expect_args=[pagination, meal_list])
 	@ns.response(200, "Sections successfully fetched", model=meal)
 	def post(self, rest):
 		"""
@@ -30,12 +31,17 @@ Method to fetch the meal's data.
 If only certain meals are desired, it may be parsed in the payload.
 It will return every meal otherwise.
 		"""
+		page_data = dict(request.args)
+		payload = api.payload.copy()
+		payload['limit'] = min(max(1, int(page_data['pagesize'])), current_app.config['PORTAL_MAX_PAGE_SIZE'])
+		payload['offset'] = (max(0, int(page_data['page']) - 1)) * payload['limit']
+
 		resp = requests.post(
 			'{}/database/portal/meals/fetch/{}'.format(
 				current_app.config['DATABASE_URL'],
 				rest['id']
 			),
-			json=api.payload,
+			json=payload,
 			headers={**headers.json, **headers.system_authentication}
 		)
 

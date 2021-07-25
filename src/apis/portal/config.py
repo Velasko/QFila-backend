@@ -6,9 +6,9 @@ except ValueError:
 
 class Config(BaseConfig):
 	def config_portal(self):
-		pass
+		self.app.config['PORTAL_MAX_PAGE_SIZE'] = 30
 
 	def verify_portal(self):
-		required_config = ['DATABASE_URL']
+		required_config = ['DATABASE_URL', 'PORTAL_MAX_PAGE_SIZE']
 		
 		return self._verify(required_config)

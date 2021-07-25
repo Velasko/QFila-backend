@@ -38,8 +38,11 @@ section_items_edit = Model("restaurant.section_items_edit", {
 
 meal_list = Model("restaurant.meal_list", {
 	"meals" : fields.List(fields.Integer()),
-	"page" : fields.Integer(default=1),
-	"pagesize" : fields.Integer(default=15)
+})
+
+db_meal_list = meal_list.inherit("db.restaurant.meal_list",{
+	"offset" : fields.Integer(default=1),
+	"limit" : fields.Integer(default=15)
 })
 
 compl_repr = Model("restaurant.complement_meal",{
@@ -60,4 +63,10 @@ meal_create = Model("restaurant.meal_create", {
 meal_edit = Model("restaurant.meal_edit", {
 	"meal_id" : fields.Integer(required=True),
 	"new_fields" : fields.Nested(meal_create, required=True)
+})
+
+complement_list = Model("restaurant.compl_list", {
+	"meals" : fields.List(fields.Integer()),
+	"page" : fields.Integer(default=1),
+	"pagesize" : fields.Integer(default=15)
 })
