@@ -14,6 +14,7 @@ rest_update = Model("restaurant.update", {
 	"rest" : fields.Nested(restaurant)
 })
 
+#Section models
 sections_list = Model("restaurant.sections_list", {
 	"sections" : fields.List(fields.String, required=True)
 })
@@ -36,6 +37,7 @@ section_items_edit = Model("restaurant.section_items_edit", {
 	"meals" : fields.List(fields.Integer, required=True)
 })
 
+#Meal models
 meal_list = Model("restaurant.meal_list", {
 	"meals" : fields.List(fields.Integer()),
 })
@@ -65,8 +67,40 @@ meal_edit = Model("restaurant.meal_edit", {
 	"new_fields" : fields.Nested(meal_create, required=True)
 })
 
+# Complement models
 complement_list = Model("restaurant.compl_list", {
-	"meals" : fields.List(fields.Integer()),
-	"page" : fields.Integer(default=1),
-	"pagesize" : fields.Integer(default=15)
+	"complements" : fields.List(fields.Integer())
+})
+
+db_complement_list = Model("restaurant.db_compl_list", {
+	"offset" : fields.Integer(default=1),
+	"limit" : fields.Integer(default=15)
+})
+
+complement_item = Model("restaurant.complement_item",{
+	"name" : fields.String(required=True),
+	"price" : fields.Fixed(decimals=2)
+})
+
+complement_create = Model("restaurant.complement_create", {
+	"head" : fields.String(required=True),
+	"name" : fields.String(required=True),
+	"description" : fields.String,
+	"min" : fields.Integer(default=0),
+	"max" : fields.Integer(default=1),
+	"stackable" : fields.Integer(default=1),
+	"items" : fields.List(fields.Nested(complement_item))
+})
+
+complements_data = Model("restaurant.complement_return", {
+	"complements" : fields.List(fields.Nested(complement_create))
+})
+
+complement_edit = Model("restaurant.complement_edit", {
+	"complement_id" : fields.Integer(required=True),
+	"new_fields" : fields.Nested(complement_create, required=True)
+})
+
+complement_delete = complement_list.inherit("restaurant.complement_delete", {
+	"force" : fields.Boolean(default=False)
 })

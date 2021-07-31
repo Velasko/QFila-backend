@@ -28,15 +28,6 @@ class Tables(list):
 				self.insert(0, getattr(scheme, m.groups()[0]))
 
 
-def safe_serialize(data):
-	data = serialize(data)
-
-	for key in ('login', 'passwd'):
-		if key in data:
-			del data[key]
-
-	return data
-
 def serialize(data):
 	data = {key : value for key, value in data.__dict__.items() if not key.startswith("_")}
 	for key, value in data.items():
@@ -48,6 +39,15 @@ def serialize(data):
 			data[key] = float(value)
 
 	for key in ('available',):
+		if key in data:
+			del data[key]
+
+	return data
+
+def safe_serialize(data):
+	data = serialize(data)
+
+	for key in ('login', 'passwd'):
 		if key in data:
 			del data[key]
 
@@ -243,11 +243,13 @@ class ComplementItem(Base, Serializable):
 			ondelete='CASCADE',
 			onupdate='CASCADE'
 		),
+		UniqueConstraint('rest', 'compl', 'position'),
 	)
 
 	rest = Column(Integer, primary_key=True)
 	compl = Column(Integer, primary_key=True)
 	name = Column(String(15), primary_key=True)
+	position = Column(SmallInteger, primary_key=True)
 	price = Column(Money, nullable=False)
 
 	available = Column(SmallInteger, default=0)
@@ -260,6 +262,28 @@ class ComplementItem(Base, Serializable):
 			return other.lower() == self.name.lower()
 		else:
 			return super().__eq__(other)
+
+	@staticmethod
+	def before_insert(mapper, connection, item):
+		if item.position is None:
+			from .app import DBsession
+			with DBsession as session:
+				previous = session.query(
+					ComplementItem.position
+				).filter(
+					ComplementItem.rest == item.rest,
+					ComplementItem.compl == item.compl
+				).order_by(
+					ComplementItem.position.desc()
+				).first()
+
+			if previous is None:
+				item.position = 1
+				return
+
+			item.position = 1 if not previous[0] else previous[0] + 1
+
+listen(ComplementItem, "before_insert", ComplementItem.before_insert)
 
 class MealComplRel(Base, Serializable):
 	__tablename__ = 'MealComplementRelationship'

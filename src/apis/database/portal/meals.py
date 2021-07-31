@@ -40,7 +40,7 @@ class MealFetcher(Resource):
 			fetch_meal_complements(response)
 
 		return response, 200
-#verify meal section
+
 @ns.route("/meals/<int:rest>")
 class MealManager(Resource):
 
